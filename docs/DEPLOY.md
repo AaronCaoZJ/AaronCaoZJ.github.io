@@ -158,3 +158,64 @@ Cloudflare SSL/TLS 模式是 Flexible，改成 Full。
 
 **大陆访问仍然很慢**
 第一步方案的固有上限——流量要跨境。只有走完备案上国内 CDN 才能根本解决。
+
+---
+
+## 上线记录与踩过的坑（2026-09-04 完成第一步）
+
+仓库 `AaronCaoZJ/AaronCaoZJ.github.io`，分支 `main` / `(root)`，
+自定义域名 `caozhijun.top`，Cloudflare 橙云代理，HTTPS 已启用。
+
+### 坑一：删了旧记录却忘了加新的
+
+Google Sites 时代 Cloudflare 上有 5 条记录要清：4 条指向 `216.239.32/34/36/38.21`
+（Google 的 A 记录）的 apex 记录，以及 `www → ghs.googlehosted.com`。
+删完之后必须补上两条 CNAME 指向 `aaroncaozj.github.io`，否则域名解析到"无处"，
+GitHub 报 `NotServedByPagesError`。
+
+同期还要去 **Rules → Redirect Rules** 删掉把 apex 跳转到 `www` 的旧规则，
+否则访客会被送去旧站。
+
+### 坑二：橙云状态下证书永远签不出来
+
+GitHub 要签发 Let's Encrypt 证书就得直连域名做验证，橙云代理把请求截在
+Cloudflare 边缘，验证永远完不成，`Enforce HTTPS` 一直是灰的。
+顺序只能是：**灰云 → 等证书签发 → 勾选 Enforce HTTPS → 再切橙云 → SSL/TLS 选 Full**。
+
+### 坑三：否定缓存让人误以为配置错了
+
+删除旧记录到添加新记录之间有个空窗期，任何在那时查询过的解析器都会把
+"域名不存在"缓存下来（按 SOA 的 negative TTL，常见 1 小时），
+之后即使记录已经建好，它们仍直接回 NXDOMAIN，不去重新查询。
+
+表现为：GitHub 报 `InvalidDNSError`、浏览器报 `DNS_PROBE_FINISHED_NXDOMAIN`，
+而记录其实完全正确。校园网/公司网的内部 DNS 尤其明显 ——
+`dscacheutil -flushcache` 只清本机缓存，清不掉上游服务器上的那一份。
+
+**验证 DNS 变更的正确顺序**是自上而下，先问权威服务器：
+
+```bash
+dig +short www.caozhijun.top @morgan.ns.cloudflare.com   # 权威，最终真相
+dig +short www.caozhijun.top @8.8.8.8                    # 公共 DNS
+dig +short www.caozhijun.top                             # 本机默认
+scutil --dns | grep 'nameserver\[0\]'                    # 本机在用哪个 DNS
+```
+
+权威正确而本机为空，就是缓存问题，不必改配置 —— 等它过期，或临时换用公共 DNS。
+
+### 排查技巧：用 --resolve 定位故障段
+
+整条链路失败时，用 `--resolve` 把某一跳换掉即可分段验证。绕过 Cloudflare
+直接向 GitHub Pages 发请求并带上正确的 Host：
+
+```bash
+curl -s --resolve caozhijun.top:443:185.199.110.153 https://caozhijun.top/ | grep '<title>'
+```
+
+能返回正确标题，就说明源站与内容都没问题，故障必在 Cloudflare 到访客那一段。
+
+### 尚未处理
+
+- Google Sites 后台的自定义域名仍未解绑（不影响访问，但建议清理）
+- `google-site-verification` 的 TXT 记录保留着，将来用 Google Search Console 收录新站要用
+- ICP 备案（第二步）尚未开始
