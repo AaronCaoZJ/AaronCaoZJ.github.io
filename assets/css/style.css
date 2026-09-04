@@ -502,7 +502,7 @@ strong { font-weight: 700; }
 /* 求职意向单独用 Show Lab 红描边，把这块从其余玻璃卡片里拎出来。
    只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
    文字保持正常色，红色只承担边界这一件事。 */
-#collaboration { border-color: var(--sl-red); }
+#collaboration { border-color: var(--sl-red); border-width: 2px; }
 
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
