@@ -265,6 +265,17 @@ h3.sub:first-of-type { margin-top: 16px; }
 }
 .item .s { font-size: 14.5px; color: var(--subtle); margin-top: 2px; }
 .item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
+
+/* 工作条目下的产出行：左侧产品名，右侧状态，与上方日期列右对齐 */
+.item .prod { margin-top: 6px; }
+.item .prod .s { flex: 1 1 auto; min-width: 0; margin-top: 0; color: var(--fg); }
+.item .prod .lbl {
+  font-family: var(--sans); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent); background: var(--chip);
+  padding: 2px 7px; border-radius: 4px; margin-right: 8px;
+  vertical-align: 1px;
+}
 .item .t a { color: inherit; }
 .item .t a:hover { color: var(--link); }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
