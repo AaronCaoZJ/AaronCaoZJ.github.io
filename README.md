@@ -83,6 +83,8 @@ magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
 
 ## 部署
 
+完整的 GitHub Pages / Cloudflare / ICP 备案流程见 [docs/DEPLOY.md](docs/DEPLOY.md)。
+
 推到 `main` 分支即自动发布，通常 1–2 分钟生效。
 
 ```bash
