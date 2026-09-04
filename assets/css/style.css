@@ -442,6 +442,9 @@ strong { font-weight: 700; }
   font-family: var(--sans); font-size: 12px; color: var(--subtle);
   white-space: nowrap;
 }
+/* 未发布的状态走斜体，与 publication 里 "Under Review" 同一套语汇：
+   斜体 = 未定，正体 = 已确定 */
+.item .pst.pending { font-style: italic; }
 .item .t a { color: inherit; }
 .item .t a:hover { color: inherit; }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
