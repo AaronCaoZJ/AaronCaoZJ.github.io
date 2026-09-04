@@ -503,13 +503,16 @@ strong { font-weight: 700; }
    只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
    文字保持正常色，红色只承担边界这一件事。 */
 #collaboration {
-  border-color: var(--sl-red); border-width: 2px;
-  /* 中性投影保留（负责把卡片压在页面上），额外叠一层红色辉光。
-     第一行是老浏览器的兜底；支持 color-mix 的会用第二行，
-     红色从 --sl-red 派生，改品牌色时辉光自动跟着变。 */
-  box-shadow: 0 12px 36px var(--glass-cast), 0 14px 44px rgba(216, 94, 93, .18);
+  border-width: 2px;
+  /* 半透明的红：backdrop-filter 模糊过的背景会从描边里透出来，
+     线条不再是压在玻璃上的一道实色，而像是玻璃自身的边缘染了色。
+     两条声明各写一遍，老引擎取上面的 rgba，新引擎取 color-mix。 */
+  border-color: rgba(216, 94, 93, .42);
+  border-color: color-mix(in srgb, var(--sl-red) 42%, transparent);
+  /* 中性投影保留（把卡片压在页面上），红色辉光减到 11% 只作氛围 */
+  box-shadow: 0 12px 36px var(--glass-cast), 0 14px 44px rgba(216, 94, 93, .11);
   box-shadow: 0 12px 36px var(--glass-cast),
-              0 14px 44px color-mix(in srgb, var(--sl-red) 18%, transparent);
+              0 14px 44px color-mix(in srgb, var(--sl-red) 11%, transparent);
 }
 
 /* ---------- 页脚 ---------- */
