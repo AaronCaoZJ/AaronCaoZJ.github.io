@@ -502,7 +502,15 @@ strong { font-weight: 700; }
 /* 求职意向单独用 Show Lab 红描边，把这块从其余玻璃卡片里拎出来。
    只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
    文字保持正常色，红色只承担边界这一件事。 */
-#collaboration { border-color: var(--sl-red); border-width: 2px; }
+#collaboration {
+  border-color: var(--sl-red); border-width: 2px;
+  /* 中性投影保留（负责把卡片压在页面上），额外叠一层红色辉光。
+     第一行是老浏览器的兜底；支持 color-mix 的会用第二行，
+     红色从 --sl-red 派生，改品牌色时辉光自动跟着变。 */
+  box-shadow: 0 12px 36px var(--glass-cast), 0 14px 44px rgba(216, 94, 93, .18);
+  box-shadow: 0 12px 36px var(--glass-cast),
+              0 14px 44px color-mix(in srgb, var(--sl-red) 18%, transparent);
+}
 
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
