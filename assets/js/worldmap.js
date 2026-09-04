@@ -87,7 +87,7 @@
   /* 部署好 Worker 之后把 USE_MOCK 改成 false，这是唯一需要动的开关。
      为 false 时若接口取不到数据，整块保持隐藏 —— 宁可什么都不显示，
      也不能把编出来的数字当成真实访问量摆在页面上。 */
-  var USE_MOCK = true;
+  var USE_MOCK = false;
   var API_READ  = '/api/visitors';
   var API_WRITE = '/api/visit';
 
