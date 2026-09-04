@@ -115,17 +115,37 @@ img { max-width: 100%; }
   position: sticky; top: 12px; z-index: 50;
   width: fit-content; max-width: calc(100% - 28px);
   margin: 14px auto 0;
-  background: rgba(255, 255, 255, .17);
-  backdrop-filter: blur(5px) saturate(190%) brightness(1.22);
-  -webkit-backdrop-filter: blur(5px) saturate(190%) brightness(1.22);
-  border: 1px solid rgba(255, 255, 255, .42);
+  /* 通透度：底色降到 9%，模糊只留 2px —— 背后内容基本原样透出 */
+  background: rgba(255, 255, 255, .09);
+  backdrop-filter: blur(2px) saturate(200%) brightness(1.26);
+  -webkit-backdrop-filter: blur(2px) saturate(200%) brightness(1.26);
+  border: 0;
   border-radius: 999px;
   box-shadow:
-    inset 0  1px 2px rgba(255, 255, 255, .85),   /* 上缘：主受光面 */
-    inset 0 -2px 4px rgba(255, 255, 255, .42),   /* 下缘：底面内反射 */
-    inset  2px 0 5px rgba(255, 255, 255, .28),   /* 左缘折射带 */
-    inset -2px 0 5px rgba(255, 255, 255, .28),   /* 右缘折射带 */
-    0 6px 20px rgba(45, 42, 41, .07);            /* 落影极淡，玻璃不该显重 */
+    inset 0  1px 3px rgba(255, 255, 255, .9),
+    inset 0 -3px 6px rgba(255, 255, 255, .5),
+    inset  3px 0 7px rgba(255, 255, 255, .34),
+    inset -3px 0 7px rgba(255, 255, 255, .34),
+    0 6px 22px rgba(45, 42, 41, .06);
+}
+/* 边缘折射带：一圈沿周长明暗变化的描边。真实玻璃的边缘因厚度渐变
+   把光折向不同方向，左上与右下最亮、两侧转暗。用渐变填充 + 遮罩
+   挖空中心，就得到一条粗细均匀但亮度随角度变化的环。 */
+.nav::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  padding: 1.6px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, .95) 0%,
+    rgba(255, 255, 255, .25) 26%,
+    rgba(255, 255, 255, .1)  50%,
+    rgba(255, 255, 255, .35) 74%,
+    rgba(255, 255, 255, .85) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
 }
 .nav .wrap {
   display: flex; align-items: center; justify-content: center; gap: 2px;
@@ -133,14 +153,20 @@ img { max-width: 100%; }
 }
 .nav .wrap::-webkit-scrollbar { display: none; }
 .nav a {
+  transition: background .2s ease, box-shadow .2s ease;
   font-family: var(--sans);
   font-size: 13.5px; font-weight: 500; letter-spacing: .02em;
   color: var(--fg);
-  padding: 6px 10px; border-radius: 6px; white-space: nowrap;
+  padding: 7px 13px; border-radius: 999px; white-space: nowrap;
   /* 玻璃是透明的，背后可能是深色照片，加一层淡描边保证可读 */
   text-shadow: 0 0 3px rgba(255, 255, 255, .9), 0 1px 2px rgba(255, 255, 255, .8);
 }
-.nav a:hover { background: var(--chip); text-decoration: none; }
+.nav a:hover {
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .9),
+              0 1px 4px rgba(45, 42, 41, .07);
+  text-decoration: none;
+}
 
 /* ---------- 头部名片 ---------- */
 .hero {
@@ -198,14 +224,14 @@ img { max-width: 100%; }
   font-family: var(--sans); font-size: 13px; font-weight: 500;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, .45);
-  background: rgba(255, 255, 255, .16);
-  backdrop-filter: blur(3px) saturate(170%) brightness(1.07);
-  -webkit-backdrop-filter: blur(3px) saturate(170%) brightness(1.07);
+  border: 1px solid rgba(255, 255, 255, .4);
+  background: rgba(255, 255, 255, .11);
+  backdrop-filter: blur(2px) saturate(180%) brightness(1.18);
+  -webkit-backdrop-filter: blur(2px) saturate(180%) brightness(1.18);
   box-shadow:
-    inset 0  1px 2px rgba(255, 255, 255, .8),
-    inset 0 -1px 3px rgba(255, 255, 255, .35),
-    0 3px 10px rgba(45, 42, 41, .05);
+    inset 0  1px 2px rgba(255, 255, 255, .85),
+    inset 0 -2px 4px rgba(255, 255, 255, .4),
+    0 3px 10px rgba(45, 42, 41, .045);
   color: var(--fg);
 }
 .links a {
@@ -378,17 +404,31 @@ strong { font-weight: 600; }
 .info-block {
   position: relative;
   margin-top: 46px; padding: 24px 26px;
-  background: rgba(255, 255, 255, .14);
-  backdrop-filter: blur(4px) saturate(175%) brightness(1.07);
-  -webkit-backdrop-filter: blur(4px) saturate(175%) brightness(1.07);
-  border: 1px solid rgba(255, 255, 255, .45);
-  border-radius: 18px;
+  background: rgba(255, 255, 255, .10);
+  backdrop-filter: blur(3px) saturate(185%) brightness(1.16);
+  -webkit-backdrop-filter: blur(3px) saturate(185%) brightness(1.16);
+  border: 0; border-radius: 18px;
   box-shadow:
-    inset 0  1px 2px rgba(255, 255, 255, .85),
-    inset 0 -2px 5px rgba(255, 255, 255, .4),
-    inset  2px 0 6px rgba(255, 255, 255, .26),
-    inset -2px 0 6px rgba(255, 255, 255, .26),
-    0 10px 30px rgba(45, 42, 41, .06);
+    inset 0  1px 3px rgba(255, 255, 255, .9),
+    inset 0 -3px 7px rgba(255, 255, 255, .45),
+    inset  3px 0 8px rgba(255, 255, 255, .3),
+    inset -3px 0 8px rgba(255, 255, 255, .3),
+    0 10px 30px rgba(45, 42, 41, .055);
+}
+/* 同款边缘折射带 */
+.info-block::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  padding: 1.6px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .22) 28%,
+    rgba(255, 255, 255, .1) 52%, rgba(255, 255, 255, .32) 76%,
+    rgba(255, 255, 255, .8) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
 }
 /* 上缘受光：一道由亮转透的斜向渐变，让平面读起来像有厚度的板 */
 .info-block::before {
@@ -463,3 +503,36 @@ footer.wrap {
 @media (prefers-reduced-motion: reduce) {
   .rise { opacity: 1; transform: none; transition: none; }
 }
+
+/* ---------- 主题色选择 ----------
+   按钮本身用当前强调色填充，所以它既是入口也是当前状态的指示。 */
+.tint { position: relative; display: flex; align-items: center; margin-left: 2px; }
+.tint-btn {
+  width: 17px; height: 17px; padding: 0; cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, .85); border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(45, 42, 41, .22);
+  transition: transform .18s ease;
+}
+.tint-btn:hover { transform: scale(1.16); }
+.tint-pop {
+  position: fixed; z-index: 60;
+  display: none; gap: 8px; padding: 9px 11px;
+  background: rgba(255, 255, 255, .16);
+  backdrop-filter: blur(3px) saturate(190%) brightness(1.2);
+  -webkit-backdrop-filter: blur(3px) saturate(190%) brightness(1.2);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 3px rgba(255, 255, 255, .9),
+    inset 0 -2px 5px rgba(255, 255, 255, .45),
+    0 8px 24px rgba(45, 42, 41, .12);
+}
+.tint-pop.open { display: flex; }
+.tint-dot {
+  width: 16px; height: 16px; padding: 0; cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, .8); border-radius: 50%;
+  transition: transform .16s ease;
+}
+.tint-dot:hover { transform: scale(1.2); }
+/* 选中态用一圈留白外扩的描边，而不是改变色点本身 */
+.tint-dot.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px currentColor; color: var(--accent); }
