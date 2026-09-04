@@ -8,6 +8,10 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
 
+<!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
+<link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Newsreader-normal.woff2" as="font" type="font/woff2" crossorigin>
+
 <style>
   /* Gallery 专属样式：只在这一页用到，就地内联，不污染全局 style.css */
   .grid {

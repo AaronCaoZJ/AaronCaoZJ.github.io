@@ -18,6 +18,10 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
 
+<!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
+<link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Newsreader-normal.woff2" as="font" type="font/woff2" crossorigin>
+
 </head>
 <body>
 
@@ -48,7 +52,8 @@
         I am an M.Sc. student in ECE. I am also conducting research on
         <strong>robot policy learning</strong> at
         <a href="https://github.com/showlab">Show Lab</a> under the advice of
-        Prof. Mike Zheng Shou. My research interests include
+        <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>.
+        My research interests include
         <strong>Diffusion Models</strong>, <strong>VLA Models</strong> and
         <strong>World Models</strong>.
       </p>
@@ -68,6 +73,10 @@
         <a href="https://github.com/AaronCaoZJ">
           <img src="assets/img/icon/github.png" alt="" width="15" height="15">GitHub
         </a>
+        <a href="assets/pdf/CV_ZhijunCao.pdf">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          CV (CN)
+        </a>
         <a href="https://www.linkedin.com/in/aaron-cao-zhijun/">
           <img src="assets/img/icon/linkedin.png" alt="" width="15" height="15">LinkedIn
         </a>
@@ -76,10 +85,6 @@
         </a>
         <a href="https://www.instagram.com/aaron_caozj/">
           <img src="assets/img/icon/instagram.png" alt="" width="15" height="15">Instagram
-        </a>
-        <a href="assets/pdf/CV_ZhijunCao.pdf">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-          CV (CN)
         </a>
       </div>
     </div>
@@ -93,11 +98,8 @@
     <ul class="news">
       <li><time>2026.07</time><div>Rejoined <strong>Kokoro Lab, Mikomiko</strong> (Singapore).</div></li>
       <li><time>2026.06</time><div><em>Supervise What Survives</em> is on arXiv — <a href="https://arxiv.org/abs/2606.24448">arXiv:2606.24448</a>.</div></li>
-      <li><time>2026.06</time><div>Started <strong>Show-Pro</strong>, on semantic harnesses that let VLMs drive robots zero-shot.</div></li>
-      <li><time>2026.05</time><div>Two co-first-authored papers submitted and under review.</div></li>
-      <li><time>2026.03</time><div>Published a blog on continuous-time diffusion models in Julia, for NUS EE5311.</div></li>
-      <li class="news-hidden" hidden><time>2026.02</time><div><em>Intelligent Review System for Embedded Microprocessor Lab Reports</em> published in <em>Research and Exploration in Laboratory</em>.</div></li>
-      <li class="news-hidden" hidden><time>2025.08</time><div>Joined <strong>Show Lab @ NUS</strong> as an M.Sc. student.</div></li>
+      <li><time>2026.02</time><div><em>Intelligent Review System for Embedded Microprocessor Lab Reports</em> published in <strong>Research and Exploration in Laboratory</strong>.</div></li>
+      <li><time>2025.08</time><div>Joined <strong>Show Lab @ NUS</strong> as an M.Sc. student.</div></li>
       <li class="news-hidden" hidden><time>2024.11</time><div><em>Imitation Learning Based Manipulator Skill Training for Home Environment</em> presented at <strong>CAC 2024</strong>.</div></li>
       <li class="news-hidden" hidden><time>2024.06</time><div>Graduated from <strong>Zhejiang University</strong> with a bachelor's degree in Automation.</div></li>
     </ul>
@@ -106,22 +108,46 @@
 
   <!-- ============ Publications ============ -->
   <section id="publications">
-    <h2>🎈 Publications <span class="zh">* denotes co-first authorship</span></h2>
+    <h2>Publications</h2>
 
     <article class="pub">
       <div class="thumb"><img src="assets/img/pub/pub-showharness.jpg" alt="" loading="lazy"></div>
       <div>
-        <h3>Show-Pro: Semantic Harness Enables VLMs to Play Robots</h3>
+        <h3>Show-Harness: Just a VLM Agent Can Play Robot</h3>
+        <p class="authors">
+          <a href="https://chenanno.github.io/">Yanzhe Chen</a><span class="star">*</span>,
+          <a href="https://www.baizechen.site/">Zechen Bai</a><span class="star">*</span>,
+          <span class="me">Zhijun Cao</span><span class="star">*</span>,
+          <a href="https://wenzhengzeng.github.io/">Wenzheng Zeng</a><span class="star">*</span>,
+          <a href="https://qhlin.me/">Kevin Qinghong Lin</a>,
+          <a href="https://linyq17.github.io/">Yiqi Lin</a>,
+          <a href="https://ethanliang99.github.io/">Guoqiang Liang</a>,
+          <a href="https://kevinskwk.github.io/">Kevin Yuchen Ma</a>,
+          <a href="https://github.com/ceilingFan456/">Qiming Huang</a>,
+          Mike Zheng Shou
+        </p>
         <p class="authors">Co-first Author<span class="star">*</span></p>
-        <p class="venue">Preprint in preparation <span class="dot">·</span> 2026.06</p>
+        <p class="venue">Preprint in preparation <span class="dot">·</span> 2026.09</p>
         <div class="tags"><span>Paper link to be updated</span></div>
+      </div>
+    </article>
+
+        <article class="pub">
+      <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" alt="" loading="lazy"></div>
+      <div>
+        <h3>Supervise What Survives: Geometry-Guided VLA Adaptation from Synthetic Robot Videos</h3>
+        <p class="authors">Danze Chen, Yanzhe Chen, Qiming Huang, <span class="me">Zhijun Cao</span>, Chen Gao, Mike Zheng Shou</p>
+        <p class="venue">Arxiv Preprint <span class="dot">·</span> 2026.06</p>
+        <div class="tags">
+          <a href="https://arxiv.org/abs/2606.24448">Arxiv Preprint</a>
+        </div>
       </div>
     </article>
 
     <article class="pub">
       <div class="thumb"><img src="assets/img/pub/pub-face.jpg" alt="" loading="lazy"></div>
       <div>
-        <h3>📄 When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>
+        <h3>When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>
         <p class="authors">Co-first Author<span class="star">*</span></p>
         <p class="venue">Under Review <span class="dot">·</span> 2026.05</p>
         <div class="tags"><span>Paper link to be updated</span></div>
@@ -135,18 +161,6 @@
         <p class="authors">Co-first Author<span class="star">*</span></p>
         <p class="venue">Under Review <span class="dot">·</span> 2026.05</p>
         <div class="tags"><span>Paper link to be updated</span></div>
-      </div>
-    </article>
-
-    <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" alt="" loading="lazy"></div>
-      <div>
-        <h3>Supervise What Survives: Geometry-Guided VLA Adaptation from Synthetic Robot Videos</h3>
-        <p class="authors">Danze Chen, Yanzhe Chen, Qiming Huang, <span class="me">Zhijun Cao</span>, Chen Gao, Mike Zheng Shou</p>
-        <p class="venue">Arxiv Preprint <span class="dot">·</span> 2026.06</p>
-        <div class="tags">
-          <a href="https://arxiv.org/abs/2606.24448">Arxiv Preprint</a>
-        </div>
       </div>
     </article>
 
@@ -183,7 +197,7 @@
     <article class="pub">
       <div class="thumb"><img src="assets/img/write/write-juliadiffusion.jpg" alt="" loading="lazy"></div>
       <div>
-        <h3>💬 Julia Implementation of Continuous-time Diffusion Models: A Blog for NUS EE5311</h3>
+        <h3>Julia Implementation of Continuous-time Diffusion Models: A Blog for NUS EE5311</h3>
         <p class="authors"><span class="me">Zhijun Cao</span>, Pinhong Chen, Zifeng Huang, Shuzhe Rui, Xiao Wang</p>
         <p class="venue">Course Blog for NUS EE5311 <span class="dot">·</span> 2026.03</p>
         <div class="tags">

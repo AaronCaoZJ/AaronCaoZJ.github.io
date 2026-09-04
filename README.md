@@ -14,6 +14,7 @@
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
 └── assets/
     ├── css/style.css   全站样式，配色沿用简历 LaTeX 的莫兰迪色板
+    ├── fonts/          自托管字体（Inter + Newsreader 可变字体，167 KB）
     ├── img/
     │   ├── avatar.jpg      头像（640×640）
     │   ├── pub/            论文配图，宽 900px
@@ -26,6 +27,28 @@
         ├── BGTree_ChinaCampus_2025.pdf 《大学生》报道抽印（459 KB）
         └── src/                        未压缩源文件，不进 git
 ```
+
+## 字体
+
+标题 **Inter**、正文 **Newsreader**，均为**自托管**可变字体（`assets/fonts/`，合计 167 KB）。
+
+不使用 Google Fonts CDN —— `fonts.googleapis.com` 在中国大陆不可达，
+会阻塞整个页面的渲染。自托管后全球访客看到同一套排版。
+
+Newsreader 原本带 `opsz`（光学尺寸）轴，页面只在 14–16.5px 的正文用它，
+因此用 fontTools 把该轴固定为 16，体积从 273 KB 降到 120 KB：
+
+```bash
+python3 -c "
+from fontTools.ttLib import TTFont
+from fontTools.varLib import instancer
+f = TTFont('Newsreader-normal.woff2')
+instancer.instantiateVariableFont(f, {'opsz': 16}, inplace=True)
+f.flavor = 'woff2'; f.save('Newsreader-normal.woff2')"
+```
+
+中文（"曹植竣""报告树"等）走系统字体：苹果设备落到苹方，Windows 落到微软雅黑。
+页面上中文只有寥寥几个词，为此下载 1–3 MB 中文字库对大陆访问得不偿失。
 
 ## 本地预览
 
@@ -46,6 +69,8 @@ python3 -m http.server 8000
 | 论文 teaser 图 | 见下方「从论文 PDF 裁 teaser」 |
 | 换简历 | 覆盖 `assets/pdf/CV_ZhijunCao.pdf`，文件名保持不变 |
 | 配色 | `assets/css/style.css` 顶部的 CSS 变量（仅浅色一套） |
+| 字体 | 同文件顶部的 `@font-face` 与 `--sans` / `--serif` |
+| News 默认显示条数 | 给 `<li>` 加/去 `class="news-hidden" hidden` |
 
 ### 从论文 PDF 裁 teaser
 
