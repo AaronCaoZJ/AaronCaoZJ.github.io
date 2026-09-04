@@ -17,6 +17,8 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/reveal.js"></script>
+
 
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
 <link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -27,7 +29,8 @@
 
 <nav class="nav">
   <div class="wrap">
-    <a href="#top">Biography</a>
+    <a href="#top">🏠 Home</a>
+    <a href="#biography">Biography</a>
     <a href="#news">News</a>
     <a href="#publications">Publications</a>
     <a href="#career">Experiences</a>
@@ -40,12 +43,12 @@
   <!-- ============ 头部名片 ============ -->
   <header class="hero">
     <div>
-      <h1>Cao Zhijun Aaron<span class="cn">曹植竣</span></h1>
-      <div class="role">M.Sc. Electrical Engineering</div>
-      <p class="affil">Show Lab, College of Design and Engineering, National University of Singapore</p>
+      <h1 class="rise">Cao Zhijun Aaron<span class="cn">曹植竣</span></h1>
+      <div class="role rise">M.Sc. Electrical Engineering</div>
+      <p class="affil rise">Show Lab, College of Design and Engineering, National University of Singapore</p>
 
 
-      <div class="links">
+      <div class="links rise">
         <a href="mailto:aaroncaozj@gmail.com">
           <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
         </a>
@@ -83,15 +86,15 @@
 
   <!-- ============ Biography ============ -->
   <section id="about">
-    <h2>Biography</h2>
+    <h2 class="rise">Biography</h2>
     <p>I am an M.Sc. student in ECE. I am also conducting research on <strong>robot policy learning</strong> at <a href="https://github.com/showlab">Show Lab</a> under the advice of <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>. My research interests include <strong>Diffusion Models</strong>, <strong>VLA Models</strong> and <strong>World Models</strong>.</p>
     <p>Previously, I received my bachelor's degree in Automation from Zhejiang University, where my early research focused on control for robots.</p>
   </section>
 
   <!-- ============ News ============ -->
   <section id="news">
-    <h2>News</h2>
-    <ul class="news">
+    <h2 class="rise">News</h2>
+    <ul class="news rise">
       <li><time>2026.07</time><div>Rejoined <strong>Mikomiko</strong> (Singapore).</div></li>
       <li><time>2026.06</time><div><em>Supervise What Survives</em> is on arXiv — <a href="https://arxiv.org/abs/2606.24448">arXiv:2606.24448</a>.</div></li>
       <li><time>2026.02</time><div><em>Intelligent Review System for Embedded Microprocessor Lab Reports</em> published in <strong>Research and Exploration in Laboratory</strong>.</div></li>
@@ -104,9 +107,9 @@
 
   <!-- ============ Publications ============ -->
   <section id="publications">
-    <h2>Publications</h2>
+    <h2 class="rise">Publications</h2>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-showharness.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>Show-Harness: Just a VLM Agent Can Play Robot</h3>
@@ -134,7 +137,7 @@
       </div>
     </article>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-mmeasurvey.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>When Agents Enter the Physical World: A Capability-Centric Survey of Multimodal Embodied Agents</h3>
@@ -165,7 +168,7 @@
       </div>
     </article>
 
-        <article class="pub">
+        <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>Supervise What Survives: Geometry-Guided VLA Adaptation from Synthetic Robot Videos</h3>
@@ -177,7 +180,7 @@
       </div>
     </article>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-face.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>
@@ -187,7 +190,7 @@
       </div>
     </article>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-dls.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>Where Success Breaks: Failure-Boundary Learning for Robust Vision-Language-Action Models</h3>
@@ -197,7 +200,7 @@
       </div>
     </article>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-llmgrade.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>Intelligent Review System for Embedded Microprocessor Lab Reports Powered by Large Language Models</h3>
@@ -209,7 +212,7 @@
       </div>
     </article>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-cac.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>Imitation Learning Based Manipulator Skill Training for Home Environment</h3>
@@ -225,9 +228,9 @@
 
   <!-- ============ Writing & Media ============ -->
   <section id="writing">
-    <h2>Writing &amp; Media</h2>
+    <h2 class="rise">Writing &amp; Media</h2>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/write/write-juliadiffusion.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>Julia Implementation of Continuous-time Diffusion Models: A Blog for NUS EE5311</h3>
@@ -240,7 +243,7 @@
       </div>
     </article>
 
-    <article class="pub">
+    <article class="pub rise">
       <div class="thumb"><img src="assets/img/write/write-bgtree.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>报告树：“BG Tree” — A Documentary Report on the Historic Cedar at ZJU Yuquan Campus Gate</h3>
@@ -255,9 +258,9 @@
 
   <!-- ============ Career ============ -->
   <section id="career">
-    <h2>Career</h2>
+    <h2 class="rise">Career</h2>
 
-    <div class="item">
+    <div class="item rise">
       <div class="row">
         <span class="t">Mikomiko Pte. Ltd, Singapore</span>
         <span class="d">2025.08 – 2026.02 · 2026.07 – present</span>
@@ -273,7 +276,7 @@
       </ul> -->
     </div>
 
-    <div class="item">
+    <div class="item rise">
       <div class="row">
         <span class="t">Zhejiang Key Laboratory of Electrical Technology and System on Renewable Energy</span>
         <span class="d">2024.06 – 2025.07</span>
@@ -281,7 +284,7 @@
       <div class="s">Research Assistant · Advised by Prof. Miao Yu</div>
     </div>
 
-    <div class="item">
+    <div class="item rise">
       <div class="row">
         <span class="t">InnoMotion Co. Ltd, Shanghai — R&amp;D Department</span>
         <span class="d">2023.07 – 2023.09</span>
@@ -292,9 +295,9 @@
 
   <!-- ============ Projects ============ -->
   <section id="projects">
-    <h2>Projects</h2>
+    <h2 class="rise">Projects</h2>
 
-    <div class="item">
+    <div class="item rise">
       <div class="row">
         <span class="t">Teaching Robots “What Not to Do”: Improving VLA Robustness with Negative Demonstrations</span>
         <span class="d">2025.09 – 2026.04</span>
@@ -302,7 +305,7 @@
       <div class="s">Individual Project for NUS EE5003</div>
     </div>
 
-    <div class="item">
+    <div class="item rise">
       <div class="row">
         <span class="t">Design of Coffee Brewing Robot Based on Mitsubishi RV-4FRL-D Manipulator</span>
         <span class="d">2022.04 – 2023.05</span>
@@ -314,9 +317,9 @@
 
   <!-- ============ Student Work ============ -->
   <section id="student-work">
-    <h2>Student Work</h2>
+    <h2 class="rise">Student Work</h2>
 
-    <div class="item">
+    <div class="item rise">
       <div class="row">
         <span class="t">Student Press Corps of Convergence Media Center of Zhejiang University</span>
         <span class="d">2021.10 – 2025.07</span>
@@ -332,8 +335,8 @@
 
   <!-- ============ Collaboration ============ -->
   <section id="collaboration">
-    <h2>Collaboration</h2>
-    <p style="margin-top:14px">
+    <h2 class="rise">Collaboration</h2>
+    <p class="rise" style="margin-top:14px">
       I am always open to potential collaborations and research opportunities. If my
       background aligns with your interests or if you have research topics to explore
       together, please feel free to reach out via

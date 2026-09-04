@@ -359,3 +359,20 @@ footer.wrap {
     transform: none;
   }
 }
+
+/* ---------- 入场：进入视口后逐个浮现 ----------
+   缓动取 Apple 常用的那条：起步快、尾段长时间缓收。
+   延迟由 JS 写入 --d，实现依次浮现。 */
+/* 默认可见：万一 reveal.js 没能加载，内容照常呈现而不是整页空白。
+   只有 <head> 里的同步脚本打上 js-rise 之后才转为待入场状态。 */
+.js-rise .rise {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .8s cubic-bezier(.32,.72,0,1),
+              transform .8s cubic-bezier(.32,.72,0,1);
+  transition-delay: var(--d, 0ms);
+}
+.js-rise .rise.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise { opacity: 1; transform: none; transition: none; }
+}

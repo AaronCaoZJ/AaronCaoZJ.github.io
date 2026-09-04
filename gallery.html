@@ -7,6 +7,8 @@
 <meta name="description" content="Photography by Cao Zhijun Aaron — Zhejiang University campus, West Lake, and travels.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/reveal.js"></script>
+
 
 <link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Newsreader-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -36,7 +38,7 @@
   .track figure {
     flex: 0 0 auto; margin: 0;
     height: 236px; border-radius: 10px; overflow: hidden;
-    background: var(--chip); cursor: zoom-in;
+    background: var(--chip);
     transition: transform .34s cubic-bezier(.32,.72,0,1),
                 box-shadow .34s cubic-bezier(.32,.72,0,1);
   }
@@ -55,14 +57,6 @@
   .track figure:nth-child(4n):hover   { transform: translateY(24px) scale(1.045); }
   .track figure:hover { box-shadow: 0 16px 38px rgba(45,42,41,.22); z-index: 3; }
 
-  /* ============ 入场：逐元素浮现 ============ */
-  .rise {
-    opacity: 0; transform: translateY(26px);
-    transition: opacity .8s cubic-bezier(.32,.72,0,1),
-                transform .8s cubic-bezier(.32,.72,0,1);
-    transition-delay: var(--d, 0ms);
-  }
-  .rise.in { opacity: 1; transform: none; }
 
   .gsec { padding-top: 46px; }
   .gsec .zh {
@@ -76,30 +70,6 @@
   .sign { text-align: center; padding: 58px 0 8px; }
   .sign img { width: 170px; opacity: .55; }
 
-  /* ============ 灯箱 ============ */
-  .lb {
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(28,26,25,.94);
-    display: none; align-items: center; justify-content: center; padding: 28px;
-  }
-  .lb.on { display: flex; }
-  .lb img {
-    max-width: min(100%, 1000px); max-height: 100%;
-    border-radius: 6px; box-shadow: 0 18px 50px rgba(0,0,0,.5);
-  }
-  .lb button {
-    position: absolute; background: none; border: 0; cursor: pointer;
-    color: rgba(255,255,255,.72); font-family: var(--sans);
-    font-size: 30px; line-height: 1; padding: 14px 18px;
-  }
-  .lb button:hover { color: #fff; }
-  .lb .lb-x { top: 10px; right: 14px; font-size: 26px; }
-  .lb .lb-p { left: 4px; }
-  .lb .lb-n { right: 4px; }
-  .lb .lb-i {
-    position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
-    font-family: var(--sans); font-size: 12.5px; color: rgba(255,255,255,.6);
-  }
 
   /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */
   .bleed { width: 100vw; margin-left: calc(50% - 50vw); }
@@ -110,21 +80,19 @@
     .track figure:nth-child(2n+1) { transform: none; }
   }
   /* 尊重系统的减少动态效果设置：不滚动、不位移，直接呈现 */
-  @media (prefers-reduced-motion: reduce) {
-    .track { animation: none; }
-    .rise { opacity: 1; transform: none; transition: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .track { animation: none; } }
 </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="wrap">
-    <a href="index.html">Biography</a>
+    <a href="index.html">🏠 Home</a>
+    <a href="index.html#biography">Biography</a>
     <a href="index.html#news">News</a>
     <a href="index.html#publications">Publications</a>
     <a href="index.html#career">Experiences</a>
-    <a href="gallery.html">Gallery</a>
+    <a href="gallery.html">🖼️ Gallery</a>
   </div>
 </nav>
 
@@ -148,19 +116,19 @@
     </div>
     <div class="marquee bleed rise" style="--dur:72s">
       <div class="track">
-        <figure data-i="campus1"><img src="assets/img/gallery/campus-01.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus2"><img src="assets/img/gallery/campus-02.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus3"><img src="assets/img/gallery/campus-03.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus4"><img src="assets/img/gallery/campus-04.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus5"><img src="assets/img/gallery/campus-05.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus6"><img src="assets/img/gallery/campus-06.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus7"><img src="assets/img/gallery/campus-07.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus8"><img src="assets/img/gallery/campus-08.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus9"><img src="assets/img/gallery/campus-09.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus10"><img src="assets/img/gallery/campus-10.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus11"><img src="assets/img/gallery/campus-11.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus12"><img src="assets/img/gallery/campus-12.webp" alt="" loading="lazy"></figure>
-        <figure data-i="campus13"><img src="assets/img/gallery/campus-13.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-01.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-02.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-03.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-04.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-05.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-06.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-07.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-08.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-09.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-11.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-12.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-13.webp" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -172,19 +140,19 @@
     </div>
     <div class="marquee bleed rise" style="--dur:84s">
       <div class="track rev">
-        <figure data-i="lake1"><img src="assets/img/gallery/lake-01.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake2"><img src="assets/img/gallery/lake-02.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake3"><img src="assets/img/gallery/lake-03.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake4"><img src="assets/img/gallery/lake-04.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake5"><img src="assets/img/gallery/lake-05.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake6"><img src="assets/img/gallery/lake-06.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake7"><img src="assets/img/gallery/lake-07.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake8"><img src="assets/img/gallery/lake-08.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake9"><img src="assets/img/gallery/lake-09.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake10"><img src="assets/img/gallery/lake-10.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake11"><img src="assets/img/gallery/lake-11.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake12"><img src="assets/img/gallery/lake-12.webp" alt="" loading="lazy"></figure>
-        <figure data-i="lake13"><img src="assets/img/gallery/lake-13.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-01.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-02.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-03.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-04.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-05.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-06.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-07.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-08.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-09.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-11.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-12.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-13.webp" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -195,16 +163,16 @@
     </div>
     <div class="marquee bleed rise" style="--dur:64s">
       <div class="track">
-        <figure data-i="more1"><img src="assets/img/gallery/more-01.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more2"><img src="assets/img/gallery/more-02.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more3"><img src="assets/img/gallery/more-03.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more4"><img src="assets/img/gallery/more-04.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more5"><img src="assets/img/gallery/more-05.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more6"><img src="assets/img/gallery/more-06.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more7"><img src="assets/img/gallery/more-07.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more8"><img src="assets/img/gallery/more-08.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more9"><img src="assets/img/gallery/more-09.webp" alt="" loading="lazy"></figure>
-        <figure data-i="more10"><img src="assets/img/gallery/more-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-01.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-02.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-03.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-04.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-05.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-06.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-07.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-08.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-09.webp" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-10.webp" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -222,13 +190,6 @@
   <span>Last Update: Sep. 2026</span>
 </footer>
 
-<div class="lb" id="lb" aria-hidden="true">
-  <button class="lb-x" aria-label="Close">✕</button>
-  <button class="lb-p" aria-label="Previous">‹</button>
-  <img alt="">
-  <button class="lb-n" aria-label="Next">›</button>
-  <div class="lb-i"></div>
-</div>
 
 <script>
 /* ---------- 轨道复制：无缝循环的前提 ----------
@@ -246,68 +207,7 @@
   });
 })();
 
-/* ---------- 入场：进入视口后逐元素浮现 ---------- */
-(function () {
-  var items = [].slice.call(document.querySelectorAll('.rise'));
-  if (!('IntersectionObserver' in window)) {
-    items.forEach(function (el) { el.classList.add('in'); });
-    return;
-  }
-  var io = new IntersectionObserver(function (entries) {
-    // 同一批进入视口的元素按文档顺序错开，形成依次浮现的节奏
-    var batch = entries.filter(function (e) { return e.isIntersecting; });
-    batch.sort(function (a, b) {
-      return a.target.compareDocumentPosition(b.target) & 4 ? -1 : 1;
-    });
-    batch.forEach(function (e, i) {
-      e.target.style.setProperty('--d', (i * 90) + 'ms');
-      e.target.classList.add('in');
-      io.unobserve(e.target);
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-  items.forEach(function (el) { io.observe(el); });
-})();
 
-/* ---------- 灯箱 ---------- */
-(function () {
-  var box = document.getElementById('lb');
-  var pic = box.querySelector('img');
-  var info = box.querySelector('.lb-i');
-  var figs = [].slice.call(document.querySelectorAll('figure[data-i]'));
-  var at = 0;
-
-  function show(i) {
-    at = (i + figs.length) % figs.length;
-    pic.src = figs[at].firstElementChild.src;
-    info.textContent = (at + 1) + ' / ' + figs.length;
-  }
-  function open(i) { show(i); box.classList.add('on'); document.body.style.overflow = 'hidden'; }
-  function close() { box.classList.remove('on'); document.body.style.overflow = ''; }
-
-  document.addEventListener('click', function (e) {
-    var f = e.target.closest && e.target.closest('.track figure');
-    if (!f) return;
-    // 副本没有 data-i，点到副本时换算回原件的序号
-    var idx = figs.indexOf(f);
-    if (idx < 0) {
-      var sibs = [].slice.call(f.parentNode.children);
-      idx = sibs.indexOf(f) % figs.length;
-    }
-    open(idx);
-  });
-
-  box.addEventListener('click', function (e) {
-    if (e.target === box || e.target.className === 'lb-x') return close();
-    if (e.target.className === 'lb-p') return show(at - 1);
-    if (e.target.className === 'lb-n') return show(at + 1);
-  });
-  document.addEventListener('keydown', function (e) {
-    if (!box.classList.contains('on')) return;
-    if (e.key === 'Escape') close();
-    else if (e.key === 'ArrowLeft') show(at - 1);
-    else if (e.key === 'ArrowRight') show(at + 1);
-  });
-})();
 </script>
 
 </body>
