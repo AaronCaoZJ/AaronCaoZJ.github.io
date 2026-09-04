@@ -409,6 +409,15 @@
     </p>
   </section>
 
+  <!-- ============ Visitors ============ -->
+  <!-- 整段带 hidden，由 worldmap.js 在建好之后移除：
+       脚本挂了就整块不出现，而不是留一个空标题。 -->
+  <section id="visitors" hidden>
+    <h2 class="rise">Visitors</h2>
+    <div class="vmap rise" id="visitorMap"></div>
+    <p class="vmap-meta rise" id="visitorMeta"></p>
+  </section>
+
 </main>
 
 <footer class="wrap">
@@ -550,6 +559,8 @@
   wrap.addEventListener('click', play);
 })();
 </script>
+
+<script src="assets/js/worldmap.js"></script>
 
 </body>
 </html>
