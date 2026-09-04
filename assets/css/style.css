@@ -107,7 +107,7 @@ img { max-width: 100%; }
   color: var(--subtle);
   padding: 6px 10px; border-radius: 6px; white-space: nowrap;
 }
-.nav a:hover { color: var(--accent); background: var(--chip); text-decoration: none; }
+.nav a:hover { background: var(--chip); text-decoration: none; }
 
 /* ---------- 头部名片 ---------- */
 .hero {
@@ -187,11 +187,11 @@ img { max-width: 100%; }
 section { padding-top: 34px; }
 h2 {
   font-family: var(--sans);
-  font-size: 13px; font-weight: 700;
+  font-size: 15px; font-weight: 700;
   letter-spacing: .13em; text-transform: uppercase;
   color: var(--accent);
   margin: 0 0 4px; padding-bottom: 7px;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 3px solid var(--accent);
 }
 h2 .zh {
   font-family: var(--serif); font-size: 12px; font-weight: 400;
@@ -206,18 +206,24 @@ strong { font-weight: 600; }
 /* ---------- News 时间线 ---------- */
 .news { margin: 14px 0 0; padding: 0; list-style: none; }
 .news li {
-  display: grid; grid-template-columns: 82px 1fr;
-  gap: 14px; padding: 5px 0; font-size: 15px;
+  /* 日期列宽随内容而定，不再固定 82px —— 原先日期只占约 55px，
+     余下的空位加上 gap 把两栏推开了近 40px */
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 11px; padding: 5px 0; font-size: 15px;
+  /* 按基线对齐：日期是 13px 无衬线、正文是 15px 衬线，
+     顶对齐会让日期看上去矮半行，只有基线才是两种字号的共同参照 */
+  align-items: baseline;
 }
+.news li > div { min-width: 0; }
 .news time {
-  font-family: var(--sans); font-size: 12.5px; font-weight: 600;
-  color: var(--subtle); padding-top: 4px; white-space: nowrap;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  color: var(--accent); white-space: nowrap;
 }
 .news-more {
   font-family: var(--sans); font-size: 13px; color: var(--subtle);
   background: none; border: 0; cursor: pointer; padding: 8px 0 0;
 }
-.news-more:hover { color: var(--accent); text-decoration: underline; }
+.news-more:hover { text-decoration: underline; }
 
 /* ---------- 论文卡片 ---------- */
 .pub {
@@ -247,7 +253,6 @@ strong { font-weight: 600; }
   line-height: 1.4; margin: 0 0 5px;
   transition: color .22s ease;
 }
-.pub:hover h3 { color: var(--accent); }
 .pub .authors { font-size: 14.5px; color: var(--fg); margin: 0 0 3px; }
 .pub .authors .me { font-weight: 700; }
 .pub .venue {
@@ -270,8 +275,7 @@ strong { font-weight: 600; }
 }
 .tags a { transition: background .18s ease, color .18s ease, transform .18s ease; }
 .tags a:hover {
-  background: var(--link); color: #fff;
-  text-decoration: none; transform: translateY(-1px);
+  background: var(--chip); text-decoration: none; transform: translateY(-1px);
 }
 .tags span { color: var(--subtle); }
 
@@ -285,7 +289,6 @@ strong { font-weight: 600; }
 /* 标题可伸缩并在自身内部折行；否则长标题会占满整行、
    把右侧日期整个挤到下一行的左边，视觉上错位。 */
 .item .t { flex: 1 1 340px; min-width: 0; transition: color .22s ease; }
-.item:hover .t { color: var(--accent); }
 .item .d { flex: 0 0 auto; }
 .item .t { font-family: var(--sans); font-size: 15.5px; font-weight: 650; }
 .item .d {
@@ -308,15 +311,39 @@ strong { font-weight: 600; }
   display: flex; justify-content: space-between; align-items: baseline;
   gap: 16px; font-size: 14.5px; padding: 1px 0;
 }
+.item .product-main {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 5px 8px; min-width: 0;
+}
+.item .product-tags {
+  display: inline-flex; flex-wrap: wrap; gap: 4px;
+}
+.item .product-tags span {
+  font-family: var(--sans); font-size: 10.5px; line-height: 1.4;
+  color: var(--subtle); background: var(--chip);
+  border: 1px solid var(--card-b); border-radius: 4px;
+  padding: 1px 6px; white-space: nowrap;
+}
 .item .pst {
   font-family: var(--sans); font-size: 12px; color: var(--subtle);
   white-space: nowrap;
 }
 .item .t a { color: inherit; }
-.item .t a:hover { color: var(--link); }
+.item .t a:hover { color: inherit; }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
 .item li { margin-bottom: 3px; }
 .item li::marker { color: var(--accent); }
+
+/* ---------- 机会信息块 ---------- */
+.info-block {
+  margin-top: 46px; padding: 24px 26px;
+  background: var(--chip); border: 1px solid var(--card-b);
+  border-radius: 10px;
+}
+.info-block h2 {
+  color: var(--fg); border-bottom: 0; padding-bottom: 0;
+}
+.info-block p:last-child { margin-bottom: 0; }
 
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
@@ -347,6 +374,7 @@ footer.wrap {
   .pub { grid-template-columns: 1fr; gap: 14px; }
   .news li { grid-template-columns: 1fr; gap: 0; }
   .news time { padding-top: 0; }
+  .info-block { margin-top: 34px; padding: 20px 18px; }
 }
 
 /* 系统开启“减少动态效果”时关掉位移与过渡，只保留颜色反馈 */
