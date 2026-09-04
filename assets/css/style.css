@@ -201,9 +201,12 @@ strong { font-weight: 600; }
 
 /* ---------- 论文卡片 ---------- */
 .pub {
-  display: grid; grid-template-columns: 268px 1fr;
-  gap: 22px; padding: 22px 0;
+  display: grid; grid-template-columns: 264px 1fr;
+  gap: 22px; padding: 20px 0;
   border-bottom: 1px solid var(--rule);
+  /* grid item 默认 align-self:stretch，会把 .thumb 拉到与右侧文字等高，
+     图片下方留出大片空白边框。改为 center 让缩略图垂直居中对齐正文。 */
+  align-items: center;
 }
 .pub:last-child { border-bottom: 0; }
 .pub .thumb {
@@ -212,6 +215,16 @@ strong { font-weight: 600; }
   overflow: hidden;
 }
 .pub .thumb img { display: block; width: 100%; }
+.pub .thumb.badge {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 108px; padding: 16px;
+  background: var(--chip); border-style: dashed;
+}
+.pub .thumb.badge span {
+  font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .06em; text-align: center; color: var(--subtle);
+  line-height: 1.5;
+}
 .pub h3 {
   font-family: var(--sans); font-size: 16px; font-weight: 650;
   line-height: 1.4; margin: 0 0 5px;
@@ -222,7 +235,12 @@ strong { font-weight: 600; }
   font-size: 14px; color: var(--subtle); font-style: italic; margin: 0 0 8px;
 }
 .pub .venue b { color: var(--high); font-style: normal; font-weight: 600; }
-.pub .tldr { font-size: 14.5px; margin: 0 0 10px; color: var(--fg); }
+.pub .venue .dot { margin: 0 5px; opacity: .6; font-style: normal; }
+.star { color: var(--high); font-weight: 700; }
+.note {
+  font-size: 13px; color: var(--subtle); font-style: italic;
+  margin: 0 0 8px;
+}
 
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tags a, .tags span {
@@ -234,19 +252,36 @@ strong { font-weight: 600; }
 .tags a:hover { border-color: var(--link); text-decoration: none; }
 .tags span { color: var(--subtle); }
 
-/* ---------- 通用条目（教育/经历/奖项）---------- */
+/* ---------- 分组小标题（Career / Projects / Student Work）---------- */
+h3.sub {
+  font-family: var(--sans);
+  font-size: 12px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--subtle);
+  margin: 22px 0 0;
+}
+h3.sub:first-of-type { margin-top: 16px; }
+
+/* ---------- 通用条目（经历 / 项目 / 写作）---------- */
 .item { padding: 13px 0; border-bottom: 1px solid var(--rule); }
 .item:last-child { border-bottom: 0; }
 .item .row {
   display: flex; justify-content: space-between;
-  align-items: baseline; gap: 16px; flex-wrap: wrap;
+  align-items: baseline; gap: 6px 16px; flex-wrap: wrap;
 }
+/* 标题可伸缩并在自身内部折行；否则长标题会占满整行、
+   把右侧日期整个挤到下一行的左边，视觉上错位。 */
+.item .t { flex: 1 1 340px; min-width: 0; }
+.item .d { flex: 0 0 auto; }
 .item .t { font-family: var(--sans); font-size: 15.5px; font-weight: 650; }
 .item .d {
   font-family: var(--sans); font-size: 13px; color: var(--subtle);
   white-space: nowrap;
 }
 .item .s { font-size: 14.5px; color: var(--subtle); margin-top: 2px; }
+.item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
+.item .t a { color: inherit; }
+.item .t a:hover { color: var(--link); }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
 .item li { margin-bottom: 3px; }
 .item li::marker { color: var(--accent); }
