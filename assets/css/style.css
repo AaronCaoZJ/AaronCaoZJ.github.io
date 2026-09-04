@@ -325,7 +325,9 @@ img { max-width: 100%; }
   transform: translateY(-2px);
   box-shadow: 0 5px 14px rgba(45, 42, 41, .09);
 }
-.links svg { width: 14px; height: 14px; fill: currentColor; opacity: .75; }
+/* 图标不跟随文字色：其余入口都是彩色 PNG，唯独 CV 是内联 SVG，
+   用 currentColor 会让它在悬停时独自变蓝，与旁边几个格格不入 */
+.links svg { width: 14px; height: 14px; fill: var(--subtle); opacity: .85; }
 /* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
