@@ -520,10 +520,13 @@ strong { font-weight: 700; }
 }
 
 /* ---------- 访客地图 ---------- */
+/* 无标题、无分隔线、无说明文字 —— 只有地图本身，
+   靠一段留白与上方的求职卡片拉开距离。 */
+#visitors { padding-top: 72px; }
 .vmap {
-  position: relative; margin-top: 18px;
+  position: relative;
   --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
-  --vmap-pin: var(--high);
+  --vmap-pin: var(--sl-red);
 }
 :root[data-theme="dark"] .vmap { --vmap-dot: #333a42; }
 .vmap-land { display: block; width: 100%; }
@@ -546,18 +549,6 @@ strong { font-weight: 700; }
   background: var(--fg); color: var(--bg);
   pointer-events: none; z-index: 2;
 }
-/* 统计行并进 h2：标题左、数字右，共用那条 accent 下划线。
-   h2 有 uppercase / letter-spacing / accent 色，这里逐项复位。 */
-#visitors h2 {
-  display: flex; justify-content: space-between;
-  align-items: baseline; flex-wrap: wrap; gap: 4px 20px;
-}
-.vmap-meta {
-  font-family: var(--sans); font-size: 13px; font-weight: 400;
-  letter-spacing: normal; text-transform: none;
-  color: var(--subtle); margin: 0;
-}
-
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
    margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，

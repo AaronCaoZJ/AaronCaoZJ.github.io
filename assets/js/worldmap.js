@@ -172,11 +172,8 @@
   }
 
   function build() {
-    var max = 0, cities = DATA.length, total = 0, cc = {};
-    DATA.forEach(function (d) {
-      if (d.n > max) max = d.n;
-      total += d.n; cc[d.cc] = 1;
-    });
+    var max = 0;
+    DATA.forEach(function (d) { if (d.n > max) max = d.n; });
 
     DATA.forEach(function (d) {
       var b = document.createElement('button');
@@ -194,11 +191,6 @@
       pins.appendChild(b);
     });
 
-    var meta = document.getElementById('visitorMeta');
-    if (meta) {
-      meta.textContent = total.toLocaleString() + ' visits from ' + cities +
-                         ' cities in ' + Object.keys(cc).length + ' countries.';
-    }
     el.classList.add('is-ready');
     var sec = document.getElementById('visitors');
     if (sec) sec.removeAttribute('hidden');
