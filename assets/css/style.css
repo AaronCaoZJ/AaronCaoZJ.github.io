@@ -498,6 +498,10 @@ strong { font-weight: 700; }
   border-bottom: 0; padding-bottom: 0;
 }
 .info-block p:last-child { margin-bottom: 0; }
+/* section > p:first-of-type 给章节首段留了 14px 上边距（正文排版需要），
+   但玻璃卡片自己有 24px padding，两者相加就比底部多出 14px。
+   这里把它清零，卡片内的上下留白由 padding 单独决定。 */
+.info-block > p:first-of-type { margin-top: 0; }
 
 /* 求职意向单独用 Show Lab 红描边，把这块从其余玻璃卡片里拎出来。
    只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
