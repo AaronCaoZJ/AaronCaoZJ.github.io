@@ -237,16 +237,6 @@ strong { font-weight: 600; }
 .tags a:hover { border-color: var(--link); text-decoration: none; }
 .tags span { color: var(--subtle); }
 
-/* ---------- 分组小标题（Career / Projects / Student Work）---------- */
-h3.sub {
-  font-family: var(--sans);
-  font-size: 12px; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: var(--subtle);
-  margin: 22px 0 0;
-}
-h3.sub:first-of-type { margin-top: 16px; }
-
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
 .item { padding: 13px 0; border-bottom: 1px solid var(--rule); }
 .item:last-child { border-bottom: 0; }
