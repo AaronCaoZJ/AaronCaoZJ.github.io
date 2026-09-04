@@ -8,7 +8,12 @@ binding       = "DB"
 database_name = "visitors"
 database_id   = "PASTE_DATABASE_ID_HERE"
 
-# 路由必须在橙云代理的域名上，请求才会先经过 Worker
+# 路由必须在橙云代理的域名上，请求才会先经过 Worker。
+# www 也解析到 Cloudflare，从那儿进来的访问同样要记，所以两条都挂。
 [[routes]]
 pattern   = "caozhijun.top/api/*"
+zone_name = "caozhijun.top"
+
+[[routes]]
+pattern   = "www.caozhijun.top/api/*"
 zone_name = "caozhijun.top"
