@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gallery · Zhijun Cao</title>
+<meta name="description" content="Photography and visual work by Zhijun Cao.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<!-- 主题预设：必须同步内联在 <head>，在 CSS 应用前写好 data-theme，
+     否则手动选了浅色的访客会先看到系统深色闪一下（FOUC）。 -->
+<script>
+  try {
+    var t = localStorage.getItem('theme');
+    if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
+<style>
+  /* Gallery 专属样式：只在这一页用到，就地内联，不污染全局 style.css */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .grid figure {
+    margin: 0;
+    border: 1px solid var(--card-b);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .grid img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform .35s ease;
+  }
+  .grid figure:hover img { transform: scale(1.03); }
+  .grid figcaption {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    color: var(--subtle);
+    padding: 9px 12px 11px;
+    border-top: 1px solid var(--card-b);
+  }
+  /* 还没有图片时的占位提示 */
+  .empty {
+    border: 1px dashed var(--rule);
+    border-radius: 10px;
+    padding: 34px 22px;
+    text-align: center;
+    color: var(--subtle);
+    font-size: 15px;
+    margin-top: 20px;
+  }
+  .empty code {
+    font-size: 13px;
+    background: var(--chip);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">Zhijun Cao</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#publications">Publications</a>
+    <a href="index.html#projects">Projects</a>
+    <a href="index.html#experience">Experience</a>
+    <a href="gallery.html">Gallery</a>
+    <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section id="gallery" style="padding-top:44px">
+    <h2>Gallery</h2>
+    <p style="margin-top:16px">
+      Photographs from my years as a student journalist at Zhejiang University,
+      and whatever I have been pointing a camera at since.
+    </p>
+
+    <!-- 有图片后，删掉下面的 .empty 占位块，取消注释 .grid 并逐条添加 figure。
+         图片放在 assets/img/gallery/ 下，建议长边压到 1600px 以内：
+           magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
+    -->
+    <div class="empty">
+      Nothing here yet — photos are on the way.<br>
+      <span style="font-size:13px">
+        Drop images into <code>assets/img/gallery/</code> and uncomment the grid in
+        <code>gallery.html</code>.
+      </span>
+    </div>
+
+    <!--
+    <div class="grid">
+      <figure>
+        <img src="assets/img/gallery/sample-01.jpg" alt="" loading="lazy">
+        <figcaption>Caption · Location, Year</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/img/gallery/sample-02.jpg" alt="" loading="lazy">
+        <figcaption>Caption · Location, Year</figcaption>
+      </figure>
+    </div>
+    -->
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>© 2026 Zhijun Cao</span>
+  <span><a href="index.html">← Back to home</a></span>
+</footer>
+
+<script>
+// 主题切换：三态循环 auto → light → dark，记在 localStorage。
+// 初始状态已由 <head> 内联脚本设好，这里只负责图标与点击。
+// 包 try/catch —— 隐私模式下 localStorage 访问本身会抛异常。
+(function () {
+  var root = document.documentElement, btn = document.getElementById('themeBtn');
+  var ICON = { auto: '◐', light: '☀', dark: '☾' }, order = ['auto', 'light', 'dark'];
+  function read() { try { return localStorage.getItem('theme') || 'auto'; } catch (e) { return 'auto'; } }
+  var mode = read();
+  btn.textContent = ICON[mode];
+  btn.addEventListener('click', function () {
+    mode = order[(order.indexOf(mode) + 1) % order.length];
+    try { localStorage.setItem('theme', mode); } catch (e) {}
+    if (mode === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', mode);
+    btn.textContent = ICON[mode];
+  });
+})();
+</script>
+
+</body>
+</html>
