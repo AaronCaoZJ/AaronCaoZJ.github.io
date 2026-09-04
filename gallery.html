@@ -3,61 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gallery · Zhijun Cao</title>
-<meta name="description" content="Photography and visual work by Zhijun Cao.">
+<title>Gallery · Cao Zhijun Aaron</title>
+<meta name="description" content="Photography by Cao Zhijun Aaron — Zhejiang University campus, West Lake, and travels.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
 
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
 <link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Newsreader-normal.woff2" as="font" type="font/woff2" crossorigin>
-
 <style>
-  /* Gallery 专属样式：只在这一页用到，就地内联，不污染全局 style.css */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
-    margin-top: 20px;
-  }
-  .grid figure {
-    margin: 0;
-    border: 1px solid var(--card-b);
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--card);
-  }
-  .grid img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    transition: transform .35s ease;
-  }
-  .grid figure:hover img { transform: scale(1.03); }
-  .grid figcaption {
-    font-family: var(--sans);
-    font-size: 12.5px;
-    color: var(--subtle);
-    padding: 9px 12px 11px;
-    border-top: 1px solid var(--card-b);
-  }
-  /* 还没有图片时的占位提示 */
-  .empty {
-    border: 1px dashed var(--rule);
-    border-radius: 10px;
-    padding: 34px 22px;
-    text-align: center;
-    color: var(--subtle);
-    font-size: 15px;
-    margin-top: 20px;
-  }
-  .empty code {
-    font-size: 13px;
+  /* ---------- 瀑布流：CSS 多列，保留每张照片的原始比例 ---------- */
+  .masonry { columns: 3; column-gap: 12px; margin-top: 18px; }
+  .masonry figure {
+    break-inside: avoid;            /* 不让一张图被拆到两列 */
+    margin: 0 0 12px;
+    border-radius: 8px; overflow: hidden;
     background: var(--chip);
-    padding: 2px 6px;
-    border-radius: 4px;
+    cursor: zoom-in;
+    transition: box-shadow .28s ease;
   }
+  .masonry figure:hover { box-shadow: 0 8px 22px rgba(45, 42, 41, .14); }
+  /* 图片停在原位，只在框内放大；缩放中心由 JS 跟随鼠标设置，
+     于是鼠标指到哪里就看清哪里 */
+  .masonry img {
+    display: block; width: 100%;
+    transition: transform .35s cubic-bezier(.22, .61, .36, 1);
+    will-change: transform;
+  }
+  .masonry figure:hover img { transform: scale(1.55); }
+
+  .gsec { padding-top: 40px; }
+  .gsec .zh {
+    font-family: var(--serif); font-size: 14px; font-weight: 400;
+    letter-spacing: .08em; color: var(--subtle);
+    margin-left: 10px; text-transform: none;
+  }
+  .gsec .where {
+    font-size: 14.5px; color: var(--subtle); margin: 10px 0 0;
+  }
+
+  .intro p { margin: 0 0 10px; }
+
+  .sign { text-align: center; padding: 54px 0 8px; }
+  .sign img { width: 170px; opacity: .55; }
+
+  /* ---------- 灯箱 ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(28, 26, 25, .93);
+    display: none; align-items: center; justify-content: center;
+    padding: 28px;
+  }
+  .lb.on { display: flex; }
+  .lb img {
+    max-width: min(100%, 1000px); max-height: 100%;
+    border-radius: 6px; box-shadow: 0 18px 50px rgba(0, 0, 0, .5);
+  }
+  .lb button {
+    position: absolute; background: none; border: 0; cursor: pointer;
+    color: rgba(255, 255, 255, .72); font-family: var(--sans);
+    font-size: 30px; line-height: 1; padding: 14px 18px;
+  }
+  .lb button:hover { color: #fff; }
+  .lb .lb-x { top: 10px; right: 14px; font-size: 26px; }
+  .lb .lb-p { left: 4px; }
+  .lb .lb-n { right: 4px; }
+  .lb .lb-i {
+    position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+    font-family: var(--sans); font-size: 12.5px; color: rgba(255, 255, 255, .6);
+  }
+
+  @media (max-width: 900px) { .masonry { columns: 2; } }
+  @media (max-width: 560px) { .masonry { columns: 1; } .lb button { font-size: 24px; } }
 </style>
 </head>
 <body>
@@ -74,45 +91,149 @@
 </nav>
 
 <main class="wrap">
-  <section id="gallery" style="padding-top:44px">
+
+  <section class="intro" style="padding-top:52px">
     <h2>Gallery</h2>
-    <p style="margin-top:16px">
-      Photographs from my years as a student journalist at Zhejiang University,
-      and whatever I have been pointing a camera at since.
+    <p style="margin-top:16px"><strong>Welcome to my gallery!</strong></p>
+    <p>
+      I am enamored with photography. It is not merely a way to preserve fleeting
+      moments in memory, but also a medium through which I weave and voice my
+      innermost thoughts.
     </p>
-
-    <!-- 有图片后，删掉下面的 .empty 占位块，取消注释 .grid 并逐条添加 figure。
-         图片放在 assets/img/gallery/ 下，建议长边压到 1600px 以内：
-           magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
-    -->
-    <div class="empty">
-      Nothing here yet — photos are on the way.<br>
-      <span style="font-size:13px">
-        Drop images into <code>assets/img/gallery/</code> and uncomment the grid in
-        <code>gallery.html</code>.
-      </span>
-    </div>
-
-    <!--
-    <div class="grid">
-      <figure>
-        <img src="assets/img/gallery/sample-01.jpg" alt="" loading="lazy">
-        <figcaption>Caption · Location, Year</figcaption>
-      </figure>
-      <figure>
-        <img src="assets/img/gallery/sample-02.jpg" alt="" loading="lazy">
-        <figcaption>Caption · Location, Year</figcaption>
-      </figure>
-    </div>
-    -->
+    <p>May the lovely moments laid out below bring you a touch of delight.</p>
   </section>
+
+  <section class="gsec" id="campus">
+    <h2>The Campus <span class="zh">求是园</span></h2>
+    <p class="where">Photos taken @ Zhejiang University</p>
+    <div class="masonry">
+        <figure><img src="assets/img/gallery/campus-01.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-02.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-03.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-04.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-05.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-06.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-07.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-08.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-09.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-10.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-11.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-12.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/campus-13.jpg" alt="" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="gsec" id="westlake">
+    <h2>Pillowed by West Lake <span class="zh">一枕湖山</span></h2>
+    <p class="where">Photos taken in Hangzhou, China</p>
+    <div class="masonry">
+        <figure><img src="assets/img/gallery/lake-01.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-02.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-03.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-04.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-05.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-06.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-07.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-08.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-09.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-10.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-11.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-12.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/lake-13.jpg" alt="" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="gsec" id="more">
+    <h2>More <span class="zh">路上</span></h2>
+    <p class="where">Most recently: back to West Lake, Hangzhou ❤️</p>
+    <div class="masonry">
+        <figure><img src="assets/img/gallery/more-01.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-02.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-03.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-04.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-05.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-06.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-07.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-08.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-09.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-10.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-11.jpg" alt="" loading="lazy"></figure>
+        <figure><img src="assets/img/gallery/more-12.jpg" alt="" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <div class="sign"><img src="assets/img/gallery/signature.png" alt="Cao Zhijun Aaron"></div>
+
+  <section class="gsec" id="back">
+    <p>Back to 👉 <a href="index.html"><strong>🏠 Home</strong></a></p>
+  </section>
+
 </main>
 
 <footer class="wrap">
   <span>Copyright © Cao Zhijun. All Rights Reserved.</span>
-  <span><a href="index.html">← Back to home</a></span>
+  <span>Last Update: Sep. 2026</span>
 </footer>
 
+<!-- 灯箱 -->
+<div class="lb" id="lb" aria-hidden="true">
+  <button class="lb-x" aria-label="Close">✕</button>
+  <button class="lb-p" aria-label="Previous">‹</button>
+  <img alt="">
+  <button class="lb-n" aria-label="Next">›</button>
+  <div class="lb-i"></div>
+</div>
+
+<script>
+// 灯箱：点击放大，支持左右切换与键盘操作。
+// 只复用页面上已加载的那张图，不额外请求大图。
+(function () {
+  var box = document.getElementById('lb');
+  var pic = box.querySelector('img');
+  var info = box.querySelector('.lb-i');
+  var imgs = [].slice.call(document.querySelectorAll('.masonry img'));
+  var at = 0;
+
+  function show(i) {
+    at = (i + imgs.length) % imgs.length;
+    pic.src = imgs[at].src;
+    info.textContent = (at + 1) + ' / ' + imgs.length;
+  }
+  function open(i) { show(i); box.classList.add('on'); document.body.style.overflow = 'hidden'; }
+  function close() { box.classList.remove('on'); document.body.style.overflow = ''; }
+
+  imgs.forEach(function (im, i) {
+    im.parentNode.addEventListener('click', function () { open(i); });
+  });
+
+  // 缩放中心跟随鼠标：改的是 transform-origin，只触发合成、不引起重排，
+  // 所以 mousemove 上直接写样式也不会掉帧。用事件委托避免绑 38 个监听。
+  [].forEach.call(document.querySelectorAll('.masonry'), function (grid) {
+    grid.addEventListener('mousemove', function (e) {
+      var fig = e.target.closest ? e.target.closest('figure') : null;
+      if (!fig) return;
+      var r = fig.getBoundingClientRect();
+      fig.firstElementChild.style.transformOrigin =
+        ((e.clientX - r.left) / r.width * 100).toFixed(1) + '% ' +
+        ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%';
+    });
+  });
+
+  box.addEventListener('click', function (e) {
+    // 点空白处关闭；点箭头切换
+    if (e.target === box || e.target.className === 'lb-x') return close();
+    if (e.target.className === 'lb-p') return show(at - 1);
+    if (e.target.className === 'lb-n') return show(at + 1);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('on')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') show(at - 1);
+    else if (e.key === 'ArrowRight') show(at + 1);
+  });
+})();
+</script>
 
 </body>
 </html>

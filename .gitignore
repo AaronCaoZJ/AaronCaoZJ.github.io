@@ -1,5 +1,7 @@
 .DS_Store
 *.log
 
+ref/
+
 # 未压缩的原始素材，只留本地，不参与发布
 assets/**/src/

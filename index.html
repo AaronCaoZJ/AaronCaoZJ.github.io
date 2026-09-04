@@ -30,9 +30,8 @@
     <a href="#about">Biography</a>
     <a href="#news">News</a>
     <a href="#publications">Publications</a>
-    <a href="#career">Career</a>
+    <a href="#career">Experiences</a>
     <a href="gallery.html">Gallery</a>
-    <a href="#collaboration">Contact</a>
   </div>
 </nav>
 
@@ -377,12 +376,10 @@
    视频是用 FLUX.2-klein + 这张照片微调出的 LoRA 实跑的 10 步
    rectified-flow 采样（x_t 序列），末尾接一段到原照片的过渡。
 
-   播完后视频停在末帧，不切回 <img>：视频与 JPEG 的解码路径
-   不同（色彩矩阵、色度下采样），即使内容一致也会在切换瞬间
-   露出一次色彩跳变。让视频留在原位就没有这个切换点，
-   而末帧本身就是这张照片。
-
-   进入页面自动播一次，点击可重播。
+   进入页面自动播一次，之后回到原始 JPG，点击可重播。
+   视频末帧与那张 JPG 内容一致（约 40 dB），但两者解码路径
+   不同（色彩矩阵、色度下采样），直接切换仍可能闪一下，
+   故收尾用 200ms 淡出盖住这道缝。
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
@@ -408,8 +405,8 @@
 
   function stop() { clearTimeout(guard); wrap.classList.remove('playing'); }
 
-  // 刻意不在 ended 时移除 playing（见上方说明），只解除兜底计时
-  vid.addEventListener('ended', function () { clearTimeout(guard); });
+  // 播完淡出视频，露出下方的原始 JPG
+  vid.addEventListener('ended', stop);
   wrap.addEventListener('click', play);
 
   // 等到能整段播放再开始，避免中途卡顿
