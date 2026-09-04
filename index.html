@@ -240,7 +240,7 @@
     <article class="pub">
       <div class="thumb"><img src="assets/img/write/write-bgtree.jpg" alt="" loading="lazy"></div>
       <div>
-        <h3>🗞️ 报告树：“BG Tree” — A Documentary Report on the Historic Cedar at ZJU Yuquan Campus Gate</h3>
+        <h3>报告树：“BG Tree” — A Documentary Report on the Historic Cedar at ZJU Yuquan Campus Gate</h3>
         <p class="authors">Yuxuan Ouyang, <span class="me">Zhijun Cao</span>, Yiying Zhou</p>
         <p class="venue">In <em>China Campus</em> <span class="dot">·</span> 2025.06</p>
         <div class="tags">
@@ -368,96 +368,90 @@
 
 <script>
 /* ------------------------------------------------------------------
-   头像入场动效：按 DDPM 前向过程反向播放。
-     x_t = sqrt(abar_t) * x_0 + sqrt(1 - abar_t) * eps,  eps ~ N(0, I)
-   abar 用 cosine schedule (Nichol & Dhariwal, 2021)。
-   从 t = T 走到 t = 0，即“从噪声里显影”。
-   不加载任何额外资源，噪声在客户端实时采样。
+   头像入场动效：latent diffusion + rectified flow 的视觉复刻。
+
+   路径用 rectified flow 的直线插值（SD3 / Flux 的做法）：
+       x_t = (1 - t) * x_0 + t * eps,   t: 1 -> 0
+   这恰好就是 canvas 的 alpha 合成公式，于是整段可以纯靠
+   globalAlpha + drawImage 完成，走 GPU，不必逐像素读写，
+   也就不受 tainted canvas 的跨源限制。
+   （DDPM 是球面路径 sqrt(abar)*x0 + sqrt(1-abar)*eps，
+     系数平方和为 1，那个就必须逐像素算了。）
+
+   噪声不在像素空间采样，而是先在低分辨率“latent”上生成，
+   再由 drawImage 平滑上采样 —— 模拟 VAE 解码，得到块状而非
+   针尖状的颗粒。块的尺度随 t 从粗到细，复刻真实采样过程中
+   低频结构先成形、高频细节后浮现的顺序。
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
   if (!wrap) return;
   var img    = wrap.querySelector('img');
   var canvas = wrap.querySelector('canvas');
-  var ctx    = canvas.getContext('2d', { willReadFrequently: true });
-  var W = canvas.width, H = canvas.height, N = W * H;
+  var ctx    = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
 
-  var STEPS = 40;   // 去噪步数
-  var DT    = 45;   // 每步毫秒（40 x 45ms 约 1.8s）
-  var POOL  = 5;    // 预采样几组噪声循环使用，兼顾性能与“沸腾感”
+  var STEPS  = 40;    // 采样步数
+  var DT     = 45;    // 每步毫秒（40 x 45ms 约 1.8s）
+  var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
+  var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
+  var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  // cosine schedule 的 abar_t
-  function alphaBar(t) {
-    var s = 0.008;
-    var f = function (x) {
-      var v = Math.cos(((x / STEPS + s) / (1 + s)) * Math.PI / 2);
-      return v * v;
-    };
-    return f(t) / f(0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // 低分辨率噪声画布，充当 latent
+  var nz = document.createElement('canvas');
+  var nctx = nz.getContext('2d');
+
+  // Box-Muller
+  var spare = null;
+  function gauss() {
+    if (spare !== null) { var v = spare; spare = null; return v; }
+    var u1 = Math.random() || 1e-9, u2 = Math.random();
+    var r = Math.sqrt(-2 * Math.log(u1)), th = 2 * Math.PI * u2;
+    spare = r * Math.sin(th);
+    return r * Math.cos(th);
   }
 
-  // Box-Muller 采样标准高斯，预生成若干组复用
-  function gaussPool() {
-    var pool = [];
-    for (var k = 0; k < POOL; k++) {
-      var a = new Float32Array(N * 3);
-      for (var i = 0; i < a.length; i += 2) {
-        var u1 = Math.random() || 1e-9, u2 = Math.random();
-        var r = Math.sqrt(-2 * Math.log(u1)), th = 2 * Math.PI * u2;
-        a[i] = r * Math.cos(th);
-        if (i + 1 < a.length) a[i + 1] = r * Math.sin(th);
-      }
-      pool.push(a);
+  function fillLatent(t) {
+    var scale = FINE + (COARSE - FINE) * t;
+    var n = Math.max(2, Math.round(W / scale));
+    nz.width = n; nz.height = n;                 // 改尺寸即清空
+    var d = nctx.createImageData(n, n), a = d.data;
+    for (var i = 0; i < a.length; i += 4) {
+      // 三通道共享一部分分量，制造成片的偏色 —— latent 解码后的典型观感
+      var base = gauss() * 34 * CHROMA, ind = 34 * (1 - CHROMA);
+      a[i]     = 128 + base + gauss() * ind;
+      a[i + 1] = 128 + base + gauss() * ind;
+      a[i + 2] = 128 + base + gauss() * ind;
+      a[i + 3] = 255;
     }
-    return pool;
+    nctx.putImageData(d, 0, 0);
   }
 
-  var x0 = null, noise = null, out = null, running = false;
+  var running = false;
 
-  function prepare() {
-    ctx.drawImage(img, 0, 0, W, H);
-    var d;
-    try {
-      d = ctx.getImageData(0, 0, W, H);   // 跨源图片会在此抛错
-    } catch (e) {
-      return false;                        // 取不到像素就安静放弃
-    }
-    x0  = d.data;
-    out = ctx.createImageData(W, H);
-    out.data.set(x0);
-    noise = gaussPool();
-    return true;
-  }
-
-  /* 关键：加噪必须在以 0 为中心的空间里做。
-     若直接在 [0,255] 上加高斯噪声，负半边会被 clamp 到 0，
-     纯噪声帧会整体偏暗、丢掉一半能量。
-     这里把像素映射到 [-0.5, 0.5]，加噪后再映射回去。 */
-  var SIGMA = 0.34;   // 噪声幅度，越大颗粒越重
   function render(t) {
-    var ab = alphaBar(t), c0 = Math.sqrt(ab), c1 = Math.sqrt(1 - ab) * SIGMA;
-    var eps = noise[(STEPS - t) % POOL], o = out.data;
-    for (var i = 0, j = 0; i < o.length; i += 4, j += 3) {
-      o[i]     = (c0 * (x0[i]     / 255 - 0.5) + c1 * eps[j]     + 0.5) * 255;
-      o[i + 1] = (c0 * (x0[i + 1] / 255 - 0.5) + c1 * eps[j + 1] + 0.5) * 255;
-      o[i + 2] = (c0 * (x0[i + 2] / 255 - 0.5) + c1 * eps[j + 2] + 0.5) * 255;
-      o[i + 3] = 255;
-    }
-    ctx.putImageData(out, 0, 0);
+    fillLatent(t);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(img, 0, 0, W, H);              // x_0
+    ctx.globalAlpha = t;                          // 直线路径的 sigma
+    ctx.drawImage(nz, 0, 0, W, H);                // latent 噪声，上采样时自动平滑
+    ctx.globalAlpha = 1;
   }
 
   function play() {
-    if (running) return;
-    if (!x0 && !prepare()) return;
+    if (running || !img.naturalWidth) return;
     running = true;
     wrap.classList.add('fx-on');
-    var t = STEPS;
+    var k = 0;
     (function step() {
-      render(t);
-      if (t-- > 0) { setTimeout(step, DT); return; }
-      wrap.classList.remove('fx-on');   // 淡出画布，露出原图
+      render(1 - k / STEPS);
+      if (k++ < STEPS) { setTimeout(step, DT); return; }
+      wrap.classList.remove('fx-on');            // 淡出画布，露出原图
       running = false;
     })();
   }
