@@ -12,22 +12,21 @@
 <link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Newsreader-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  /* ---------- 瀑布流：CSS 多列，保留每张照片的原始比例 ---------- */
-  .masonry { columns: 3; column-gap: 12px; margin-top: 18px; }
-  .masonry figure {
-    break-inside: avoid;            /* 不让一张图被拆到两列 */
-    margin: 0 0 12px;
+  /* ---------- 相册网格 ----------
+     用 flex + wrap 而非多列瀑布流：换行位置由 flex-basis 决定，
+     而悬停时只改 flex-grow，于是同一行内的格子重新分配宽度 ——
+     鼠标附近的框变宽、同行邻居相应变窄，行宽与间距始终不变。 */
+  .rows { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+  .rows figure {
+    flex: 1 1 260px; min-width: 0;
+    height: 232px; margin: 0;
     border-radius: 8px; overflow: hidden;
-    background: var(--chip);
-    cursor: zoom-in;
+    background: var(--chip); cursor: zoom-in;
+    transition: flex-grow .18s ease-out;
   }
-  /* 整组联动：越靠近光标的照片放得越大，像 Dock 那样形成一片起伏。
-     缩放加在 figure 上，transform 不参与布局，所以不会把瀑布流挤乱。 */
-  .masonry figure {
-    transition: transform .16s ease-out, box-shadow .16s ease-out;
-    will-change: transform;
-  }
-  .masonry img { display: block; width: 100%; }
+  .rows img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* 零高度占位，避免末行不满时图片被拉得过宽 */
+  .rows .pad { flex: 1 1 260px; height: 0; }
 
   .gsec { padding-top: 40px; }
   .gsec .zh {
@@ -70,8 +69,8 @@
     font-family: var(--sans); font-size: 12.5px; color: rgba(255, 255, 255, .6);
   }
 
-  @media (max-width: 900px) { .masonry { columns: 2; } }
-  @media (max-width: 560px) { .masonry { columns: 1; } .lb button { font-size: 24px; } }
+  @media (max-width: 900px) { .rows figure { height: 200px; } }
+  @media (max-width: 560px) { .rows figure { flex-basis: 100%; height: 240px; } .lb button { font-size: 24px; } }
 </style>
 </head>
 <body>
@@ -103,7 +102,7 @@
   <section class="gsec" id="campus">
     <h2>The Campus <span class="zh">求是园</span></h2>
     <p class="where">Photos taken @ Zhejiang University</p>
-    <div class="masonry">
+    <div class="rows">
         <figure><img src="assets/img/gallery/campus-01.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/campus-02.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/campus-03.jpg" alt="" loading="lazy"></figure>
@@ -117,13 +116,15 @@
         <figure><img src="assets/img/gallery/campus-11.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/campus-12.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/campus-13.jpg" alt="" loading="lazy"></figure>
+        <span class="pad"></span>
+        <span class="pad"></span>
     </div>
   </section>
 
   <section class="gsec" id="westlake">
     <h2>Pillowed by West Lake <span class="zh">一枕湖山</span></h2>
     <p class="where">Photos taken in Hangzhou, China</p>
-    <div class="masonry">
+    <div class="rows">
         <figure><img src="assets/img/gallery/lake-01.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/lake-02.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/lake-03.jpg" alt="" loading="lazy"></figure>
@@ -137,13 +138,15 @@
         <figure><img src="assets/img/gallery/lake-11.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/lake-12.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/lake-13.jpg" alt="" loading="lazy"></figure>
+        <span class="pad"></span>
+        <span class="pad"></span>
     </div>
   </section>
 
   <section class="gsec" id="more">
     <h2>More <span class="zh">路上</span></h2>
     <p class="where">Most recently: back to West Lake, Hangzhou ❤️</p>
-    <div class="masonry">
+    <div class="rows">
         <figure><img src="assets/img/gallery/more-01.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/more-02.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/more-03.jpg" alt="" loading="lazy"></figure>
@@ -156,6 +159,8 @@
         <figure><img src="assets/img/gallery/more-10.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/more-11.jpg" alt="" loading="lazy"></figure>
         <figure><img src="assets/img/gallery/more-12.jpg" alt="" loading="lazy"></figure>
+        <span class="pad"></span>
+        <span class="pad"></span>
     </div>
   </section>
 
@@ -188,7 +193,7 @@
   var box = document.getElementById('lb');
   var pic = box.querySelector('img');
   var info = box.querySelector('.lb-i');
-  var imgs = [].slice.call(document.querySelectorAll('.masonry img'));
+  var imgs = [].slice.call(document.querySelectorAll('.rows img'));
   var at = 0;
 
   function show(i) {
@@ -204,14 +209,15 @@
   });
 
   /* 整组联动的放大效果。
+     格子宽度由 flex-grow 分配，因此放大是"挤开邻居"而不是压在它们上面。
      两点要紧：
      1) 位置只在进入网格与窗口变化时量一次并缓存 —— mousemove 里调用
         getBoundingClientRect 会强制同步布局，38 张图足以掉帧；
      2) 用 requestAnimationFrame 合并同一帧内的多次移动事件。 */
   var R = 340;      // 影响半径（px）
-  var AMP = 0.22;   // 最靠近光标时的额外放大量
+  var AMP = 1.10;   // 最靠近光标时额外分到的宽度权重
 
-  [].forEach.call(document.querySelectorAll('.masonry'), function (grid) {
+  [].forEach.call(document.querySelectorAll('.rows'), function (grid) {
     var cells = [], mx = 0, my = 0, ticking = false;
 
     function measure() {
@@ -230,13 +236,7 @@
         var d = Math.sqrt((mx - c.cx) * (mx - c.cx) + (my - c.cy) * (my - c.cy));
         // 余弦衰减：中心最强，到半径处平滑归零，没有硬边
         var t = d >= R ? 0 : (Math.cos(Math.PI * d / R) + 1) / 2;
-        var sc = 1 + AMP * t;
-        c.el.style.transform = t ? 'scale(' + sc.toFixed(3) + ')' : '';
-        c.el.style.zIndex = t > 0.05 ? String(10 + Math.round(t * 20)) : '';
-        c.el.style.boxShadow = t > 0.15
-          ? '0 ' + (t * 14).toFixed(0) + 'px ' + (t * 30).toFixed(0) +
-            'px rgba(45,42,41,' + (t * 0.22).toFixed(2) + ')'
-          : '';
+        c.el.style.flexGrow = t ? (1 + AMP * t).toFixed(3) : '';
       }
     }
 
@@ -246,11 +246,7 @@
     }
 
     function reset() {
-      for (var i = 0; i < cells.length; i++) {
-        cells[i].el.style.transform = '';
-        cells[i].el.style.zIndex = '';
-        cells[i].el.style.boxShadow = '';
-      }
+      for (var i = 0; i < cells.length; i++) cells[i].el.style.flexGrow = '';
     }
 
     grid.addEventListener('mouseenter', measure);
