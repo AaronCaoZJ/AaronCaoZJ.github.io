@@ -282,11 +282,14 @@ strong { font-weight: 600; }
 .item li::marker { color: var(--accent); }
 
 /* ---------- 页脚 ---------- */
-footer {
-  margin-top: 52px; padding: 24px 0 72px;
+/* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
+   margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，
+   会把这里设的上下间距整个覆盖掉。 */
+footer.wrap {
+  margin: 96px auto 0; padding: 44px 22px 104px;
   border-top: 1px solid var(--rule);
   font-family: var(--sans); font-size: 12.5px; color: var(--subtle);
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
   text-align: center;
 }
 
