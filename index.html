@@ -25,6 +25,42 @@
 <link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Charis-400.woff2" as="font" type="font/woff2" crossorigin>
 
+<!-- 结构化数据：告诉搜索引擎这个页面描述的是"一个人"，而不是泛泛的网页。
+     sameAs 把 Scholar / GitHub / LinkedIn 等身份关联到同一实体。 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Cao Zhijun Aaron",
+  "alternateName": ["\u66f9\u690d\u7ae3", "Zhijun Cao"],
+  "url": "https://caozhijun.top/",
+  "image": "https://caozhijun.top/assets/img/avatar.jpg",
+  "email": "mailto:aaroncaozj@gmail.com",
+  "jobTitle": "M.Sc. Student in Electrical Engineering",
+  "affiliation": {
+    "@type": "CollegeOrUniversity",
+    "name": "National University of Singapore",
+    "department": "Show Lab, College of Design and Engineering"
+  },
+  "alumniOf": {
+    "@type": "CollegeOrUniversity",
+    "name": "Zhejiang University"
+  },
+  "knowsAbout": [
+    "Diffusion Models",
+    "Vision-Language-Action Models",
+    "World Models",
+    "Robot Policy Learning",
+    "Multimodal Generation"
+  ],
+  "sameAs": [
+    "https://scholar.google.com/citations?user=HPWngY4AAAAJ",
+    "https://github.com/AaronCaoZJ",
+    "https://www.linkedin.com/in/aaron-cao-zhijun/",
+    "https://huggingface.co/aaroncaozj"
+  ]
+}
+</script>
 </head>
 <body>
 

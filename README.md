@@ -112,6 +112,13 @@ magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
 
 然后在 `gallery.html` 里删掉 `.empty` 占位块、取消 `.grid` 的注释，逐条加 `<figure>`。
 
+## 搜索引擎收录
+
+站内已备好 `robots.txt`、`sitemap.xml` 与 JSON-LD 结构化数据（`index.html` 的 `<head>`）。
+新增页面后记得往 `sitemap.xml` 里补一条 `<url>`。
+
+提交入口与外链建议见 [docs/DEPLOY.md](docs/DEPLOY.md) 的「搜索引擎收录」一节。
+
 ## 部署
 
 完整的 GitHub Pages / Cloudflare / ICP 备案流程见 [docs/DEPLOY.md](docs/DEPLOY.md)。

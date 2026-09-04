@@ -219,3 +219,52 @@ curl -s --resolve caozhijun.top:443:185.199.110.153 https://caozhijun.top/ | gre
 - Google Sites 后台的自定义域名仍未解绑（不影响访问，但建议清理）
 - `google-site-verification` 的 TXT 记录保留着，将来用 Google Search Console 收录新站要用
 - ICP 备案（第二步）尚未开始
+
+---
+
+## 搜索引擎收录
+
+### 站内已就绪
+
+| 文件 | 作用 |
+|---|---|
+| `robots.txt` | 允许全站抓取，并指出 sitemap 位置 |
+| `sitemap.xml` | 列出所有页面。**新增页面要手动补一条 `<url>`** |
+| `index.html` 中的 JSON-LD | 声明这是一个 `Person`，并用 `sameAs` 关联 Scholar / GitHub / LinkedIn / HuggingFace |
+
+`sameAs` 是学者主页最值得填的一项：它把散落各处的身份指向同一个实体，
+Google 才可能把它们并进同一条 Knowledge Graph 记录，
+搜「Cao Zhijun」时把主页、论文、代码仓库聚合在一起展示。
+
+### 提交入口
+
+**Google Search Console** — https://search.google.com/search-console
+
+1. 添加资源 → 选「网域」→ 填 `caozhijun.top`
+2. 验证方式选 DNS TXT，把它给的记录加到 Cloudflare
+   （已有的 `google-site-verification` TXT 是 Google Sites 时代的，可能仍然有效，先试）
+3. 左侧「站点地图」→ 提交 `sitemap.xml`
+4. 「网址检查」输入首页 → 请求编入索引（可跳过等待）
+
+**Bing Webmaster Tools** — https://www.bing.com/webmasters
+
+支持从 Google Search Console 一键导入，验证与 sitemap 都省了。
+Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
+
+**百度**（可选）— https://ziyuan.baidu.com
+
+需要网站备案后才能正常收录，属于第二步的事。
+
+### 真正决定排名的是外链
+
+搜索引擎靠链接发现和评估页面，个人主页尤其依赖这几处（都是高权重来源）：
+
+- **Google Scholar** 个人资料 → 填「个人主页」为 `https://caozhijun.top`
+- **GitHub** profile 的 Website 字段，以及 profile README
+- **arXiv** 论文页的作者信息
+- **实验室主页**（Show Lab）的成员列表
+- **LinkedIn** 个人资料的网站栏
+- 论文项目页（Show-Harness、PAPAV）的作者链接
+
+这些做完，通常一到两周内搜索姓名就能出现在首页。
+纯粹等待自然抓取则可能要一两个月。
