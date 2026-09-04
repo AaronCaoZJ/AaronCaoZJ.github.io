@@ -412,8 +412,8 @@
   var ctx    = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
 
-  var STEPS  = 40;    // 采样步数
-  var DT     = 45;    // 每步毫秒（40 x 45ms 约 1.8s）
+  var STEPS  = 30;    // 采样步数
+  var DT     = 45;    // 每步毫秒（30 x 45ms 约 1.35s）
   var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
   var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
   var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
