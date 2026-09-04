@@ -141,15 +141,15 @@ img { max-width: 100%; }
   position: relative; width: 230px; height: 230px;
   cursor: pointer; justify-self: end;
 }
-.avatar-vid {
+.avatar-fx {
   position: absolute; inset: 0;
-  width: 100%; height: 100%; object-fit: cover;
+  width: 100%; height: 100%;
   border-radius: 12px; border: 1px solid var(--card-b);
   opacity: 0; pointer-events: none;
-  transition: opacity .2s ease;          /* 仅用于收尾淡出 */
+  transition: opacity .45s ease;
 }
-/* 起播要立即显形，否则开头几帧会被淡入吃掉 */
-.avatar-wrap.playing .avatar-vid { opacity: 1; transition: none; }
+/* 播放中立即显示（不要过渡，否则前几步会被淡入吃掉） */
+.avatar-wrap.fx-on .avatar-fx { opacity: 1; transition: none; }
 
 .hero .avatar {
   width: 230px; height: 230px; object-fit: cover;
