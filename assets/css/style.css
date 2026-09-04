@@ -438,13 +438,12 @@ strong { font-weight: 700; }
   border: 1px solid var(--card-b); border-radius: 4px;
   padding: 1px 6px; white-space: nowrap;
 }
+/* 产品状态标签统一斜体 —— 把"这是元信息"和左侧的产品名区分开，
+   Released / To be Announced 的差别交给字面本身表达 */
 .item .pst {
   font-family: var(--sans); font-size: 12px; color: var(--subtle);
-  white-space: nowrap;
+  font-style: italic; white-space: nowrap;
 }
-/* 未发布的状态走斜体，与 publication 里 "Under Review" 同一套语汇：
-   斜体 = 未定，正体 = 已确定 */
-.item .pst.pending { font-style: italic; }
 .item .t a { color: inherit; }
 .item .t a:hover { color: inherit; }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
