@@ -39,7 +39,7 @@ python3 -m http.server 8000
 | 加论文 | 复制一整个 `<article class="pub">` 块 |
 | 论文 teaser 图 | 见下方「从论文 PDF 裁 teaser」 |
 | 换简历 | 覆盖 `assets/pdf/CV_ZhijunCao.pdf`，文件名保持不变 |
-| 配色 | `assets/css/style.css` 顶部的 CSS 变量，浅色/深色各一套 |
+| 配色 | `assets/css/style.css` 顶部的 CSS 变量（仅浅色一套） |
 
 ### 从论文 PDF 裁 teaser
 

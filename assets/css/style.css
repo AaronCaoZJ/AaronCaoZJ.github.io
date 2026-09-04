@@ -1,6 +1,7 @@
 /* ============================================================
    Zhijun Cao — personal site
    配色沿用简历 (LaTeX) 中的莫兰迪色板，保持视觉同源。
+   全站仅浅色一套主题。
    字体使用系统栈：不引用 Google Fonts，避免中国大陆访客
    因 fonts.googleapis.com 不可达而阻塞渲染。
    ============================================================ */
@@ -24,36 +25,10 @@
            "Songti SC", "Times New Roman", serif;
 
   --w: 860px;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --accent: #93b4cd;
-    --high:   #dba88f;
-    --link:   #93b4cd;
-    --rule:   #363b40;
-    --subtle: #948c88;
-
-    --bg:     #15171a;
-    --fg:     #dcd9d6;
-    --card:   #1c1f23;
-    --card-b: #2a2e33;
-    --chip:   #24282c;
-  }
-}
-
-:root[data-theme="dark"] {
-  --accent: #93b4cd;
-  --high:   #dba88f;
-  --link:   #93b4cd;
-  --rule:   #363b40;
-  --subtle: #948c88;
-
-  --bg:     #15171a;
-  --fg:     #dcd9d6;
-  --card:   #1c1f23;
-  --card-b: #2a2e33;
-  --chip:   #24282c;
+  /* 明确声明只支持浅色：阻止浏览器或系统的“强制深色模式”
+     擅自反转配色（那种自动反转的效果通常很糟）。 */
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -109,15 +84,6 @@ img { max-width: 100%; }
   padding-left: 0; font-size: 14.5px;
 }
 .nav .brand:hover { background: none; }
-
-/* 主题切换按钮 */
-.theme-btn {
-  font-family: var(--sans); font-size: 13.5px;
-  background: none; border: 0; cursor: pointer;
-  color: var(--subtle); padding: 6px 8px; border-radius: 6px;
-  line-height: 1;
-}
-.theme-btn:hover { color: var(--accent); background: var(--chip); }
 
 /* ---------- 头部名片 ---------- */
 .hero {

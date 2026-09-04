@@ -18,14 +18,6 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
 
-<!-- 主题预设：必须同步内联在 <head>，在 CSS 应用前写好 data-theme，
-     否则手动选了浅色的访客会先看到系统深色闪一下（FOUC）。 -->
-<script>
-  try {
-    var t = localStorage.getItem('theme');
-    if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t);
-  } catch (e) {}
-</script>
 </head>
 <body>
 
@@ -38,7 +30,6 @@
     <a href="#experiences">Experiences</a>
     <a href="gallery.html">Gallery</a>
     <a href="#collaboration">Contact</a>
-    <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◐</button>
   </div>
 </nav>
 
@@ -309,24 +300,6 @@
 </footer>
 
 <script>
-// 主题切换：三态循环 auto → light → dark，记在 localStorage。
-// 初始状态已由 <head> 内联脚本设好，这里只负责图标与点击。
-// 包 try/catch —— 隐私模式下 localStorage 访问本身会抛异常。
-(function () {
-  var root = document.documentElement, btn = document.getElementById('themeBtn');
-  var ICON = { auto: '◐', light: '☀', dark: '☾' }, order = ['auto', 'light', 'dark'];
-  function read() { try { return localStorage.getItem('theme') || 'auto'; } catch (e) { return 'auto'; } }
-  var mode = read();
-  btn.textContent = ICON[mode];
-  btn.addEventListener('click', function () {
-    mode = order[(order.indexOf(mode) + 1) % order.length];
-    try { localStorage.setItem('theme', mode); } catch (e) {}
-    if (mode === 'auto') root.removeAttribute('data-theme');
-    else root.setAttribute('data-theme', mode);
-    btn.textContent = ICON[mode];
-  });
-})();
-
 // News 展开
 (function () {
   var btn = document.getElementById('newsMore');
