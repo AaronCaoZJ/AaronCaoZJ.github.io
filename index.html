@@ -73,9 +73,12 @@
       </div>
     </div>
 
-    <div class="avatar-wrap" id="avatarFx" title="Click to re-run the denoising">
+    <div class="avatar-wrap" id="avatarFx" title="Click to replay the denoising">
       <img class="avatar" src="assets/img/avatar.jpg" alt="Cao Zhijun Aaron" width="230" height="230">
-      <canvas class="avatar-fx" width="460" height="460" aria-hidden="true"></canvas>
+      <video class="avatar-vid" width="460" height="460" muted playsinline
+             preload="auto" aria-hidden="true" tabindex="-1">
+        <source src="assets/video/denoise.mp4" type="video/mp4">
+      </video>
     </div>
   </header>
 
@@ -369,123 +372,38 @@
 
 <script>
 /* ------------------------------------------------------------------
-   头像入场动效：latent diffusion + rectified flow 的视觉复刻。
+   头像去噪动效：播放一段真实的采样轨迹。
 
-   路径用 rectified flow 的直线插值（SD3 / Flux 的做法）：
-       x_t = (1 - t) * x_0 + t * eps,   t: 1 -> 0
-   这恰好就是 canvas 的 alpha 合成公式，于是整段可以纯靠
-   globalAlpha + drawImage 完成，走 GPU，不必逐像素读写，
-   也就不受 tainted canvas 的跨源限制。
-   （DDPM 是球面路径 sqrt(abar)*x0 + sqrt(1-abar)*eps，
-     系数平方和为 1，那个就必须逐像素算了。）
+   视频是用 FLUX.2-klein + 这张照片微调出的 LoRA 实跑的 16 步
+   rectified-flow 采样（x_t 序列），末尾接一段到原照片的过渡，
+   所以最后一帧与静态头像是同一张图 —— 播完直接隐藏视频即可，
+   不会有跳变。
 
-   噪声不在像素空间采样，而是先在低分辨率“latent”上生成，
-   再由 drawImage 平滑上采样 —— 模拟 VAE 解码，得到块状而非
-   针尖状的颗粒。
-
-   关键点：混合进去的不是成品图，而是随 t 变化的“当前预测”
-   x_hat_0(t)。真实采样跑的是反向过程，早期模型只能给出粗糙
-   模糊、细节尚不存在的估计；若始终拿成品图去混噪声，得到的
-   只是前向加噪的倒放 —— 看上去像给照片盖了层噪声，而不是
-   把照片一点点生成出来。这里用降采样再上采样来模拟受 latent
-   分辨率限制的预测，并让饱和度、对比度一同从低到高恢复。
+   进入页面自动播一次，点击可重播。90KB，帧间压缩后比等效的
+   精灵图小三倍多。
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
   if (!wrap) return;
-  var img    = wrap.querySelector('img');
-  var canvas = wrap.querySelector('canvas');
-  var ctx    = canvas.getContext('2d');
-  var W = canvas.width, H = canvas.height;
-
-  var STEPS  = 40;    // 采样步数
-  var DT     = 45;    // 每步毫秒（40 x 45ms 约 1.8s）
-  var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
-  var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
-  var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
-  var GAMMA  = 1.35;  // 预测清晰度的回升曲线：>1 表示结构在中段快速涌现
+  var vid = wrap.querySelector('video');
+  if (!vid) return;
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  // 低分辨率噪声画布，充当 latent
-  var nz = document.createElement('canvas');
-  var nctx = nz.getContext('2d');
-  // 当前步的预测图 x_hat_0(t)，同样先降到低分辨率
-  var pr = document.createElement('canvas');
-  var pctx = pr.getContext('2d');
-  pctx.imageSmoothingEnabled = true;
-  pctx.imageSmoothingQuality = 'high';
-
-  // Box-Muller
-  var spare = null;
-  function gauss() {
-    if (spare !== null) { var v = spare; spare = null; return v; }
-    var u1 = Math.random() || 1e-9, u2 = Math.random();
-    var r = Math.sqrt(-2 * Math.log(u1)), th = 2 * Math.PI * u2;
-    spare = r * Math.sin(th);
-    return r * Math.cos(th);
-  }
-
-  function fillLatent(t) {
-    var scale = FINE + (COARSE - FINE) * t;
-    var n = Math.max(2, Math.round(W / scale));
-    nz.width = n; nz.height = n;                 // 改尺寸即清空
-    var d = nctx.createImageData(n, n), a = d.data;
-    for (var i = 0; i < a.length; i += 4) {
-      // 三通道共享一部分分量，制造成片的偏色 —— latent 解码后的典型观感
-      var base = gauss() * 34 * CHROMA, ind = 34 * (1 - CHROMA);
-      a[i]     = 128 + base + gauss() * ind;
-      a[i + 1] = 128 + base + gauss() * ind;
-      a[i + 2] = 128 + base + gauss() * ind;
-      a[i + 3] = 255;
-    }
-    nctx.putImageData(d, 0, 0);
-  }
-
-  var running = false;
-
-  /* 当前步的预测 x_hat_0(t)：分辨率受限 + 色彩未完全恢复。
-     用 GAMMA 让结构在中段快速涌现，而不是随 t 线性变清晰。 */
-  function drawPred(t) {
-    var q = Math.pow(t, GAMMA);
-    var scale = 1 + (COARSE - 1) * q;
-    var n = Math.max(2, Math.round(W / scale));
-    pr.width = n; pr.height = n;
-    pctx.drawImage(img, 0, 0, n, n);              // 降采样：丢掉高频细节
-    ctx.filter = 'saturate(' + (1 - 0.45 * q).toFixed(3) + ') ' +
-                 'contrast(' + (1 - 0.12 * q).toFixed(3) + ')';
-    ctx.drawImage(pr, 0, 0, W, H);                // 上采样回画布
-    ctx.filter = 'none';
-  }
-
-  function render(t) {
-    fillLatent(t);
-    ctx.globalAlpha = 1;
-    drawPred(t);                                  // x_hat_0(t)，而非成品图
-    ctx.globalAlpha = t;                          // 直线路径的 sigma
-    ctx.drawImage(nz, 0, 0, W, H);                // latent 噪声，上采样时自动平滑
-    ctx.globalAlpha = 1;
-  }
-
   function play() {
-    if (running || !img.naturalWidth) return;
-    running = true;
-    wrap.classList.add('fx-on');
-    var k = 0;
-    (function step() {
-      render(1 - k / STEPS);
-      if (k++ < STEPS) { setTimeout(step, DT); return; }
-      wrap.classList.remove('fx-on');            // 淡出画布，露出原图
-      running = false;
-    })();
+    try { vid.currentTime = 0; } catch (e) {}
+    wrap.classList.add('playing');
+    var p = vid.play();
+    // 浏览器可能拒绝自动播放（如 iOS 低电量模式），此时安静退回静态头像
+    if (p && p.catch) p.catch(function () { wrap.classList.remove('playing'); });
   }
 
-  if (img.complete) play();
-  else img.addEventListener('load', play);
+  vid.addEventListener('ended', function () { wrap.classList.remove('playing'); });
   wrap.addEventListener('click', play);
+
+  // 等到能整段播放再开始，避免中途卡顿
+  if (vid.readyState >= 3) play();
+  else vid.addEventListener('canplaythrough', play, { once: true });
 })();
 </script>
 

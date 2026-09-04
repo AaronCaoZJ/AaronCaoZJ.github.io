@@ -136,20 +136,19 @@ img { max-width: 100%; }
   margin: 0 0 20px;
 }
 .hero p { margin: 0 0 9px; font-size: 15.5px; }
-/* 头像容器：canvas 覆盖在图片之上，去噪播完后淡出 */
+/* 头像容器：去噪视频覆盖在图片之上，播完隐藏 */
 .avatar-wrap {
   position: relative; width: 230px; height: 230px;
   cursor: pointer; justify-self: end;
 }
-.avatar-fx {
+.avatar-vid {
   position: absolute; inset: 0;
-  width: 100%; height: 100%;
+  width: 100%; height: 100%; object-fit: cover;
   border-radius: 12px; border: 1px solid var(--card-b);
   opacity: 0; pointer-events: none;
-  transition: opacity .45s ease;
 }
-/* 播放中立即显示（不要过渡，否则前几步会被淡入吃掉） */
-.avatar-wrap.fx-on .avatar-fx { opacity: 1; transition: none; }
+/* 视频末帧与静态头像是同一张图，直接切换即可，无需淡入淡出 */
+.avatar-wrap.playing .avatar-vid { opacity: 1; }
 
 .hero .avatar {
   width: 230px; height: 230px; object-fit: cover;
