@@ -42,6 +42,12 @@
 :root {
   --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 —— 标题 */
   --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 数字/强调 */
+
+  /* Show Lab logo 四色 —— 见 .shx 与 #collaboration */
+  --sl-blue:   #669ED3;
+  --sl-green:  #67A651;
+  --sl-red:    #D85E5D;
+  --sl-orange: #F3AA68;
   --link:   #5c8299;   /* 莫兰迪石青 —— 链接 */
   --rule:   #cec9c6;   /* 莫兰迪浅暖灰 —— 分隔线 */
   --subtle: #8d8481;   /* 莫兰迪暖灰 —— 次要文字 */
@@ -391,10 +397,10 @@ strong { font-weight: 700; }
 /* Show-Harness 的 "Show" 用 Show Lab logo 的四色。
    四个 <span> 之间不能有任何空白 —— HTML 会把换行折叠成空格，
    渲染出 "S h o w"，复制出来也会带空格。 */
-.shx span:nth-child(1) { color: #669ED3; }
-.shx span:nth-child(2) { color: #67A651; }
-.shx span:nth-child(3) { color: #D85E5D; }
-.shx span:nth-child(4) { color: #F3AA68; }
+.shx span:nth-child(1) { color: var(--sl-blue); }
+.shx span:nth-child(2) { color: var(--sl-green); }
+.shx span:nth-child(3) { color: var(--sl-red); }
+.shx span:nth-child(4) { color: var(--sl-orange); }
 .note {
   font-size: 13px; color: var(--subtle); font-style: italic;
   margin: 0 0 8px;
@@ -492,6 +498,9 @@ strong { font-weight: 700; }
   border-bottom: 0; padding-bottom: 0;
 }
 .info-block p:last-child { margin-bottom: 0; }
+
+/* 求职意向的关键词用 Show Lab 的红，和 Show-Harness 里那个 o 同一个色号 */
+#collaboration strong { color: var(--sl-red); }
 
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
