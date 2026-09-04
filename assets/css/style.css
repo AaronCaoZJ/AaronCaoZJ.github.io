@@ -81,17 +81,21 @@ body {
 }
 
 /* ---------- 背景光晕 ----------
-   三团极淡的色斑固定在视口上，滚动时不动，只作氛围。
-   固定（而非随内容滚动）是关键：玻璃层的模糊要有东西可透，
-   若光晕跟着滚，玻璃后面的画面会跟着糊动，反而显脏。
-   透明度压到 0.06–0.10，几乎察觉不到，但让大片留白不再是死白。 */
+   固定在视口上，滚动时不动，只作氛围。固定而非随内容滚动是关键：
+   玻璃层的模糊要有东西可透，光晕若跟着滚，玻璃后的画面会跟着糊动。
+
+   透明度取 0.26–0.34：先前用 0.07–0.10，实测与底色只差 10 级灰，
+   在浅底上根本看不出来。浅色页面对色偏的容忍度远比想象中高，
+   要"很柔和"靠的是渐变足够宽、边界足够软，而不是把颜色调到近乎透明。 */
 body::before {
   content: '';
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(58% 46% at 12% -4%,  rgba(77, 110, 138, .10), transparent 68%),
-    radial-gradient(46% 40% at 88% 12%,  rgba(196, 135, 110, .075), transparent 70%),
-    radial-gradient(60% 44% at 52% 104%, rgba(92, 130, 153, .07),  transparent 70%);
+    radial-gradient(62% 52% at 10% -6%,  rgba(77, 110, 138, .34), transparent 72%),
+    radial-gradient(52% 46% at 92% 8%,   rgba(196, 135, 110, .30), transparent 72%),
+    radial-gradient(48% 40% at 74% 52%,  rgba(92, 130, 153, .26), transparent 70%),
+    radial-gradient(64% 48% at 20% 96%,  rgba(120, 140, 130, .26), transparent 72%),
+    radial-gradient(50% 44% at 96% 88%,  rgba(150, 130, 155, .24), transparent 70%);
 }
 
 a { color: var(--link); text-decoration: none; }
@@ -101,29 +105,40 @@ img { max-width: 100%; }
 
 .wrap { max-width: var(--w); margin: 0 auto; padding: 0 22px; }
 
-/* ---------- 顶部导航 ---------- */
+/* ---------- 液态玻璃 ----------
+   模拟的是一块厚而光滑的实心玻璃，而非磨砂玻璃：
+   光线穿过时几乎不散射，所以背后的内容仍然清晰，只在边缘因厚度
+   变化发生折射。因此 blur 极小、底色极淡，厚度全部交给四道 inset
+   高光——上下左右各一条反光带，那才是"玻璃"被读出来的地方。
+   （之前用 blur(30px) + 22% 白底做的是磨砂玻璃，背后一片糊。） */
 .nav {
-  position: sticky; top: 0; z-index: 50;
-  /* 底色必须留出足够透明度，否则 backdrop-filter 无从显现 */
-  background: color-mix(in srgb, var(--bg) 52%, transparent);
-  backdrop-filter: saturate(190%) blur(22px);
-  -webkit-backdrop-filter: saturate(190%) blur(22px);
-  /* 顶部内高光 + 底部细线：模拟玻璃板的上缘受光、下缘投影，
-     厚度感来自这两条一亮一暗的边，而不是把底色调白 */
-  border-bottom: 1px solid color-mix(in srgb, var(--rule) 62%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65),
-              0 1px 12px rgba(45, 42, 41, .045);
+  position: sticky; top: 12px; z-index: 50;
+  width: fit-content; max-width: calc(100% - 28px);
+  margin: 14px auto 0;
+  background: rgba(255, 255, 255, .17);
+  backdrop-filter: blur(5px) saturate(190%) brightness(1.22);
+  -webkit-backdrop-filter: blur(5px) saturate(190%) brightness(1.22);
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 999px;
+  box-shadow:
+    inset 0  1px 2px rgba(255, 255, 255, .85),   /* 上缘：主受光面 */
+    inset 0 -2px 4px rgba(255, 255, 255, .42),   /* 下缘：底面内反射 */
+    inset  2px 0 5px rgba(255, 255, 255, .28),   /* 左缘折射带 */
+    inset -2px 0 5px rgba(255, 255, 255, .28),   /* 右缘折射带 */
+    0 6px 20px rgba(45, 42, 41, .07);            /* 落影极淡，玻璃不该显重 */
 }
 .nav .wrap {
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  height: 54px; overflow-x: auto; scrollbar-width: none;
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  height: 48px; padding: 0 8px; overflow-x: auto; scrollbar-width: none;
 }
 .nav .wrap::-webkit-scrollbar { display: none; }
 .nav a {
   font-family: var(--sans);
   font-size: 13.5px; font-weight: 500; letter-spacing: .02em;
-  color: var(--subtle);
+  color: var(--fg);
   padding: 6px 10px; border-radius: 6px; white-space: nowrap;
+  /* 玻璃是透明的，背后可能是深色照片，加一层淡描边保证可读 */
+  text-shadow: 0 0 3px rgba(255, 255, 255, .9), 0 1px 2px rgba(255, 255, 255, .8);
 }
 .nav a:hover { background: var(--chip); text-decoration: none; }
 
@@ -132,7 +147,7 @@ img { max-width: 100%; }
   display: grid;
   grid-template-columns: 1fr 230px;
   gap: 42px; align-items: start;
-  padding: 76px 0 44px;
+  padding: 54px 0 44px;
 }
 .hero h1 {
   font-family: var(--sans);
@@ -183,12 +198,14 @@ img { max-width: 100%; }
   font-family: var(--sans); font-size: 13px; font-weight: 500;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, .6);
-  background: color-mix(in srgb, var(--card) 55%, transparent);
-  backdrop-filter: saturate(150%) blur(10px);
-  -webkit-backdrop-filter: saturate(150%) blur(10px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7),
-              0 1px 3px rgba(45, 42, 41, .04);
+  border: 1px solid rgba(255, 255, 255, .45);
+  background: rgba(255, 255, 255, .16);
+  backdrop-filter: blur(3px) saturate(170%) brightness(1.07);
+  -webkit-backdrop-filter: blur(3px) saturate(170%) brightness(1.07);
+  box-shadow:
+    inset 0  1px 2px rgba(255, 255, 255, .8),
+    inset 0 -1px 3px rgba(255, 255, 255, .35),
+    0 3px 10px rgba(45, 42, 41, .05);
   color: var(--fg);
 }
 .links a {
@@ -359,17 +376,28 @@ strong { font-weight: 600; }
 
 /* ---------- 机会信息块 ---------- */
 .info-block {
+  position: relative;
   margin-top: 46px; padding: 24px 26px;
-  /* 半透明 + 背景模糊：卡片下方的光晕被揉开后透上来，
-     所以它看着像一块浮在页面上的玻璃，而不是一块灰底色板 */
-  background: color-mix(in srgb, var(--card) 46%, transparent);
-  backdrop-filter: saturate(165%) blur(16px);
-  -webkit-backdrop-filter: saturate(165%) blur(16px);
-  border: 1px solid rgba(255, 255, 255, .55);
-  border-radius: 14px;
-  box-shadow: 0 10px 34px rgba(45, 42, 41, .055),
-              inset 0 1px 0 rgba(255, 255, 255, .72);
+  background: rgba(255, 255, 255, .14);
+  backdrop-filter: blur(4px) saturate(175%) brightness(1.07);
+  -webkit-backdrop-filter: blur(4px) saturate(175%) brightness(1.07);
+  border: 1px solid rgba(255, 255, 255, .45);
+  border-radius: 18px;
+  box-shadow:
+    inset 0  1px 2px rgba(255, 255, 255, .85),
+    inset 0 -2px 5px rgba(255, 255, 255, .4),
+    inset  2px 0 6px rgba(255, 255, 255, .26),
+    inset -2px 0 6px rgba(255, 255, 255, .26),
+    0 10px 30px rgba(45, 42, 41, .06);
 }
+/* 上缘受光：一道由亮转透的斜向渐变，让平面读起来像有厚度的板 */
+.info-block::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .26), transparent 34%);
+  pointer-events: none;
+}
+.info-block > * { position: relative; }
 .info-block h2 {
   /* 只去掉下划线（卡片本身已有边界），颜色继承全局 h2 的 accent */
   border-bottom: 0; padding-bottom: 0;
