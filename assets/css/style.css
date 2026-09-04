@@ -125,9 +125,10 @@ img { max-width: 100%; }
   font-size: 17px; color: var(--subtle); font-weight: 400;
   margin-left: 9px; letter-spacing: .06em;
 }
+/* 名字下的两行同用正文衬线体与字号，仅靠颜色/字重区分主次 */
 .hero .role {
-  font-family: var(--sans); font-size: 16.5px; color: var(--accent);
-  font-weight: 600; margin: 12px 0 4px;
+  font-size: 16.5px; line-height: 1.5; color: var(--accent);
+  font-weight: 600; margin: 12px 0 2px;
 }
 /* 机构行与 Biography 正文同款：同字体、同字号、同字重，只是颜色略淡 */
 .hero .affil {
