@@ -1,3 +1,5 @@
 .DS_Store
 *.log
-assets/img/avatar.png
+
+# 未压缩的原始素材，只留本地，不参与发布
+_src/

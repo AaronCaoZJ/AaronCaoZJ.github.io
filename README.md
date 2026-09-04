@@ -12,10 +12,11 @@
 ├── gallery.html        相册页（骨架已就绪，图片待补）
 ├── CNAME               GitHub Pages 自定义域名，内容为 caozhijun.top
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
+├── _src/               未压缩原图等源素材，本地保留、不进 git、不发布
 └── assets/
     ├── css/style.css   全站样式，配色沿用简历 LaTeX 的莫兰迪色板
     ├── img/
-    │   ├── avatar.jpg      头像（560×560，由简历 photo.png 压制）
+    │   ├── avatar.jpg      头像（640×640，由 _src/avatar.png 压制）
     │   ├── pub-*.jpg       论文 teaser，从论文 PDF 裁出
     │   └── gallery/        相册图片目录（当前为空）
     └── pdf/CV_ZhijunCao.pdf  中文简历（172 KB，已降采样压缩）
