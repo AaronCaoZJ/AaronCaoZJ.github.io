@@ -374,13 +374,15 @@
 /* ------------------------------------------------------------------
    头像去噪动效：播放一段真实的采样轨迹。
 
-   视频是用 FLUX.2-klein + 这张照片微调出的 LoRA 实跑的 16 步
-   rectified-flow 采样（x_t 序列），末尾接一段到原照片的过渡，
-   所以最后一帧与静态头像是同一张图 —— 播完直接隐藏视频即可，
-   不会有跳变。
+   视频是用 FLUX.2-klein + 这张照片微调出的 LoRA 实跑的 10 步
+   rectified-flow 采样（x_t 序列），末尾接一段到原照片的过渡。
 
-   进入页面自动播一次，点击可重播。90KB，帧间压缩后比等效的
-   精灵图小三倍多。
+   播完后视频停在末帧，不切回 <img>：视频与 JPEG 的解码路径
+   不同（色彩矩阵、色度下采样），即使内容一致也会在切换瞬间
+   露出一次色彩跳变。让视频留在原位就没有这个切换点，
+   而末帧本身就是这张照片。
+
+   进入页面自动播一次，点击可重播。
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
@@ -390,15 +392,24 @@
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  var guard = null;
+
   function play() {
     try { vid.currentTime = 0; } catch (e) {}
     wrap.classList.add('playing');
     var p = vid.play();
     // 浏览器可能拒绝自动播放（如 iOS 低电量模式），此时安静退回静态头像
-    if (p && p.catch) p.catch(function () { wrap.classList.remove('playing'); });
+    if (p && p.catch) p.catch(stop);
+    // 兜底：播放若因缓冲卡住，别把访客一直晾在噪声帧上
+    clearTimeout(guard);
+    guard = setTimeout(function () { if (!vid.ended) stop(); },
+                       (vid.duration || 2) * 1000 + 4000);
   }
 
-  vid.addEventListener('ended', function () { wrap.classList.remove('playing'); });
+  function stop() { clearTimeout(guard); wrap.classList.remove('playing'); }
+
+  // 刻意不在 ended 时移除 playing（见上方说明），只解除兜底计时
+  vid.addEventListener('ended', function () { clearTimeout(guard); });
   wrap.addEventListener('click', play);
 
   // 等到能整段播放再开始，避免中途卡顿
