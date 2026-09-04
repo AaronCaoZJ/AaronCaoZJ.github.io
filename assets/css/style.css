@@ -314,15 +314,22 @@ strong { font-weight: 700; }
 /* ---------- News 时间线 ---------- */
 .news { margin: 14px 0 0; padding: 0; list-style: none; }
 .news li {
-  /* 日期列宽随内容而定，不再固定 82px —— 原先日期只占约 55px，
-     余下的空位加上 gap 把两栏推开了近 40px */
-  display: grid; grid-template-columns: auto 1fr;
+  /* 每个 li 各自是一个 grid，auto 列只按自己这行的日期收缩 ——
+     "2026.09.08:" 比 "2026.07:" 宽，正文起点就参差不齐。
+     真正的对齐交给下面的 subgrid，这里 70px 只是不支持时的兜底。 */
+  display: grid; grid-template-columns: 70px 1fr;
   gap: 11px; padding: 5px 0; font-size: 15px;
   /* 按基线对齐：日期是 13px 无衬线、正文是 15px 衬线，
      顶对齐会让日期看上去矮半行，只有基线才是两种字号的共同参照 */
   align-items: baseline;
 }
 .news li > div { min-width: 0; }
+/* subgrid 让所有 li 共用 ul 上的同一条列轨，宽度由最宽的那条日期决定。
+   好处是不写死数值：以后日期格式再变（补上日、去掉年）都自动跟上。 */
+@supports (grid-template-columns: subgrid) {
+  .news { display: grid; grid-template-columns: auto 1fr; column-gap: 11px; }
+  .news li { grid-template-columns: subgrid; grid-column: 1 / -1; }
+}
 .news time {
   font-family: var(--sans); font-size: 13px; font-weight: 600;
   color: var(--accent); white-space: nowrap;
@@ -506,8 +513,8 @@ footer.wrap {
   .hero .avatar { width: 150px; height: 150px; }
   .hero h1 { font-size: 28px; }
   .pub { grid-template-columns: 1fr; gap: 14px; }
-  .news li { grid-template-columns: 1fr; gap: 0; }
-  .news time { padding-top: 0; }
+  /* 窄屏日期单独占一行；连 ul 一起退回块级，否则 subgrid 还在生效 */
+  .news, .news li { display: block; }
   .info-block { margin-top: 34px; padding: 20px 18px; }
 }
 
