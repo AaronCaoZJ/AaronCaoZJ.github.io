@@ -333,6 +333,9 @@ strong { font-weight: 700; }
 .news time {
   font-family: var(--sans); font-size: 13px; font-weight: 600;
   color: var(--accent); white-space: nowrap;
+  /* Inter 默认是比例数字，1 比 0 窄一截，"2026.09.08" 和 "2026.07.16"
+     的像素宽度并不相同，冒号就参差不齐。tabular-nums 让每个数字等宽。 */
+  font-variant-numeric: tabular-nums;
 }
 .news-more {
   font-family: var(--sans); font-size: 13px; color: var(--subtle);
