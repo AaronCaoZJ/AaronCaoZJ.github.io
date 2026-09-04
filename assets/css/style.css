@@ -58,13 +58,12 @@
      擅自反转配色（那种自动反转的效果通常很糟）。 */
   color-scheme: light;
 
-  /* 玻璃的可调量集中在这里，深色模式整组替换即可 */
-  --glass-fill:   rgba(255, 255, 255, .13);
-  --glass-edge:   rgba(255, 255, 255, .62);   /* 外缘反射亮线 */
-  --glass-inner:  rgba(40, 44, 52, .05);      /* 紧邻内侧的暗线，厚度感来源 */
-  --glass-top:    rgba(255, 255, 255, .34);   /* 上部内反光 */
-  --glass-bot:    rgba(40, 44, 52, .035);     /* 下部内阴影 */
-  --glass-cast:   rgba(45, 42, 41, .10);
+  /* 磨砂玻璃：靠模糊背景 + 半透明底色成形，
+     深色模式整组替换即可，构造不变 */
+  --glass-fill: rgba(255, 255, 255, .58);
+  --glass-blur: 24px;
+  --glass-edge: rgba(255, 255, 255, .75);
+  --glass-cast: rgba(45, 42, 41, .09);
 
   --glow-a: rgba(77, 110, 138, .34);
   --glow-b: rgba(196, 135, 110, .30);
@@ -73,9 +72,6 @@
   --glow-e: rgba(150, 130, 155, .24);
   --glass-hover: rgba(255, 255, 255, .55);
   --text-halo: rgba(255, 255, 255, .85);
-  /* 色散：短波在左缘、长波在右缘各偏一点，玻璃边缘的彩虹感 */
-  --disp-cool: rgba(120, 185, 255, .5);
-  --disp-warm: rgba(255, 186, 145, .45);
 }
 
 /* 深色模式：明暗关系整体翻转，但玻璃的构造不变 —— 
@@ -95,12 +91,10 @@
 
   color-scheme: dark;
 
-  --glass-fill:   rgba(255, 255, 255, .055);
-  --glass-edge:   rgba(255, 255, 255, .17);
-  --glass-inner:  rgba(0, 0, 0, .22);
-  --glass-top:    rgba(255, 255, 255, .09);
-  --glass-bot:    rgba(0, 0, 0, .16);
-  --glass-cast:   rgba(0, 0, 0, .34);
+  --glass-fill: rgba(28, 32, 38, .62);
+  --glass-blur: 24px;
+  --glass-edge: rgba(255, 255, 255, .12);
+  --glass-cast: rgba(0, 0, 0, .32);
 
   /* 深色下光晕要压得更低：深底上同样的浓度会显得脏 */
   --glow-a: rgba(70, 110, 150, .22);
@@ -110,8 +104,6 @@
   --glow-e: rgba(110, 90, 125, .15);
   --glass-hover: rgba(255, 255, 255, .12);
   --text-halo: rgba(0, 0, 0, .55);
-  --disp-cool: rgba(120, 185, 255, .34);
-  --disp-warm: rgba(255, 186, 145, .3);
 }
 
 /* 跟随系统时套用同一组深色值 */
@@ -131,12 +123,10 @@
 
     color-scheme: dark;
 
-    --glass-fill:   rgba(255, 255, 255, .055);
-    --glass-edge:   rgba(255, 255, 255, .17);
-    --glass-inner:  rgba(0, 0, 0, .22);
-    --glass-top:    rgba(255, 255, 255, .09);
-    --glass-bot:    rgba(0, 0, 0, .16);
-    --glass-cast:   rgba(0, 0, 0, .34);
+    --glass-fill: rgba(28, 32, 38, .62);
+    --glass-blur: 24px;
+    --glass-edge: rgba(255, 255, 255, .12);
+    --glass-cast: rgba(0, 0, 0, .32);
 
     --glow-a: rgba(70, 110, 150, .22);
     --glow-b: rgba(150, 100, 80, .17);
@@ -145,8 +135,6 @@
     --glow-e: rgba(110, 90, 125, .15);
     --glass-hover: rgba(255, 255, 255, .12);
     --text-halo: rgba(0, 0, 0, .55);
-    --disp-cool: rgba(120, 185, 255, .34);
-    --disp-warm: rgba(255, 186, 145, .3);
   }
 }
 
@@ -206,15 +194,10 @@ img { max-width: 100%; }
    玻璃应该几乎不改变透过来的东西，只在边缘做文章。 */
 .glass {
   background: var(--glass-fill);
-  backdrop-filter: blur(2px) saturate(108%) brightness(1.02);
-  -webkit-backdrop-filter: blur(2px) saturate(108%) brightness(1.02);
-  border: 0;
-  box-shadow:
-    inset 0 0 0 1px var(--glass-edge),      /* 外缘：反射亮线 */
-    inset 0 0 0 2.5px var(--glass-inner),   /* 内缘：折射暗线，厚度就在这 */
-    inset 0 3px 10px -4px var(--glass-top), /* 上部内反光 */
-    inset 0 -8px 16px -8px var(--glass-bot),/* 下部内阴影 */
-    0 8px 26px var(--glass-cast);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 8px 30px var(--glass-cast);
 }
 
 /* ---------- 顶部导航 ----------
@@ -225,36 +208,10 @@ img { max-width: 100%; }
   margin: 14px auto 0;
   border-radius: 999px;
   background: var(--glass-fill);
-  backdrop-filter: blur(2px) saturate(108%) brightness(1.02);
-  -webkit-backdrop-filter: blur(2px) saturate(108%) brightness(1.02);
-  border: 0;
-  box-shadow:
-    inset 0 0 0 1px var(--glass-edge),
-    inset 0 0 0 2.5px var(--glass-inner),
-    inset 0 3px 10px -4px var(--glass-top),
-    inset 0 -8px 16px -8px var(--glass-bot),
-    0 8px 26px var(--glass-cast);
-}
-/* 边缘渐进模糊：真实透镜中心薄、边缘厚，穿过边缘的光偏折更多，
-   所以画面在边缘糊、在中心清晰。这里叠第二层更强的 backdrop-filter，
-   再用遮罩把它限制在左右两端，做出同样的梯度。 */
-.nav::before {
-  content: '';
-  position: absolute; inset: 0; border-radius: inherit;
-  backdrop-filter: blur(9px) saturate(112%);
-  -webkit-backdrop-filter: blur(9px) saturate(112%);
-  -webkit-mask: linear-gradient(90deg, #000 0, transparent 16%, transparent 84%, #000 100%);
-          mask: linear-gradient(90deg, #000 0, transparent 16%, transparent 84%, #000 100%);
-  pointer-events: none;
-}
-/* 色散：两侧边缘的冷暖分离 */
-.nav::after {
-  content: '';
-  position: absolute; inset: 0; border-radius: inherit;
-  box-shadow:
-    inset  3px 0 4px -2px var(--disp-cool),
-    inset -3px 0 4px -2px var(--disp-warm);
-  pointer-events: none;
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 8px 30px var(--glass-cast);
 }
 .nav .wrap {
   display: flex; align-items: center; justify-content: center; gap: 2px;
@@ -332,15 +289,11 @@ img { max-width: 100%; }
   font-family: var(--sans); font-size: 13px; font-weight: 500;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
-  border: 0;
   background: var(--glass-fill);
-  backdrop-filter: blur(2px) saturate(108%) brightness(1.02);
-  -webkit-backdrop-filter: blur(2px) saturate(108%) brightness(1.02);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-edge),
-    inset 0 0 0 2px var(--glass-inner),
-    inset 0 2px 7px -3px var(--glass-top),
-    0 3px 12px var(--glass-cast);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 2px 8px var(--glass-cast);
   color: var(--fg);
 }
 .links a {
@@ -517,40 +470,10 @@ strong { font-weight: 600; }
   margin-top: 46px; padding: 24px 26px;
   border-radius: 18px;
   background: var(--glass-fill);
-  backdrop-filter: blur(3px) saturate(108%) brightness(1.02);
-  -webkit-backdrop-filter: blur(3px) saturate(108%) brightness(1.02);
-  border: 0;
-  box-shadow:
-    inset 0 0 0 1px var(--glass-edge),
-    inset 0 0 0 2.5px var(--glass-inner),
-    inset 0 4px 14px -6px var(--glass-top),
-    inset 0 -10px 20px -10px var(--glass-bot),
-    0 12px 34px var(--glass-cast);
-}
-.info-block::before {
-  content: '';
-  position: absolute; inset: 0; border-radius: inherit;
-  backdrop-filter: blur(10px) saturate(112%);
-  -webkit-backdrop-filter: blur(10px) saturate(112%);
-  /* 两个方向的遮罩相乘，得到一圈四边都收窄的模糊环 */
-  -webkit-mask:
-    linear-gradient(90deg, #000 0, transparent 9%, transparent 91%, #000 100%),
-    linear-gradient(180deg, #000 0, transparent 22%, transparent 78%, #000 100%);
-          mask:
-    linear-gradient(90deg, #000 0, transparent 9%, transparent 91%, #000 100%),
-    linear-gradient(180deg, #000 0, transparent 22%, transparent 78%, #000 100%);
-  -webkit-mask-composite: source-over;
-          mask-composite: add;
-  pointer-events: none;
-}
-.info-block::after {
-  content: '';
-  position: absolute; inset: 0; border-radius: inherit;
-  box-shadow:
-    inset  4px 0 5px -3px var(--disp-cool),
-    inset -4px 0 5px -3px var(--disp-warm),
-    inset 0  3px 4px -3px rgba(255, 255, 255, .3);
-  pointer-events: none;
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 12px 36px var(--glass-cast);
 }
 .info-block > * { position: relative; }
 .info-block h2 {
