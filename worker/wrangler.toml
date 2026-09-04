@@ -1,0 +1,14 @@
+name = "caozhijun-visitors"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# database_id 要换成 `wrangler d1 create visitors` 输出的那一串
+[[d1_databases]]
+binding       = "DB"
+database_name = "visitors"
+database_id   = "PASTE_DATABASE_ID_HERE"
+
+# 路由必须在橙云代理的域名上，请求才会先经过 Worker
+[[routes]]
+pattern   = "caozhijun.top/api/*"
+zone_name = "caozhijun.top"

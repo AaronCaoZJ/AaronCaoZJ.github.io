@@ -82,10 +82,17 @@
     '0000000000000f0000000000000000000000000000000' +
     '00000000000003c000000000000000000000000000000';
 
-  /* ⚠️ 原型数据，非真实访问。接后端时把 DATA 换成
-     fetch('/api/visitors').then(r => r.json()) 的结果即可，
-     字段保持 {city, cc, lat, lon, n}，其余代码一行都不用动。 */
-  var DATA = [
+  /* 部署好 Worker 之后把 USE_MOCK 改成 false，这是唯一需要动的开关。
+     为 false 时若接口取不到数据，整块保持隐藏 —— 宁可什么都不显示，
+     也不能把编出来的数字当成真实访问量摆在页面上。 */
+  var USE_MOCK = true;
+  var API_READ  = '/api/visitors';
+  var API_WRITE = '/api/visit';
+
+  var DATA = [];
+
+  /* ⚠️ 原型数据，非真实访问，仅供 USE_MOCK 时预览版式。 */
+  var MOCK = [
     { city: 'Singapore',     cc: 'SG', lat:   1.29, lon:  103.85, n: 486 },
     { city: 'Hangzhou',      cc: 'CN', lat:  30.27, lon:  120.15, n: 341 },
     { city: 'Shanghai',      cc: 'CN', lat:  31.23, lon:  121.47, n: 208 },
@@ -197,13 +204,39 @@
     if (sec) sec.removeAttribute('hidden');
   }
 
-  build();
-  draw();
+  function start(rows) {
+    if (!rows || !rows.length) return;     // 没数据就整块不出现
+    DATA = rows;
+    build();
+    draw();
 
-  if (window.ResizeObserver) new ResizeObserver(draw).observe(el);
-  else window.addEventListener('resize', draw);
+    if (window.ResizeObserver) new ResizeObserver(draw).observe(el);
+    else window.addEventListener('resize', draw);
 
-  /* 主题切换时 --vmap-dot 变了，但 canvas 是位图、不会自己重绘 */
-  new MutationObserver(draw).observe(document.documentElement,
-    { attributes: true, attributeFilter: ['data-theme'] });
+    /* 主题切换时 --vmap-dot 变了，但 canvas 是位图、不会自己重绘 */
+    new MutationObserver(draw).observe(document.documentElement,
+      { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
+  /* 记一次访问。同一浏览器 24 小时内只记一次 —— 判断在客户端，
+     能被绕过，但对个人主页足够，也免得自己刷新几次就把本地点顶大。
+     隐私模式下 localStorage 会直接抛异常，所以整段包 try/catch。 */
+  function record() {
+    var KEY = 'vmap:seen', now = Date.now();
+    try {
+      if (now - (+localStorage.getItem(KEY) || 0) < 864e5) return;
+      localStorage.setItem(KEY, now);
+    } catch (e) { /* 存不了就每次都记，无所谓 */ }
+    fetch(API_WRITE, { method: 'POST', keepalive: true }).catch(function () {});
+  }
+
+  if (USE_MOCK) {
+    start(MOCK);
+  } else {
+    record();
+    fetch(API_READ, { headers: { accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(start)
+      .catch(function () { /* 接口挂了就当没这一节 */ });
+  }
 })();

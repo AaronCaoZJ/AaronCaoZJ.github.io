@@ -546,9 +546,16 @@ strong { font-weight: 700; }
   background: var(--fg); color: var(--bg);
   pointer-events: none; z-index: 2;
 }
+/* 统计行并进 h2：标题左、数字右，共用那条 accent 下划线。
+   h2 有 uppercase / letter-spacing / accent 色，这里逐项复位。 */
+#visitors h2 {
+  display: flex; justify-content: space-between;
+  align-items: baseline; flex-wrap: wrap; gap: 4px 20px;
+}
 .vmap-meta {
-  font-family: var(--sans); font-size: 13px; color: var(--subtle);
-  margin: 14px 0 0;
+  font-family: var(--sans); font-size: 13px; font-weight: 400;
+  letter-spacing: normal; text-transform: none;
+  color: var(--subtle); margin: 0;
 }
 
 /* ---------- 页脚 ---------- */
