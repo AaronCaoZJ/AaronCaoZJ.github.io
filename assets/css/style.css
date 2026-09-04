@@ -519,6 +519,38 @@ strong { font-weight: 700; }
               0 14px 44px color-mix(in srgb, var(--sl-red) 11%, transparent);
 }
 
+/* ---------- 访客地图 ---------- */
+.vmap {
+  position: relative; margin-top: 18px;
+  --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
+  --vmap-pin: var(--high);
+}
+:root[data-theme="dark"] .vmap { --vmap-dot: #333a42; }
+.vmap-land { display: block; width: 100%; }
+.vmap-pins { position: absolute; inset: 0; }
+/* 用 <button> 而不是 <span>：键盘可聚焦，读屏能念出城市和次数 */
+.vmap-pin {
+  position: absolute; width: var(--s); height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  padding: 0; border: 0; border-radius: 50%;
+  background: var(--vmap-pin); opacity: .75; cursor: pointer;
+  transition: transform .2s ease, opacity .2s ease;
+}
+.vmap-pin:hover, .vmap-pin:focus-visible {
+  transform: scale(1.45); opacity: 1; outline: none;
+}
+.vmap-tip {
+  position: absolute; transform: translate(-50%, -180%);
+  font-family: var(--sans); font-size: 12px; white-space: nowrap;
+  padding: 4px 9px; border-radius: 6px;
+  background: var(--fg); color: var(--bg);
+  pointer-events: none; z-index: 2;
+}
+.vmap-meta {
+  font-family: var(--sans); font-size: 13px; color: var(--subtle);
+  margin: 14px 0 0;
+}
+
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
    margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，
