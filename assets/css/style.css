@@ -81,8 +81,8 @@
   --text-halo: rgba(255, 255, 255, .85);
 }
 
-/* 深色模式：明暗关系整体翻转，但玻璃的构造不变 —— 
-   仍是外缘一圈亮线、内侧一圈暗线，只是数值换了一套。 */
+/* 深色模式：仅在用户手动切换时生效，不跟随系统偏好。
+   明暗关系整体翻转，但玻璃的构造不变，只是数值换了一套。 */
 :root[data-theme="dark"] {
   --accent: #8fb4d0;
   --high:   #d9a68c;
@@ -113,37 +113,6 @@
   --text-halo: rgba(0, 0, 0, .55);
 }
 
-/* 跟随系统时套用同一组深色值 */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --accent: #8fb4d0;
-    --high:   #d9a68c;
-    --link:   #8fb4d0;
-    --rule:   #343a40;
-    --subtle: #8e8783;
-
-    --bg:     #14161a;
-    --fg:     #dcd9d6;
-    --card:   #1b1e23;
-    --card-b: #2a2f36;
-    --chip:   #22262c;
-
-    color-scheme: dark;
-
-    --glass-fill: rgba(28, 32, 38, .34);
-    --glass-blur: 10px;
-    --glass-edge: rgba(255, 255, 255, .12);
-    --glass-cast: rgba(0, 0, 0, .32);
-
-    --glow-a: rgba(70, 110, 150, .22);
-    --glow-b: rgba(150, 100, 80, .17);
-    --glow-c: rgba(70, 110, 140, .16);
-    --glow-d: rgba(80, 110, 100, .15);
-    --glow-e: rgba(110, 90, 125, .15);
-    --glass-hover: rgba(255, 255, 255, .12);
-    --text-halo: rgba(0, 0, 0, .55);
-  }
-}
 
 * { box-sizing: border-box; }
 
@@ -560,6 +529,3 @@ footer.wrap {
 }
 .mode-btn:hover { color: var(--accent); background: rgba(255, 255, 255, .5); }
 :root[data-theme="dark"] .mode-btn:hover { background: rgba(255, 255, 255, .1); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .mode-btn:hover { background: rgba(255, 255, 255, .1); }
-}
