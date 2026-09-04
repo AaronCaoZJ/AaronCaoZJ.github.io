@@ -73,6 +73,9 @@
   --glow-e: rgba(150, 130, 155, .24);
   --glass-hover: rgba(255, 255, 255, .55);
   --text-halo: rgba(255, 255, 255, .85);
+  /* 色散：短波在左缘、长波在右缘各偏一点，玻璃边缘的彩虹感 */
+  --disp-cool: rgba(120, 185, 255, .5);
+  --disp-warm: rgba(255, 186, 145, .45);
 }
 
 /* 深色模式：明暗关系整体翻转，但玻璃的构造不变 —— 
@@ -107,6 +110,8 @@
   --glow-e: rgba(110, 90, 125, .15);
   --glass-hover: rgba(255, 255, 255, .12);
   --text-halo: rgba(0, 0, 0, .55);
+  --disp-cool: rgba(120, 185, 255, .34);
+  --disp-warm: rgba(255, 186, 145, .3);
 }
 
 /* 跟随系统时套用同一组深色值 */
@@ -140,6 +145,8 @@
     --glow-e: rgba(110, 90, 125, .15);
     --glass-hover: rgba(255, 255, 255, .12);
     --text-halo: rgba(0, 0, 0, .55);
+    --disp-cool: rgba(120, 185, 255, .34);
+    --disp-warm: rgba(255, 186, 145, .3);
   }
 }
 
@@ -227,6 +234,27 @@ img { max-width: 100%; }
     inset 0 3px 10px -4px var(--glass-top),
     inset 0 -8px 16px -8px var(--glass-bot),
     0 8px 26px var(--glass-cast);
+}
+/* 边缘渐进模糊：真实透镜中心薄、边缘厚，穿过边缘的光偏折更多，
+   所以画面在边缘糊、在中心清晰。这里叠第二层更强的 backdrop-filter，
+   再用遮罩把它限制在左右两端，做出同样的梯度。 */
+.nav::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  backdrop-filter: blur(9px) saturate(112%);
+  -webkit-backdrop-filter: blur(9px) saturate(112%);
+  -webkit-mask: linear-gradient(90deg, #000 0, transparent 16%, transparent 84%, #000 100%);
+          mask: linear-gradient(90deg, #000 0, transparent 16%, transparent 84%, #000 100%);
+  pointer-events: none;
+}
+/* 色散：两侧边缘的冷暖分离 */
+.nav::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  box-shadow:
+    inset  3px 0 4px -2px var(--disp-cool),
+    inset -3px 0 4px -2px var(--disp-warm);
+  pointer-events: none;
 }
 .nav .wrap {
   display: flex; align-items: center; justify-content: center; gap: 2px;
@@ -498,6 +526,31 @@ strong { font-weight: 600; }
     inset 0 4px 14px -6px var(--glass-top),
     inset 0 -10px 20px -10px var(--glass-bot),
     0 12px 34px var(--glass-cast);
+}
+.info-block::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  backdrop-filter: blur(10px) saturate(112%);
+  -webkit-backdrop-filter: blur(10px) saturate(112%);
+  /* 两个方向的遮罩相乘，得到一圈四边都收窄的模糊环 */
+  -webkit-mask:
+    linear-gradient(90deg, #000 0, transparent 9%, transparent 91%, #000 100%),
+    linear-gradient(180deg, #000 0, transparent 22%, transparent 78%, #000 100%);
+          mask:
+    linear-gradient(90deg, #000 0, transparent 9%, transparent 91%, #000 100%),
+    linear-gradient(180deg, #000 0, transparent 22%, transparent 78%, #000 100%);
+  -webkit-mask-composite: source-over;
+          mask-composite: add;
+  pointer-events: none;
+}
+.info-block::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  box-shadow:
+    inset  4px 0 5px -3px var(--disp-cool),
+    inset -4px 0 5px -3px var(--disp-warm),
+    inset 0  3px 4px -3px rgba(255, 255, 255, .3);
+  pointer-events: none;
 }
 .info-block > * { position: relative; }
 .info-block h2 {
