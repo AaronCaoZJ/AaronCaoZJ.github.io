@@ -83,8 +83,33 @@
     .track figure:nth-child(2n) { transform: translateY(18px); }
     .track figure:nth-child(2n+1) { transform: none; }
   }
+  /* ============ 彩蛋 ============
+     点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
+     pointer-events:none，所以不挡任何交互，也不参与轮播的布局。 */
+  .egg-layer {
+    position: fixed; inset: 0; overflow: hidden;
+    pointer-events: none; z-index: 60;
+  }
+  .egg {
+    position: fixed; line-height: 1; user-select: none;
+    animation: eggpop .95s cubic-bezier(.22,.9,.3,1) forwards;
+  }
+  @keyframes eggpop {
+    0%   { transform: translate(-50%,-50%) scale(.2) rotate(0deg);   opacity: 0; }
+    16%  { transform: translate(-50%,-50%) scale(1)  rotate(0deg);   opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+                     scale(.8) rotate(var(--rot));                   opacity: 0; }
+  }
+
   /* 尊重系统的减少动态效果设置：不滚动、不位移，直接呈现 */
-  @media (prefers-reduced-motion: reduce) { .track { animation: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .track { animation: none; }
+    /* 彩蛋保留但不飞出，只做一次原地淡入淡出 */
+    @keyframes eggpop {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+      35%, 65% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    }
+  }
 </style>
 </head>
 <body>
@@ -206,6 +231,49 @@
       n.removeAttribute('data-i');          // 副本不进灯箱序列
       tr.appendChild(n);
     }
+  });
+})();
+
+
+/* ---------- 彩蛋：点中特定照片蹦出 emoji ----------
+   按文件名匹配而不是按 DOM 位置，所以上面复制出的那一份副本同样生效。 */
+(function () {
+  var EGGS = { 'campus-07': '\uD83C\uDF93', 'lake-04': '\uD83D\uDC30', 'more-07': '\uD83D\uDC18' };
+  var layer = null;
+
+  function burst(rect, emoji) {
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'egg-layer';
+      document.body.appendChild(layer);
+    }
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    for (var i = 0; i < 14; i++) {
+      var s = document.createElement('span');
+      s.className = 'egg';
+      s.textContent = emoji;
+      // 朝上的扇形：-165°~-15°，避免全部往下掉
+      var a = (-165 + Math.random() * 150) * Math.PI / 180;
+      var d = 90 + Math.random() * 150;
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      s.style.fontSize = (18 + Math.random() * 20) + 'px';
+      s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
+      s.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'px');
+      s.style.setProperty('--rot', ((Math.random() - .5) * 240).toFixed(0) + 'deg');
+      s.style.animationDelay = (i * 22) + 'ms';
+      s.addEventListener('animationend', function () { this.remove(); });
+      layer.appendChild(s);
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var img = e.target.closest && e.target.closest('.track img');
+    if (!img) return;
+    var m = img.getAttribute('src').match(/([a-z]+-\d+)\.webp$/);
+    var emoji = m && EGGS[m[1]];
+    if (emoji) burst(img.getBoundingClientRect(), emoji);
   });
 })();
 
