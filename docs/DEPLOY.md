@@ -26,7 +26,7 @@ Cloudflare 的大陆节点（China Network）仅 Enterprise 计划开放，且�
 （用户级 Pages 仓库，站点直接挂在域名根路径；换成别的名字会变成 `/仓库名/` 子路径）。
 
 ```bash
-cd /Users/aaroncao/Code/homepage
+cd /Users/aaroncao/Code/Homepage
 git remote add origin git@github.com:AaronCaoZJ/AaronCaoZJ.github.io.git
 git push -u origin main
 ```
