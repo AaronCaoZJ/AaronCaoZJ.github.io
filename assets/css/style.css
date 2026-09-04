@@ -276,6 +276,14 @@ h3.sub:first-of-type { margin-top: 16px; }
   padding: 2px 7px; border-radius: 4px; margin-right: 8px;
   vertical-align: 1px;
 }
+.item .prod .pdot { margin: 0 9px; color: var(--rule); }
+/* 未发布产物的状态标记，紧跟在它自己后面，避免与另一个产物的状态混淆 */
+.item .prod .pending {
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  letter-spacing: .02em; color: var(--subtle);
+  background: var(--chip); padding: 2px 7px; border-radius: 4px;
+  margin-left: 8px; vertical-align: 1px; white-space: nowrap;
+}
 .item .t a { color: inherit; }
 .item .t a:hover { color: var(--link); }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
