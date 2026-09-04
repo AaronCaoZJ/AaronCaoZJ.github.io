@@ -1,0 +1,544 @@
+/* ============================================================
+   Zhijun Cao — personal site
+   配色沿用简历 (LaTeX) 中的莫兰迪色板，保持视觉同源。
+   全站仅浅色一套主题。
+   字体使用系统栈：不引用 Google Fonts，避免中国大陆访客
+   因 fonts.googleapis.com 不可达而阻塞渲染。
+   ============================================================ */
+
+/* ---------- 自托管字体 ----------
+   不用 Google Fonts CDN：fonts.googleapis.com 在中国大陆不可达，
+   会阻塞渲染。字体文件随站点一起发布，全球访客看到同一套排版。
+   三个文件均为可变字体，单个文件覆盖整段字重。 */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/Inter-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Charis';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Charis-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Charis';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Charis-400i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Charis';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/Charis-700.woff2') format('woff2');
+}
+
+:root {
+  --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 —— 标题 */
+  --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 数字/强调 */
+  --link:   #5c8299;   /* 莫兰迪石青 —— 链接 */
+  --rule:   #cec9c6;   /* 莫兰迪浅暖灰 —— 分隔线 */
+  --subtle: #8d8481;   /* 莫兰迪暖灰 —— 次要文字 */
+
+  --bg:     #fdfcfb;
+  --fg:     #2b2a29;
+  --card:   #ffffff;
+  --card-b: #ece8e5;
+  --chip:   #f2efec;
+
+  /* 中文不自托管字体：页面上中文只有寥寥几个词，
+     为此下载 1–3 MB 字库对大陆访问得不偿失，交给系统字体。 */
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  --serif: "Charis", "Charter", "Iowan Old Style", Georgia,
+           "PingFang SC", "Microsoft YaHei", serif;
+
+  --w: 920px;
+
+  /* 明确声明只支持浅色：阻止浏览器或系统的“强制深色模式”
+     擅自反转配色（那种自动反转的效果通常很糟）。 */
+  color-scheme: light;
+
+  /* 磨砂玻璃：靠模糊背景 + 半透明底色成形，
+     深色模式整组替换即可，构造不变 */
+  --glass-fill: rgba(255, 255, 255, .20);
+  --glass-blur: 5px;
+  --glass-edge: rgba(255, 255, 255, .75);
+  --glass-cast: rgba(45, 42, 41, .09);
+
+  --glow-a: rgba(77, 110, 138, .34);
+  --glow-b: rgba(196, 135, 110, .30);
+  --glow-c: rgba(92, 130, 153, .26);
+  --glow-d: rgba(120, 140, 130, .26);
+  --glow-e: rgba(150, 130, 155, .24);
+  --glass-hover: rgba(255, 255, 255, .55);
+  --text-halo: rgba(255, 255, 255, .85);
+}
+
+/* 深色模式：仅在用户手动切换时生效，不跟随系统偏好。
+   明暗关系整体翻转，但玻璃的构造不变，只是数值换了一套。 */
+:root[data-theme="dark"] {
+  --accent: #8fb4d0;
+  --high:   #d9a68c;
+  --link:   #8fb4d0;
+  --rule:   #343a40;
+  --subtle: #8e8783;
+
+  --bg:     #14161a;
+  --fg:     #dcd9d6;
+  --card:   #1b1e23;
+  --card-b: #2a2f36;
+  --chip:   #22262c;
+
+  color-scheme: dark;
+
+  --glass-fill: rgba(28, 32, 38, .34);
+  --glass-blur: 10px;
+  --glass-edge: rgba(255, 255, 255, .12);
+  --glass-cast: rgba(0, 0, 0, .32);
+
+  /* 深色下光晕要压得更低：深底上同样的浓度会显得脏 */
+  --glow-a: rgba(70, 110, 150, .22);
+  --glow-b: rgba(150, 100, 80, .17);
+  --glow-c: rgba(70, 110, 140, .16);
+  --glow-d: rgba(80, 110, 100, .15);
+  --glow-e: rgba(110, 90, 125, .15);
+  --glass-hover: rgba(255, 255, 255, .12);
+  --text-halo: rgba(0, 0, 0, .55);
+}
+
+
+* { box-sizing: border-box; }
+
+/* HTML 的 hidden 属性只有 UA 样式表级别的优先级，会被下面任何显式
+   display 声明（如 .news li 的 display:grid）覆盖，必须显式兜底。 */
+[hidden] { display: none !important; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 1.68;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* 兜底：极长的 URL 或未断行的长词不会把窄屏页面撑出横向滚动 */
+  overflow-wrap: break-word;
+}
+
+/* ---------- 背景光晕 ----------
+   固定在视口上，滚动时不动，只作氛围。固定而非随内容滚动是关键：
+   玻璃层的模糊要有东西可透，光晕若跟着滚，玻璃后的画面会跟着糊动。
+
+   透明度取 0.26–0.34：先前用 0.07–0.10，实测与底色只差 10 级灰，
+   在浅底上根本看不出来。浅色页面对色偏的容忍度远比想象中高，
+   要"很柔和"靠的是渐变足够宽、边界足够软，而不是把颜色调到近乎透明。 */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(62% 52% at 10% -6%,  var(--glow-a), transparent 72%),
+    radial-gradient(52% 46% at 92% 8%,   var(--glow-b), transparent 72%),
+    radial-gradient(48% 40% at 74% 52%,  var(--glow-c), transparent 70%),
+    radial-gradient(64% 48% at 20% 96%,  var(--glow-d), transparent 72%),
+    radial-gradient(50% 44% at 96% 88%,  var(--glow-e), transparent 70%);
+}
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+img { max-width: 100%; }
+
+.wrap { max-width: var(--w); margin: 0 auto; padding: 0 22px; }
+
+/* ---------- 液态玻璃 ----------
+   厚度不是靠一条亮边，而是靠"外亮—内暗"这一对线：真实玻璃的
+   外缘反射天光而发亮，紧邻内侧因折射背景而压暗，两者之间的落差
+   才被读成"这块板有厚度"。只画一条亮线，看着就是贴纸。
+
+   饱和度与亮度几乎不动（saturate 108%、brightness 1.02）：
+   之前用 200% / 1.26 把背后的颜色整个拽偏，那正是廉价感的来源 ——
+   玻璃应该几乎不改变透过来的东西，只在边缘做文章。 */
+.glass {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 8px 30px var(--glass-cast);
+}
+
+/* ---------- 顶部导航 ----------
+   悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。 */
+.nav {
+  position: sticky; top: 12px; z-index: 50;
+  width: fit-content; max-width: calc(100% - 28px);
+  margin: 14px auto 0;
+  border-radius: 999px;
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 8px 30px var(--glass-cast);
+}
+.nav .wrap {
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  height: 48px; padding: 0 8px; overflow-x: auto; scrollbar-width: none;
+}
+.nav .wrap::-webkit-scrollbar { display: none; }
+.nav a {
+  transition: background .2s ease, box-shadow .2s ease;
+  font-family: var(--sans);
+  font-size: 13.5px; font-weight: 500; letter-spacing: .02em;
+  color: var(--fg);
+  padding: 7px 13px; border-radius: 999px; white-space: nowrap;
+  /* 玻璃是透明的，背后可能是深色照片，加一层淡描边保证可读 */
+  text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
+}
+.nav a:hover {
+  background: var(--glass-hover);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+  text-decoration: none;
+}
+
+/* ---------- 头部名片 ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 230px;
+  gap: 42px; align-items: start;
+  padding: 54px 0 44px;
+}
+.hero h1 {
+  font-family: var(--sans);
+  font-size: 33px; font-weight: 700; letter-spacing: -.02em;
+  margin: 0 0 2px; line-height: 1.2;
+}
+.hero .cn {
+  font-size: 17px; color: var(--subtle); font-weight: 400;
+  margin-left: 9px; letter-spacing: .06em;
+}
+/* 名字下的两行同用正文衬线体与字号，仅靠颜色/字重区分主次 */
+.hero .role {
+  font-size: 16.5px; line-height: 1.5; color: var(--accent);
+  font-weight: 600; margin: 12px 0 2px;
+}
+/* 机构行与 Biography 正文同款：同字体、同字号、同字重，只是颜色略淡 */
+.hero .affil {
+  font-size: 16.5px; line-height: 1.5; color: var(--fg);
+  margin: 0 0 20px;
+}
+.hero p { margin: 0 0 9px; font-size: 15.5px; }
+/* 头像容器：去噪视频覆盖在图片之上，播完隐藏 */
+.avatar-wrap {
+  position: relative; width: 230px; height: 230px;
+  cursor: pointer; justify-self: end;
+}
+.avatar-fx {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  border-radius: 12px; border: 1px solid var(--card-b);
+  opacity: 0; pointer-events: none;
+  transition: opacity .45s ease;
+}
+/* 播放中立即显示（不要过渡，否则前几步会被淡入吃掉） */
+.avatar-wrap.fx-on .avatar-fx { opacity: 1; transition: none; }
+
+.hero .avatar {
+  width: 230px; height: 230px; object-fit: cover;
+  border-radius: 12px; border: 1px solid var(--card-b);
+  background: var(--card);
+}
+
+/* 联系方式行 */
+.links {
+  display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px;
+}
+.links a {
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--glass-fill);
+  backdrop-filter: blur(8px) saturate(135%);
+  -webkit-backdrop-filter: blur(8px) saturate(135%);
+  /* 原本用 --glass-edge（近白）作高光边，在米白底上等于没有轮廓；
+     改用 --rule 让每个入口成为看得见的独立块，玻璃质感仍由填充与模糊承担 */
+  border: 1px solid var(--rule);
+  box-shadow: 0 2px 8px var(--glass-cast);
+  color: var(--fg);
+}
+.links a {
+  transition: transform .18s ease, box-shadow .18s ease,
+              border-color .18s ease, color .18s ease;
+}
+.links a:hover {
+  border-color: var(--accent); color: var(--accent);
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(45, 42, 41, .09);
+}
+/* 图标不跟随文字色：其余入口都是彩色 PNG，唯独 CV 是内联 SVG，
+   用 currentColor 会让它在悬停时独自变蓝，与旁边几个格格不入 */
+.links svg { width: 14px; height: 14px; fill: var(--subtle); opacity: .85; }
+/* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
+.links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
+.links img { width: 15px; height: 15px; object-fit: contain; }
+
+/* ---------- 章节 ---------- */
+section { padding-top: 34px; }
+h2 {
+  font-family: var(--sans);
+  font-size: 15px; font-weight: 700;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 4px; padding-bottom: 7px;
+  border-bottom: 3px solid var(--accent);
+}
+h2 .zh {
+  font-family: var(--serif); font-size: 12px; font-weight: 400;
+  letter-spacing: normal; color: var(--subtle); margin-left: 8px;
+  text-transform: none;
+}
+section > p:first-of-type { margin-top: 14px; }
+
+.hl { color: var(--high); font-weight: 600; }
+strong { font-weight: 700; }
+
+/* ---------- News 时间线 ---------- */
+.news { margin: 14px 0 0; padding: 0; list-style: none; }
+.news li {
+  /* 日期列宽随内容而定，不再固定 82px —— 原先日期只占约 55px，
+     余下的空位加上 gap 把两栏推开了近 40px */
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 11px; padding: 5px 0; font-size: 15px;
+  /* 按基线对齐：日期是 13px 无衬线、正文是 15px 衬线，
+     顶对齐会让日期看上去矮半行，只有基线才是两种字号的共同参照 */
+  align-items: baseline;
+}
+.news li > div { min-width: 0; }
+.news time {
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  color: var(--accent); white-space: nowrap;
+}
+.news-more {
+  font-family: var(--sans); font-size: 13px; color: var(--subtle);
+  background: none; border: 0; cursor: pointer; padding: 8px 0 0;
+}
+.news-more:hover { text-decoration: underline; }
+
+/* ---------- 论文卡片 ---------- */
+.pub {
+  display: grid; grid-template-columns: 264px 1fr;
+  gap: 22px; padding: 20px 0;
+  border-bottom: 1px solid var(--rule);
+  /* grid item 默认 align-self:stretch，会把 .thumb 拉到与右侧文字等高，
+     图片下方留出大片空白边框。改为 center 让缩略图垂直居中对齐正文。 */
+  align-items: center;
+}
+.pub:last-child { border-bottom: 0; }
+.pub .thumb {
+  width: 100%; border-radius: 8px;
+  border: 1px solid var(--card-b); background: var(--card);
+  overflow: hidden;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+/* 悬停整张卡片时缩略图上浮，标题同步点亮 —— 让整块成为一个视觉单元 */
+.pub:hover .thumb {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(45, 42, 41, .10);
+  border-color: var(--rule);
+}
+.pub .thumb img { display: block; width: 100%; }
+.pub h3 {
+  font-family: var(--sans); font-size: 16px; font-weight: 650;
+  line-height: 1.4; margin: 0 0 5px;
+  transition: color .22s ease;
+}
+.pub .authors { font-size: 14.5px; color: var(--fg); margin: 0 0 3px; }
+.pub .authors .me { font-weight: 700; }
+.pub .venue {
+  font-size: 14px; color: var(--subtle); font-style: italic; margin: 0 0 8px;
+}
+/* 未定稿状态（Under Review、Preprint in preparation）走默认的斜体灰；
+   已发表的会议 / 期刊名反过来 —— 正体 + 暖赤陶高亮，直立的字形在一片
+   斜体里反而更跳。em 也一并接住，避免以后写错标签就失效。 */
+.pub .venue b,
+.pub .venue em { color: var(--high); font-weight: 600; font-style: normal; }
+.pub .venue .dot { margin: 0 5px; opacity: .6; font-style: normal; }
+.star { color: var(--high); font-weight: 700; }
+.note {
+  font-size: 13px; color: var(--subtle); font-style: italic;
+  margin: 0 0 8px;
+}
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tags a, .tags span {
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  padding: 3px 9px; border-radius: 5px;
+  background: var(--chip); color: var(--link);
+  border: 1px solid var(--rule);
+}
+.tags a { transition: border-color .18s ease, color .18s ease, transform .18s ease; }
+/* 原来的悬停只把 background 换成它本来就有的值，等于没有反馈；
+   现在描边点亮成链接色 */
+.tags a:hover {
+  border-color: var(--link); text-decoration: none; transform: translateY(-1px);
+}
+.tags span { color: var(--subtle); }
+
+/* ---------- 通用条目（经历 / 项目 / 写作）---------- */
+.item { padding: 13px 0; border-bottom: 1px solid var(--rule); }
+.item:last-child { border-bottom: 0; }
+.item .row {
+  display: flex; justify-content: space-between;
+  align-items: baseline; gap: 6px 16px; flex-wrap: wrap;
+}
+/* 标题可伸缩并在自身内部折行；否则长标题会占满整行、
+   把右侧日期整个挤到下一行的左边，视觉上错位。 */
+.item .t { flex: 1 1 340px; min-width: 0; transition: color .22s ease; }
+.item .d { flex: 0 0 auto; }
+.item .t { font-family: var(--sans); font-size: 15.5px; font-weight: 650; }
+.item .d {
+  font-family: var(--sans); font-size: 13px; color: var(--subtle);
+  white-space: nowrap;
+}
+.item .s { font-size: 14.5px; color: var(--subtle); margin-top: 2px; }
+.item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
+
+/* 工作条目下的产出列表：字段名 + 每个产物一行。
+   左侧竖线表明从属于上方的经历，右侧状态与日期列对齐，
+   避免多个产物共用一行时状态归属不明。 */
+.item .plabel {
+  font-family: var(--sans); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--subtle); margin: 9px 0 4px;
+}
+.item .plist { border-left: 2px solid var(--rule); padding-left: 14px; }
+/* 不用 space-between 把状态顶到最右：产品名 + 标签只占三分之一宽，
+   撑开的空白会让状态看着像掉队的孤儿。让它紧跟标签自然排布，
+   窄屏放不下时整体折行。 */
+.item .prow {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 4px 10px; font-size: 14.5px; padding: 1px 0;
+}
+.item .product-main {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 5px 8px; min-width: 0;
+}
+.item .product-tags {
+  display: inline-flex; flex-wrap: wrap; gap: 4px;
+}
+.item .product-tags span {
+  font-family: var(--sans); font-size: 10.5px; line-height: 1.4;
+  color: var(--subtle); background: var(--chip);
+  border: 1px solid var(--card-b); border-radius: 4px;
+  padding: 1px 6px; white-space: nowrap;
+}
+/* 产品状态标签统一斜体 —— 把"这是元信息"和左侧的产品名区分开，
+   Released / To be Announced 的差别交给字面本身表达 */
+.item .pst {
+  font-family: var(--sans); font-size: 12px; color: var(--subtle);
+  font-style: italic; white-space: nowrap;
+}
+.item .t a { color: inherit; }
+.item .t a:hover { color: inherit; }
+.item ul { margin: 7px 0 0; padding-left: 18px; font-size: 14.5px; }
+.item li { margin-bottom: 3px; }
+.item li::marker { color: var(--accent); }
+
+/* ---------- 机会信息块 ---------- */
+.info-block {
+  position: relative;
+  margin-top: 46px; padding: 24px 26px;
+  border-radius: 18px;
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 12px 36px var(--glass-cast);
+}
+.info-block > * { position: relative; }
+.info-block h2 {
+  /* 只去掉下划线（卡片本身已有边界），颜色继承全局 h2 的 accent */
+  border-bottom: 0; padding-bottom: 0;
+}
+.info-block p:last-child { margin-bottom: 0; }
+
+/* ---------- 页脚 ---------- */
+/* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
+   margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，
+   会把这里设的上下间距整个覆盖掉。 */
+footer.wrap {
+  margin: 120px auto 0; padding: 60px 22px 40px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans); font-size: 12.5px; color: var(--subtle);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  text-align: center;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 700px) {
+  body { font-size: 16px; }
+  /* 居中 + overflow 会让左侧溢出部分永远滚动不到
+     （滚动起点就是内容左缘），窄屏改为靠左，只让右侧溢出。 */
+  .nav .wrap { justify-content: flex-start; }
+  /* 窄屏一行本来就放不下四个，交给自然换行 */
+  .links .lbreak { display: none; }
+  .hero {
+    grid-template-columns: 1fr; gap: 20px; padding-top: 32px;
+  }
+  .avatar-wrap { width: 150px; height: 150px; order: -1; justify-self: start; }
+  .hero .avatar { width: 150px; height: 150px; }
+  .hero h1 { font-size: 28px; }
+  .pub { grid-template-columns: 1fr; gap: 14px; }
+  .news li { grid-template-columns: 1fr; gap: 0; }
+  .news time { padding-top: 0; }
+  .info-block { margin-top: 34px; padding: 20px 18px; }
+}
+
+/* 系统开启“减少动态效果”时关掉位移与过渡，只保留颜色反馈 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+  .links a:hover, .pub:hover .thumb, .tags a:hover {
+    transform: none;
+  }
+}
+
+/* ---------- 入场：进入视口后逐个浮现 ----------
+   缓动取 Apple 常用的那条：起步快、尾段长时间缓收。
+   延迟由 JS 写入 --d，实现依次浮现。 */
+/* 默认可见：万一 reveal.js 没能加载，内容照常呈现而不是整页空白。
+   只有 <head> 里的同步脚本打上 js-rise 之后才转为待入场状态。 */
+.js-rise .rise {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .8s cubic-bezier(.32,.72,0,1),
+              transform .8s cubic-bezier(.32,.72,0,1);
+  transition-delay: var(--d, 0ms);
+}
+.js-rise .rise.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise { opacity: 1; transform: none; transition: none; }
+}
+
+
+/* ---------- 明暗切换 ---------- */
+.mode-btn {
+  font-family: var(--sans); font-size: 14px; line-height: 1;
+  background: none; border: 0; cursor: pointer;
+  color: var(--subtle); padding: 7px 9px; margin-left: 2px;
+  border-radius: 999px;
+  transition: background .2s ease, color .2s ease;
+}
+.mode-btn:hover { color: var(--accent); background: rgba(255, 255, 255, .5); }
+:root[data-theme="dark"] .mode-btn:hover { background: rgba(255, 255, 255, .1); }

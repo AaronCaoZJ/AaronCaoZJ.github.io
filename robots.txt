@@ -1,0 +1,9 @@
+# 全站允许抓取
+User-agent: *
+Allow: /
+
+# 源素材目录不对外（本就不在仓库里，写明以防将来误传）
+Disallow: /assets/img/src/
+Disallow: /assets/pdf/src/
+
+Sitemap: https://caozhijun.top/sitemap.xml
