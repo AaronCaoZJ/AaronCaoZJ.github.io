@@ -140,6 +140,11 @@ img { max-width: 100%; }
   width: 230px; height: 230px; object-fit: cover;
   border-radius: 12px; border: 1px solid var(--card-b);
   background: #fff;
+  transition: transform .35s ease, box-shadow .35s ease;
+}
+.hero .avatar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(45, 42, 41, .12);
 }
 
 /* 联系方式行 */
@@ -153,9 +158,15 @@ img { max-width: 100%; }
   border: 1px solid var(--card-b); background: var(--card);
   color: var(--fg);
 }
+.links a {
+  transition: transform .18s ease, box-shadow .18s ease,
+              border-color .18s ease, color .18s ease;
+}
 .links a:hover {
   border-color: var(--accent); color: var(--accent);
   text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(45, 42, 41, .09);
 }
 .links svg { width: 14px; height: 14px; fill: currentColor; opacity: .75; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
@@ -210,12 +221,21 @@ strong { font-weight: 600; }
   width: 100%; border-radius: 8px;
   border: 1px solid var(--card-b); background: var(--card);
   overflow: hidden;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+/* 悬停整张卡片时缩略图上浮，标题同步点亮 —— 让整块成为一个视觉单元 */
+.pub:hover .thumb {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(45, 42, 41, .10);
+  border-color: var(--rule);
 }
 .pub .thumb img { display: block; width: 100%; }
 .pub h3 {
   font-family: var(--sans); font-size: 16px; font-weight: 650;
   line-height: 1.4; margin: 0 0 5px;
+  transition: color .22s ease;
 }
+.pub:hover h3 { color: var(--accent); }
 .pub .authors { font-size: 14.5px; color: var(--fg); margin: 0 0 3px; }
 .pub .authors .me { font-weight: 700; }
 .pub .venue {
@@ -236,7 +256,11 @@ strong { font-weight: 600; }
   background: var(--chip); color: var(--link);
   border: 1px solid transparent;
 }
-.tags a:hover { border-color: var(--link); text-decoration: none; }
+.tags a { transition: background .18s ease, color .18s ease, transform .18s ease; }
+.tags a:hover {
+  background: var(--link); color: #fff;
+  text-decoration: none; transform: translateY(-1px);
+}
 .tags span { color: var(--subtle); }
 
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
@@ -248,7 +272,8 @@ strong { font-weight: 600; }
 }
 /* 标题可伸缩并在自身内部折行；否则长标题会占满整行、
    把右侧日期整个挤到下一行的左边，视觉上错位。 */
-.item .t { flex: 1 1 340px; min-width: 0; }
+.item .t { flex: 1 1 340px; min-width: 0; transition: color .22s ease; }
+.item:hover .t { color: var(--accent); }
 .item .d { flex: 0 0 auto; }
 .item .t { font-family: var(--sans); font-size: 15.5px; font-weight: 650; }
 .item .d {
@@ -307,4 +332,15 @@ footer.wrap {
   .pub { grid-template-columns: 1fr; gap: 14px; }
   .news li { grid-template-columns: 1fr; gap: 0; }
   .news time { padding-top: 0; }
+}
+
+/* 系统开启“减少动态效果”时关掉位移与过渡，只保留颜色反馈 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+  .links a:hover, .pub:hover .thumb, .tags a:hover, .hero .avatar:hover {
+    transform: none;
+  }
 }
