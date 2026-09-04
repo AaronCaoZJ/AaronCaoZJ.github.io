@@ -421,9 +421,12 @@ strong { font-weight: 700; }
   color: var(--subtle); margin: 9px 0 4px;
 }
 .item .plist { border-left: 2px solid var(--rule); padding-left: 14px; }
+/* 不用 space-between 把状态顶到最右：产品名 + 标签只占三分之一宽，
+   撑开的空白会让状态看着像掉队的孤儿。让它紧跟标签自然排布，
+   窄屏放不下时整体折行。 */
 .item .prow {
-  display: flex; justify-content: space-between; align-items: baseline;
-  gap: 16px; font-size: 14.5px; padding: 1px 0;
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 4px 10px; font-size: 14.5px; padding: 1px 0;
 }
 .item .product-main {
   display: flex; align-items: baseline; flex-wrap: wrap;
