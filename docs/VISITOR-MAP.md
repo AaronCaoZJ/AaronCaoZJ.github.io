@@ -57,8 +57,21 @@ Cloudflare 的面板改版频繁，下面的菜单名可能略有出入，按意
 左侧 **Storage & Databases → D1**（旧版在 Workers & Pages 下面）→
 **Create database**，名字填 `visitors`。
 
-进去后有个 **Console**（或 Query）标签页，把 `worker/schema.sql` 的内容
-整段粘进去执行。执行完在 **Tables** 里应该能看到 `visits` 表，0 行。
+进去后有个 **Console**（或 Query）标签页，**一次粘一条**执行下面两句：
+
+```sql
+CREATE TABLE IF NOT EXISTS visits (city TEXT NOT NULL, country TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, PRIMARY KEY (city, country));
+```
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_visits_n ON visits (n DESC);
+```
+
+执行 `/tables` 应该能看到 `visits`。
+
+> Console 会把多行输入折叠成一行，所以**别把带 `--` 行注释的 SQL 整段粘进去**
+> —— 折叠之后注释会把整条语句吃掉，报 `Requests without any query are not supported`。
+> `worker/schema.sql` 里已经改用块注释，但仍建议按上面这样一条一条来。
 
 ### 2. 建 Worker
 
