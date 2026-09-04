@@ -60,8 +60,8 @@
 
   /* 磨砂玻璃：靠模糊背景 + 半透明底色成形，
      深色模式整组替换即可，构造不变 */
-  --glass-fill: rgba(255, 255, 255, .30);
-  --glass-blur: 10px;
+  --glass-fill: rgba(255, 255, 255, .20);
+  --glass-blur: 5px;
   --glass-edge: rgba(255, 255, 255, .75);
   --glass-cast: rgba(45, 42, 41, .09);
 
