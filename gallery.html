@@ -8,56 +8,88 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🤖</text></svg>">
 <link rel="stylesheet" href="assets/css/style.css">
 
-<!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
 <link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Newsreader-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  /* ---------- 相册网格 ----------
-     用 flex + wrap 而非多列瀑布流：换行位置由 flex-basis 决定，
-     而悬停时只改 flex-grow，于是同一行内的格子重新分配宽度 ——
-     鼠标附近的框变宽、同行邻居相应变窄，行宽与间距始终不变。 */
-  .rows { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
-  .rows figure {
-    flex: 1 1 260px; min-width: 0;
-    height: 232px; margin: 0;
-    border-radius: 8px; overflow: hidden;
-    background: var(--chip); cursor: zoom-in;
-    transition: flex-grow .18s ease-out;
+  /* ============ 轮播 ============
+     两份相同的图片首尾相接，轨道匀速平移到 -50% 时正好回到起点，
+     于是循环处没有接缝。悬停时暂停整条轨道。 */
+  .marquee {
+    position: relative;
+    overflow: hidden;
+    padding: 30px 0 34px;          /* 给悬浮上移与投影留出余量 */
+    /* 两端渐隐，照片像是从页面边缘之外流进来 */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
   }
-  .rows img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  /* 零高度占位，避免末行不满时图片被拉得过宽 */
-  .rows .pad { flex: 1 1 260px; height: 0; }
+  .track {
+    display: flex; align-items: flex-start;
+    gap: 16px; width: max-content;
+    animation: slide var(--dur, 66s) linear infinite;
+  }
+  .track.rev { animation-direction: reverse; }
+  .marquee:hover .track,
+  .marquee:focus-within .track { animation-play-state: paused; }
+  @keyframes slide { from { transform: translate3d(0,0,0); }
+                      to   { transform: translate3d(-50%,0,0); } }
 
-  .gsec { padding-top: 40px; }
+  .track figure {
+    flex: 0 0 auto; margin: 0;
+    height: 236px; border-radius: 10px; overflow: hidden;
+    background: var(--chip); cursor: zoom-in;
+    transition: transform .34s cubic-bezier(.32,.72,0,1),
+                box-shadow .34s cubic-bezier(.32,.72,0,1);
+  }
+  .track img { display: block; height: 100%; width: auto; }
+
+  /* 错落：高度与垂直位置轮换，避免一条笔直的带子 */
+  .track figure:nth-child(4n+1) { height: 212px; transform: translateY(26px); }
+  .track figure:nth-child(4n+2) { height: 262px; }
+  .track figure:nth-child(4n+3) { height: 226px; transform: translateY(14px); }
+  .track figure:nth-child(4n)   { height: 246px; transform: translateY(34px); }
+
+  /* 悬浮：在各自错落的基线上再抬起一点 */
+  .track figure:nth-child(4n+1):hover { transform: translateY(16px) scale(1.045); }
+  .track figure:nth-child(4n+2):hover { transform: translateY(-10px) scale(1.045); }
+  .track figure:nth-child(4n+3):hover { transform: translateY(4px)  scale(1.045); }
+  .track figure:nth-child(4n):hover   { transform: translateY(24px) scale(1.045); }
+  .track figure:hover { box-shadow: 0 16px 38px rgba(45,42,41,.22); z-index: 3; }
+
+  /* ============ 入场：逐元素浮现 ============ */
+  .rise {
+    opacity: 0; transform: translateY(26px);
+    transition: opacity .8s cubic-bezier(.32,.72,0,1),
+                transform .8s cubic-bezier(.32,.72,0,1);
+    transition-delay: var(--d, 0ms);
+  }
+  .rise.in { opacity: 1; transform: none; }
+
+  .gsec { padding-top: 46px; }
   .gsec .zh {
     font-family: var(--serif); font-size: 14px; font-weight: 400;
     letter-spacing: .08em; color: var(--subtle);
     margin-left: 10px; text-transform: none;
   }
-  .gsec .where {
-    font-size: 14.5px; color: var(--subtle); margin: 10px 0 0;
-  }
-
+  .gsec .where { font-size: 14.5px; color: var(--subtle); margin: 10px 0 0; }
   .intro p { margin: 0 0 10px; }
 
-  .sign { text-align: center; padding: 54px 0 8px; }
+  .sign { text-align: center; padding: 58px 0 8px; }
   .sign img { width: 170px; opacity: .55; }
 
-  /* ---------- 灯箱 ---------- */
+  /* ============ 灯箱 ============ */
   .lb {
     position: fixed; inset: 0; z-index: 100;
-    background: rgba(28, 26, 25, .93);
-    display: none; align-items: center; justify-content: center;
-    padding: 28px;
+    background: rgba(28,26,25,.94);
+    display: none; align-items: center; justify-content: center; padding: 28px;
   }
   .lb.on { display: flex; }
   .lb img {
     max-width: min(100%, 1000px); max-height: 100%;
-    border-radius: 6px; box-shadow: 0 18px 50px rgba(0, 0, 0, .5);
+    border-radius: 6px; box-shadow: 0 18px 50px rgba(0,0,0,.5);
   }
   .lb button {
     position: absolute; background: none; border: 0; cursor: pointer;
-    color: rgba(255, 255, 255, .72); font-family: var(--sans);
+    color: rgba(255,255,255,.72); font-family: var(--sans);
     font-size: 30px; line-height: 1; padding: 14px 18px;
   }
   .lb button:hover { color: #fff; }
@@ -66,11 +98,22 @@
   .lb .lb-n { right: 4px; }
   .lb .lb-i {
     position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
-    font-family: var(--sans); font-size: 12.5px; color: rgba(255, 255, 255, .6);
+    font-family: var(--sans); font-size: 12.5px; color: rgba(255,255,255,.6);
   }
 
-  @media (max-width: 900px) { .rows figure { height: 200px; } }
-  @media (max-width: 560px) { .rows figure { flex-basis: 100%; height: 240px; } .lb button { font-size: 24px; } }
+  /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */
+  .bleed { width: 100vw; margin-left: calc(50% - 50vw); }
+
+  @media (max-width: 700px) {
+    .track figure { height: 180px !important; }
+    .track figure:nth-child(2n) { transform: translateY(18px); }
+    .track figure:nth-child(2n+1) { transform: none; }
+  }
+  /* 尊重系统的减少动态效果设置：不滚动、不位移，直接呈现 */
+  @media (prefers-reduced-motion: reduce) {
+    .track { animation: none; }
+    .rise { opacity: 1; transform: none; transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -86,88 +129,94 @@
   </div>
 </nav>
 
-<main class="wrap">
+<main>
 
-  <section class="intro" style="padding-top:52px">
-    <h2>Gallery</h2>
-    <p style="margin-top:16px"><strong>Welcome to my gallery!</strong></p>
-    <p>
+  <section class="intro wrap" style="padding-top:56px">
+    <h2 class="rise">🖼️ Gallery</h2>
+    <p class="rise" style="margin-top:16px"><strong>Welcome to my gallery!</strong></p>
+    <p class="rise">
       I am enamored with photography. It is not merely a way to preserve fleeting
       moments in memory, but also a medium through which I weave and voice my
       innermost thoughts.
     </p>
-    <p>May the lovely moments laid out below bring you a touch of delight.</p>
+    <p class="rise">May the lovely moments laid out below bring you a touch of delight.</p>
   </section>
 
   <section class="gsec" id="campus">
-    <h2>The Campus <span class="zh">求是园</span></h2>
-    <p class="where">Photos taken @ Zhejiang University</p>
-    <div class="rows">
-        <figure><img src="assets/img/gallery/campus-01.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-02.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-03.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-04.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-05.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-06.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-07.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-08.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-09.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-10.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-11.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-12.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/campus-13.jpg" alt="" loading="lazy"></figure>
-        <span class="pad"></span>
-        <span class="pad"></span>
+    <div class="wrap">
+      <h2 class="rise">The Campus <span class="zh">求是园</span></h2>
+      <p class="where rise">Photos taken @ Zhejiang University</p>
+    </div>
+    <div class="marquee bleed rise" style="--dur:72s">
+      <div class="track">
+        <figure data-i="campus1"><img src="assets/img/gallery/campus-01.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus2"><img src="assets/img/gallery/campus-02.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus3"><img src="assets/img/gallery/campus-03.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus4"><img src="assets/img/gallery/campus-04.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus5"><img src="assets/img/gallery/campus-05.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus6"><img src="assets/img/gallery/campus-06.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus7"><img src="assets/img/gallery/campus-07.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus8"><img src="assets/img/gallery/campus-08.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus9"><img src="assets/img/gallery/campus-09.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus10"><img src="assets/img/gallery/campus-10.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus11"><img src="assets/img/gallery/campus-11.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus12"><img src="assets/img/gallery/campus-12.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="campus13"><img src="assets/img/gallery/campus-13.jpg" alt="" loading="lazy"></figure>
+      </div>
     </div>
   </section>
 
   <section class="gsec" id="westlake">
-    <h2>Pillowed by West Lake <span class="zh">一枕湖山</span></h2>
-    <p class="where">Photos taken in Hangzhou, China</p>
-    <div class="rows">
-        <figure><img src="assets/img/gallery/lake-01.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-02.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-03.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-04.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-05.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-06.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-07.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-08.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-09.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-10.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-11.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-12.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/lake-13.jpg" alt="" loading="lazy"></figure>
-        <span class="pad"></span>
-        <span class="pad"></span>
+    <div class="wrap">
+      <h2 class="rise">Pillowed by West Lake <span class="zh">一枕湖山</span></h2>
+      <p class="where rise">Photos taken in Hangzhou, China</p>
+    </div>
+    <div class="marquee bleed rise" style="--dur:84s">
+      <div class="track rev">
+        <figure data-i="lake1"><img src="assets/img/gallery/lake-01.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake2"><img src="assets/img/gallery/lake-02.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake3"><img src="assets/img/gallery/lake-03.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake4"><img src="assets/img/gallery/lake-04.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake5"><img src="assets/img/gallery/lake-05.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake6"><img src="assets/img/gallery/lake-06.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake7"><img src="assets/img/gallery/lake-07.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake8"><img src="assets/img/gallery/lake-08.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake9"><img src="assets/img/gallery/lake-09.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake10"><img src="assets/img/gallery/lake-10.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake11"><img src="assets/img/gallery/lake-11.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake12"><img src="assets/img/gallery/lake-12.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="lake13"><img src="assets/img/gallery/lake-13.jpg" alt="" loading="lazy"></figure>
+      </div>
     </div>
   </section>
 
   <section class="gsec" id="more">
-    <h2>More <span class="zh">路上</span></h2>
-    <p class="where">Most recently: back to West Lake, Hangzhou ❤️</p>
-    <div class="rows">
-        <figure><img src="assets/img/gallery/more-01.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-02.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-03.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-04.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-05.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-06.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-07.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-08.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-09.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-10.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-11.jpg" alt="" loading="lazy"></figure>
-        <figure><img src="assets/img/gallery/more-12.jpg" alt="" loading="lazy"></figure>
-        <span class="pad"></span>
-        <span class="pad"></span>
+    <div class="wrap">
+      <h2 class="rise">More <span class="zh">路上</span></h2>
+      <p class="where rise">Most recently: back to West Lake, Hangzhou ❤️</p>
+    </div>
+    <div class="marquee bleed rise" style="--dur:64s">
+      <div class="track">
+        <figure data-i="more1"><img src="assets/img/gallery/more-01.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more2"><img src="assets/img/gallery/more-02.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more3"><img src="assets/img/gallery/more-03.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more4"><img src="assets/img/gallery/more-04.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more5"><img src="assets/img/gallery/more-05.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more6"><img src="assets/img/gallery/more-06.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more7"><img src="assets/img/gallery/more-07.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more8"><img src="assets/img/gallery/more-08.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more9"><img src="assets/img/gallery/more-09.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more10"><img src="assets/img/gallery/more-10.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more11"><img src="assets/img/gallery/more-11.jpg" alt="" loading="lazy"></figure>
+        <figure data-i="more12"><img src="assets/img/gallery/more-12.jpg" alt="" loading="lazy"></figure>
+      </div>
     </div>
   </section>
 
-  <div class="sign"><img src="assets/img/gallery/signature.png" alt="Cao Zhijun Aaron"></div>
+  <div class="sign rise"><img src="assets/img/gallery/signature.png" alt="Cao Zhijun Aaron"></div>
 
-  <section class="gsec" id="back">
-    <p>Back to 👉 <a href="index.html"><strong>🏠 Home</strong></a></p>
+  <section class="gsec wrap" id="back">
+    <p class="rise">Back to 👉 <a href="index.html"><strong>🏠 Home</strong></a></p>
   </section>
 
 </main>
@@ -177,7 +226,6 @@
   <span>Last Update: Sep. 2026</span>
 </footer>
 
-<!-- 灯箱 -->
 <div class="lb" id="lb" aria-hidden="true">
   <button class="lb-x" aria-label="Close">✕</button>
   <button class="lb-p" aria-label="Previous">‹</button>
@@ -187,74 +235,82 @@
 </div>
 
 <script>
-// 灯箱：点击放大，支持左右切换与键盘操作。
-// 只复用页面上已加载的那张图，不额外请求大图。
+/* ---------- 轨道复制：无缝循环的前提 ----------
+   动画平移到 -50%，只有当轨道由两份完全相同的内容组成时，
+   那一刻的画面才与起点重合，循环处才看不出接缝。 */
+(function () {
+  [].forEach.call(document.querySelectorAll('.track'), function (tr) {
+    var copy = tr.cloneNode(true);
+    while (copy.firstElementChild) {
+      var n = copy.firstElementChild;
+      n.setAttribute('aria-hidden', 'true');
+      n.removeAttribute('data-i');          // 副本不进灯箱序列
+      tr.appendChild(n);
+    }
+  });
+})();
+
+/* ---------- 入场：进入视口后逐元素浮现 ---------- */
+(function () {
+  var items = [].slice.call(document.querySelectorAll('.rise'));
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(function (el) { el.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    // 同一批进入视口的元素按文档顺序错开，形成依次浮现的节奏
+    var batch = entries.filter(function (e) { return e.isIntersecting; });
+    batch.sort(function (a, b) {
+      return a.target.compareDocumentPosition(b.target) & 4 ? -1 : 1;
+    });
+    batch.forEach(function (e, i) {
+      e.target.style.setProperty('--d', (i * 90) + 'ms');
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  items.forEach(function (el) { io.observe(el); });
+})();
+
+/* ---------- 灯箱 ---------- */
 (function () {
   var box = document.getElementById('lb');
   var pic = box.querySelector('img');
   var info = box.querySelector('.lb-i');
-  var imgs = [].slice.call(document.querySelectorAll('.rows img'));
+  var figs = [].slice.call(document.querySelectorAll('figure[data-i]'));
   var at = 0;
 
   function show(i) {
-    at = (i + imgs.length) % imgs.length;
-    pic.src = imgs[at].src;
-    info.textContent = (at + 1) + ' / ' + imgs.length;
+    at = (i + figs.length) % figs.length;
+    pic.src = figs[at].firstElementChild.src;
+    info.textContent = (at + 1) + ' / ' + figs.length;
   }
   function open(i) { show(i); box.classList.add('on'); document.body.style.overflow = 'hidden'; }
   function close() { box.classList.remove('on'); document.body.style.overflow = ''; }
 
-  imgs.forEach(function (im, i) {
-    im.parentNode.addEventListener('click', function () { open(i); });
+  document.addEventListener('click', function (e) {
+    var f = e.target.closest && e.target.closest('.track figure');
+    if (!f) return;
+    // 副本没有 data-i，点到副本时换算回原件的序号
+    var idx = figs.indexOf(f);
+    if (idx < 0) {
+      var sibs = [].slice.call(f.parentNode.children);
+      idx = sibs.indexOf(f) % figs.length;
+    }
+    open(idx);
   });
 
-  /* 整组联动的放大效果。
-     格子宽度由 flex-grow 分配，因此放大是"挤开邻居"而不是压在它们上面。
-     两点要紧：
-     1) 位置只在进入网格与窗口变化时量一次并缓存 —— mousemove 里调用
-        getBoundingClientRect 会强制同步布局，38 张图足以掉帧；
-     2) 用 requestAnimationFrame 合并同一帧内的多次移动事件。 */
-  var R = 340;      // 影响半径（px）
-  var AMP = 1.10;   // 最靠近光标时额外分到的宽度权重
-
-  [].forEach.call(document.querySelectorAll('.rows'), function (grid) {
-    var cells = [], mx = 0, my = 0, ticking = false;
-
-    function measure() {
-      cells = [].map.call(grid.querySelectorAll('figure'), function (f) {
-        var r = f.getBoundingClientRect();
-        return { el: f,
-                 cx: r.left + window.scrollX + r.width / 2,
-                 cy: r.top + window.scrollY + r.height / 2 };
-      });
-    }
-
-    function paint() {
-      ticking = false;
-      for (var i = 0; i < cells.length; i++) {
-        var c = cells[i];
-        var d = Math.sqrt((mx - c.cx) * (mx - c.cx) + (my - c.cy) * (my - c.cy));
-        // 余弦衰减：中心最强，到半径处平滑归零，没有硬边
-        var t = d >= R ? 0 : (Math.cos(Math.PI * d / R) + 1) / 2;
-        c.el.style.flexGrow = t ? (1 + AMP * t).toFixed(3) : '';
-      }
-    }
-
-    function onMove(e) {
-      mx = e.pageX; my = e.pageY;
-      if (!ticking) { ticking = true; requestAnimationFrame(paint); }
-    }
-
-    function reset() {
-      for (var i = 0; i < cells.length; i++) cells[i].el.style.flexGrow = '';
-    }
-
-    grid.addEventListener('mouseenter', measure);
-    grid.addEventListener('mousemove', onMove);
-    grid.addEventListener('mouseleave', reset);
-    window.addEventListener('resize', function () { if (cells.length) measure(); });
+  box.addEventListener('click', function (e) {
+    if (e.target === box || e.target.className === 'lb-x') return close();
+    if (e.target.className === 'lb-p') return show(at - 1);
+    if (e.target.className === 'lb-n') return show(at + 1);
   });
-
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('on')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') show(at - 1);
+    else if (e.key === 'ArrowRight') show(at + 1);
+  });
 })();
 </script>
 
