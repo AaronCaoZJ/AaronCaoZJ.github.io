@@ -60,8 +60,8 @@
 
   /* 磨砂玻璃：靠模糊背景 + 半透明底色成形，
      深色模式整组替换即可，构造不变 */
-  --glass-fill: rgba(255, 255, 255, .58);
-  --glass-blur: 24px;
+  --glass-fill: rgba(255, 255, 255, .30);
+  --glass-blur: 10px;
   --glass-edge: rgba(255, 255, 255, .75);
   --glass-cast: rgba(45, 42, 41, .09);
 
@@ -91,8 +91,8 @@
 
   color-scheme: dark;
 
-  --glass-fill: rgba(28, 32, 38, .62);
-  --glass-blur: 24px;
+  --glass-fill: rgba(28, 32, 38, .34);
+  --glass-blur: 10px;
   --glass-edge: rgba(255, 255, 255, .12);
   --glass-cast: rgba(0, 0, 0, .32);
 
@@ -123,8 +123,8 @@
 
     color-scheme: dark;
 
-    --glass-fill: rgba(28, 32, 38, .62);
-    --glass-blur: 24px;
+    --glass-fill: rgba(28, 32, 38, .34);
+    --glass-blur: 10px;
     --glass-edge: rgba(255, 255, 255, .12);
     --glass-cast: rgba(0, 0, 0, .32);
 
@@ -290,8 +290,8 @@ img { max-width: 100%; }
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
   background: var(--glass-fill);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(8px) saturate(135%);
+  -webkit-backdrop-filter: blur(8px) saturate(135%);
   border: 1px solid var(--glass-edge);
   box-shadow: 0 2px 8px var(--glass-cast);
   color: var(--fg);
