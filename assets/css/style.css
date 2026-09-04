@@ -525,6 +525,7 @@ strong { font-weight: 700; }
 #visitors { padding-top: 72px; }
 .vmap {
   position: relative;
+  width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
   --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
   --vmap-pin: var(--sl-red);
 }
