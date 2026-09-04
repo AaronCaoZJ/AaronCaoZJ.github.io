@@ -80,6 +80,20 @@ body {
   overflow-wrap: break-word;
 }
 
+/* ---------- 背景光晕 ----------
+   三团极淡的色斑固定在视口上，滚动时不动，只作氛围。
+   固定（而非随内容滚动）是关键：玻璃层的模糊要有东西可透，
+   若光晕跟着滚，玻璃后面的画面会跟着糊动，反而显脏。
+   透明度压到 0.06–0.10，几乎察觉不到，但让大片留白不再是死白。 */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(58% 46% at 12% -4%,  rgba(77, 110, 138, .10), transparent 68%),
+    radial-gradient(46% 40% at 88% 12%,  rgba(196, 135, 110, .075), transparent 70%),
+    radial-gradient(60% 44% at 52% 104%, rgba(92, 130, 153, .07),  transparent 70%);
+}
+
 a { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 2px; }
 
@@ -91,10 +105,14 @@ img { max-width: 100%; }
 .nav {
   position: sticky; top: 0; z-index: 50;
   /* 底色必须留出足够透明度，否则 backdrop-filter 无从显现 */
-  background: color-mix(in srgb, var(--bg) 65%, transparent);
-  backdrop-filter: saturate(180%) blur(18px);
-  -webkit-backdrop-filter: saturate(180%) blur(18px);
-  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--bg) 52%, transparent);
+  backdrop-filter: saturate(190%) blur(22px);
+  -webkit-backdrop-filter: saturate(190%) blur(22px);
+  /* 顶部内高光 + 底部细线：模拟玻璃板的上缘受光、下缘投影，
+     厚度感来自这两条一亮一暗的边，而不是把底色调白 */
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 62%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65),
+              0 1px 12px rgba(45, 42, 41, .045);
 }
 .nav .wrap {
   display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -165,7 +183,12 @@ img { max-width: 100%; }
   font-family: var(--sans); font-size: 13px; font-weight: 500;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
-  border: 1px solid var(--card-b); background: var(--card);
+  border: 1px solid rgba(255, 255, 255, .6);
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  backdrop-filter: saturate(150%) blur(10px);
+  -webkit-backdrop-filter: saturate(150%) blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7),
+              0 1px 3px rgba(45, 42, 41, .04);
   color: var(--fg);
 }
 .links a {
@@ -337,8 +360,15 @@ strong { font-weight: 600; }
 /* ---------- 机会信息块 ---------- */
 .info-block {
   margin-top: 46px; padding: 24px 26px;
-  background: var(--chip); border: 1px solid var(--card-b);
-  border-radius: 10px;
+  /* 半透明 + 背景模糊：卡片下方的光晕被揉开后透上来，
+     所以它看着像一块浮在页面上的玻璃，而不是一块灰底色板 */
+  background: color-mix(in srgb, var(--card) 46%, transparent);
+  backdrop-filter: saturate(165%) blur(16px);
+  -webkit-backdrop-filter: saturate(165%) blur(16px);
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 14px;
+  box-shadow: 0 10px 34px rgba(45, 42, 41, .055),
+              inset 0 1px 0 rgba(255, 255, 255, .72);
 }
 .info-block h2 {
   /* 只去掉下划线（卡片本身已有边界），颜色继承全局 h2 的 accent */
