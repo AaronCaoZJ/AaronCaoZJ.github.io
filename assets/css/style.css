@@ -324,6 +324,10 @@ strong { font-weight: 700; }
   align-items: baseline;
 }
 .news li > div { min-width: 0; }
+/* 同一个月里的多条消息各占一行；用 <p> 而不是嵌套 <ul>，
+   否则内层 li 会被 .news li 的 grid 规则命中 */
+.news li > div p { margin: 0 0 5px; }
+.news li > div p:last-child { margin-bottom: 0; }
 /* subgrid 让所有 li 共用 ul 上的同一条列轨，宽度由最宽的那条日期决定。
    好处是不写死数值：以后日期格式再变（补上日、去掉年）都自动跟上。 */
 @supports (grid-template-columns: subgrid) {
