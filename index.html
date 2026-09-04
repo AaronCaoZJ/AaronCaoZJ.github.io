@@ -380,8 +380,14 @@
 
    噪声不在像素空间采样，而是先在低分辨率“latent”上生成，
    再由 drawImage 平滑上采样 —— 模拟 VAE 解码，得到块状而非
-   针尖状的颗粒。块的尺度随 t 从粗到细，复刻真实采样过程中
-   低频结构先成形、高频细节后浮现的顺序。
+   针尖状的颗粒。
+
+   关键点：混合进去的不是成品图，而是随 t 变化的“当前预测”
+   x_hat_0(t)。真实采样跑的是反向过程，早期模型只能给出粗糙
+   模糊、细节尚不存在的估计；若始终拿成品图去混噪声，得到的
+   只是前向加噪的倒放 —— 看上去像给照片盖了层噪声，而不是
+   把照片一点点生成出来。这里用降采样再上采样来模拟受 latent
+   分辨率限制的预测，并让饱和度、对比度一同从低到高恢复。
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
@@ -396,6 +402,7 @@
   var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
   var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
   var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
+  var GAMMA  = 1.35;  // 预测清晰度的回升曲线：>1 表示结构在中段快速涌现
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -405,6 +412,11 @@
   // 低分辨率噪声画布，充当 latent
   var nz = document.createElement('canvas');
   var nctx = nz.getContext('2d');
+  // 当前步的预测图 x_hat_0(t)，同样先降到低分辨率
+  var pr = document.createElement('canvas');
+  var pctx = pr.getContext('2d');
+  pctx.imageSmoothingEnabled = true;
+  pctx.imageSmoothingQuality = 'high';
 
   // Box-Muller
   var spare = null;
@@ -434,10 +446,24 @@
 
   var running = false;
 
+  /* 当前步的预测 x_hat_0(t)：分辨率受限 + 色彩未完全恢复。
+     用 GAMMA 让结构在中段快速涌现，而不是随 t 线性变清晰。 */
+  function drawPred(t) {
+    var q = Math.pow(t, GAMMA);
+    var scale = 1 + (COARSE - 1) * q;
+    var n = Math.max(2, Math.round(W / scale));
+    pr.width = n; pr.height = n;
+    pctx.drawImage(img, 0, 0, n, n);              // 降采样：丢掉高频细节
+    ctx.filter = 'saturate(' + (1 - 0.45 * q).toFixed(3) + ') ' +
+                 'contrast(' + (1 - 0.12 * q).toFixed(3) + ')';
+    ctx.drawImage(pr, 0, 0, W, H);                // 上采样回画布
+    ctx.filter = 'none';
+  }
+
   function render(t) {
     fillLatent(t);
     ctx.globalAlpha = 1;
-    ctx.drawImage(img, 0, 0, W, H);              // x_0
+    drawPred(t);                                  // x_hat_0(t)，而非成品图
     ctx.globalAlpha = t;                          // 直线路径的 sigma
     ctx.drawImage(nz, 0, 0, W, H);                // latent 噪声，上采样时自动平滑
     ctx.globalAlpha = 1;
