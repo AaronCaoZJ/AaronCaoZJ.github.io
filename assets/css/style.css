@@ -341,7 +341,8 @@ strong { font-weight: 600; }
   border-radius: 10px;
 }
 .info-block h2 {
-  color: var(--fg); border-bottom: 0; padding-bottom: 0;
+  /* 只去掉下划线（卡片本身已有边界），颜色继承全局 h2 的 accent */
+  border-bottom: 0; padding-bottom: 0;
 }
 .info-block p:last-child { margin-bottom: 0; }
 
