@@ -9,7 +9,7 @@
 ```
 .
 ├── index.html          主页：About / Research / News / Publications / Projects / Experience / Education / Awards
-├── gallery.html        相册页（骨架已就绪，图片待补）
+├── gallery/index.html  相册页，URL 为 /gallery/
 ├── CNAME               GitHub Pages 自定义域名，内容为 caozhijun.top
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
 └── assets/
@@ -110,7 +110,7 @@ gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.5 -dNOPAUSE -dQUIET -dBATCH \
 magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
 ```
 
-然后在 `gallery.html` 里删掉 `.empty` 占位块、取消 `.grid` 的注释，逐条加 `<figure>`。
+然后在 `gallery/index.html` 里删掉 `.empty` 占位块、取消 `.grid` 的注释，逐条加 `<figure>`。
 
 ## 搜索引擎收录
 

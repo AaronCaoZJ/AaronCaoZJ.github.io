@@ -117,7 +117,7 @@ GitHub Pages 要给自定义域名签发 Let's Encrypt 证书，必须能直接�
 5. 阿里云初审（1–2 个工作日）→ 管局审核（7–20 个工作日，各省不同）
 6. 拿到备案号后，**必须**在页面底部放备案号并链接到 `https://beian.miit.gov.cn/`
 
-在 `index.html` 和 `gallery.html` 的 `<footer>` 里加：
+在 `index.html` 和 `gallery/index.html` 的 `<footer>` 里加：
 
 ```html
 <span><a href="https://beian.miit.gov.cn/" rel="noopener">浙ICP备XXXXXXXX号</a></span>
