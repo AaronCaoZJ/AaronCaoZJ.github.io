@@ -18,18 +18,25 @@
   src: url('../fonts/Inter-normal.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Newsreader';
+  font-family: 'Charis';
   font-style: normal;
-  font-weight: 400 600;
+  font-weight: 400;
   font-display: swap;
-  src: url('../fonts/Newsreader-normal.woff2') format('woff2');
+  src: url('../fonts/Charis-400.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Newsreader';
+  font-family: 'Charis';
   font-style: italic;
-  font-weight: 400 600;
+  font-weight: 400;
   font-display: swap;
-  src: url('../fonts/Newsreader-italic.woff2') format('woff2');
+  src: url('../fonts/Charis-400i.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Charis';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/Charis-700.woff2') format('woff2');
 }
 
 :root {
@@ -49,7 +56,7 @@
      为此下载 1–3 MB 字库对大陆访问得不偿失，交给系统字体。 */
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-  --serif: "Newsreader", "Iowan Old Style", Georgia,
+  --serif: "Charis", "Charter", "Iowan Old Style", Georgia,
            "PingFang SC", "Microsoft YaHei", serif;
 
   --w: 920px;
@@ -331,7 +338,7 @@ h2 .zh {
 section > p:first-of-type { margin-top: 14px; }
 
 .hl { color: var(--high); font-weight: 600; }
-strong { font-weight: 600; }
+strong { font-weight: 700; }
 
 /* ---------- News 时间线 ---------- */
 .news { margin: 14px 0 0; padding: 0; list-style: none; }
