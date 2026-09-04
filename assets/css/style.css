@@ -266,23 +266,22 @@ h3.sub:first-of-type { margin-top: 16px; }
 .item .s { font-size: 14.5px; color: var(--subtle); margin-top: 2px; }
 .item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
 
-/* 工作条目下的产出行：左侧产品名，右侧状态，与上方日期列右对齐 */
-.item .prod { margin-top: 6px; }
-.item .prod .s { flex: 1 1 auto; min-width: 0; margin-top: 0; color: var(--fg); }
-.item .prod .lbl {
+/* 工作条目下的产出列表：字段名 + 每个产物一行。
+   左侧竖线表明从属于上方的经历，右侧状态与日期列对齐，
+   避免多个产物共用一行时状态归属不明。 */
+.item .plabel {
   font-family: var(--sans); font-size: 10.5px; font-weight: 700;
-  letter-spacing: .09em; text-transform: uppercase;
-  color: var(--accent); background: var(--chip);
-  padding: 2px 7px; border-radius: 4px; margin-right: 8px;
-  vertical-align: 1px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--subtle); margin: 9px 0 4px;
 }
-.item .prod .pdot { margin: 0 9px; color: var(--rule); }
-/* 未发布产物的状态标记，紧跟在它自己后面，避免与另一个产物的状态混淆 */
-.item .prod .pending {
-  font-family: var(--sans); font-size: 11px; font-weight: 500;
-  letter-spacing: .02em; color: var(--subtle);
-  background: var(--chip); padding: 2px 7px; border-radius: 4px;
-  margin-left: 8px; vertical-align: 1px; white-space: nowrap;
+.item .plist { border-left: 2px solid var(--rule); padding-left: 14px; }
+.item .prow {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 16px; font-size: 14.5px; padding: 1px 0;
+}
+.item .pst {
+  font-family: var(--sans); font-size: 12px; color: var(--subtle);
+  white-space: nowrap;
 }
 .item .t a { color: inherit; }
 .item .t a:hover { color: var(--link); }
