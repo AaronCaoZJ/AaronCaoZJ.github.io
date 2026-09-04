@@ -72,7 +72,10 @@
       </div>
     </div>
 
-    <img class="avatar" src="assets/img/avatar.jpg" alt="Cao Zhijun Aaron" width="190" height="190">
+    <div class="avatar-wrap" id="avatarFx" title="Click to re-run the denoising">
+      <img class="avatar" src="assets/img/avatar.jpg" alt="Cao Zhijun Aaron" width="230" height="230">
+      <canvas class="avatar-fx" width="460" height="460" aria-hidden="true"></canvas>
+    </div>
   </header>
 
   <!-- ============ Biography ============ -->
@@ -360,6 +363,108 @@
     for (var i = 0; i < hidden.length; i++) hidden[i].hidden = open;
     btn.textContent = open ? 'Show all news ↓' : 'Show less ↑';
   });
+})();
+</script>
+
+<script>
+/* ------------------------------------------------------------------
+   头像入场动效：按 DDPM 前向过程反向播放。
+     x_t = sqrt(abar_t) * x_0 + sqrt(1 - abar_t) * eps,  eps ~ N(0, I)
+   abar 用 cosine schedule (Nichol & Dhariwal, 2021)。
+   从 t = T 走到 t = 0，即“从噪声里显影”。
+   不加载任何额外资源，噪声在客户端实时采样。
+------------------------------------------------------------------ */
+(function () {
+  var wrap = document.getElementById('avatarFx');
+  if (!wrap) return;
+  var img    = wrap.querySelector('img');
+  var canvas = wrap.querySelector('canvas');
+  var ctx    = canvas.getContext('2d', { willReadFrequently: true });
+  var W = canvas.width, H = canvas.height, N = W * H;
+
+  var STEPS = 40;   // 去噪步数
+  var DT    = 45;   // 每步毫秒（40 x 45ms 约 1.8s）
+  var POOL  = 5;    // 预采样几组噪声循环使用，兼顾性能与“沸腾感”
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // cosine schedule 的 abar_t
+  function alphaBar(t) {
+    var s = 0.008;
+    var f = function (x) {
+      var v = Math.cos(((x / STEPS + s) / (1 + s)) * Math.PI / 2);
+      return v * v;
+    };
+    return f(t) / f(0);
+  }
+
+  // Box-Muller 采样标准高斯，预生成若干组复用
+  function gaussPool() {
+    var pool = [];
+    for (var k = 0; k < POOL; k++) {
+      var a = new Float32Array(N * 3);
+      for (var i = 0; i < a.length; i += 2) {
+        var u1 = Math.random() || 1e-9, u2 = Math.random();
+        var r = Math.sqrt(-2 * Math.log(u1)), th = 2 * Math.PI * u2;
+        a[i] = r * Math.cos(th);
+        if (i + 1 < a.length) a[i + 1] = r * Math.sin(th);
+      }
+      pool.push(a);
+    }
+    return pool;
+  }
+
+  var x0 = null, noise = null, out = null, running = false;
+
+  function prepare() {
+    ctx.drawImage(img, 0, 0, W, H);
+    var d;
+    try {
+      d = ctx.getImageData(0, 0, W, H);   // 跨源图片会在此抛错
+    } catch (e) {
+      return false;                        // 取不到像素就安静放弃
+    }
+    x0  = d.data;
+    out = ctx.createImageData(W, H);
+    out.data.set(x0);
+    noise = gaussPool();
+    return true;
+  }
+
+  /* 关键：加噪必须在以 0 为中心的空间里做。
+     若直接在 [0,255] 上加高斯噪声，负半边会被 clamp 到 0，
+     纯噪声帧会整体偏暗、丢掉一半能量。
+     这里把像素映射到 [-0.5, 0.5]，加噪后再映射回去。 */
+  var SIGMA = 0.34;   // 噪声幅度，越大颗粒越重
+  function render(t) {
+    var ab = alphaBar(t), c0 = Math.sqrt(ab), c1 = Math.sqrt(1 - ab) * SIGMA;
+    var eps = noise[(STEPS - t) % POOL], o = out.data;
+    for (var i = 0, j = 0; i < o.length; i += 4, j += 3) {
+      o[i]     = (c0 * (x0[i]     / 255 - 0.5) + c1 * eps[j]     + 0.5) * 255;
+      o[i + 1] = (c0 * (x0[i + 1] / 255 - 0.5) + c1 * eps[j + 1] + 0.5) * 255;
+      o[i + 2] = (c0 * (x0[i + 2] / 255 - 0.5) + c1 * eps[j + 2] + 0.5) * 255;
+      o[i + 3] = 255;
+    }
+    ctx.putImageData(out, 0, 0);
+  }
+
+  function play() {
+    if (running) return;
+    if (!x0 && !prepare()) return;
+    running = true;
+    wrap.classList.add('fx-on');
+    var t = STEPS;
+    (function step() {
+      render(t);
+      if (t-- > 0) { setTimeout(step, DT); return; }
+      wrap.classList.remove('fx-on');   // 淡出画布，露出原图
+      running = false;
+    })();
+  }
+
+  if (img.complete) play();
+  else img.addEventListener('load', play);
+  wrap.addEventListener('click', play);
 })();
 </script>
 
