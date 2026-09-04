@@ -32,9 +32,75 @@
 - Cloudflare 账号，`caozhijun.top` 已托管在上面（已满足）
 - 域名是**橙云代理**状态（已满足）—— Worker 路由只在代理开启时生效
 
-## 部署步骤
+## 两条路径：网页面板 or 命令行
 
-全部在 `worker/` 目录下执行。
+后端只有一个单文件 Worker、一张表，没有依赖也没有构建步骤，所以**两条路都走得通**：
+
+| | Cloudflare 网页面板 | 本机 wrangler |
+|---|---|---|
+| 需要装东西 | 不需要 | Node.js |
+| 改代码 | 面板里编辑、点部署 | 改文件、`wrangler deploy` |
+| 部署产物有版本管理 | 面板保留历史版本，但仓库里的副本可能与线上不一致 | 仓库即真相 |
+| 适合 | 一次配好、极少改动 | 经常迭代 |
+
+对这个项目**推荐网页面板**——一次配好基本不用再动。仓库里的
+`worker/src/index.js` 保留为源码副本，改的时候以它为准、再贴回面板。
+
+选面板就看下面一节，选命令行就跳到「命令行部署」。
+
+## 网页面板部署
+
+Cloudflare 的面板改版频繁，下面的菜单名可能略有出入，按意思找即可。
+
+### 1. 建数据库
+
+左侧 **Storage & Databases → D1**（旧版在 Workers & Pages 下面）→
+**Create database**，名字填 `visitors`。
+
+进去后有个 **Console**（或 Query）标签页，把 `worker/schema.sql` 的内容
+整段粘进去执行。执行完在 **Tables** 里应该能看到 `visits` 表，0 行。
+
+### 2. 建 Worker
+
+**Compute (Workers) → Create → Worker**，名字填 `caozhijun-visitors`，
+先用默认的 Hello World 模板创建，然后点 **Edit code**。
+
+把 `worker/src/index.js` 的**全部内容**覆盖进编辑器，点 **Deploy**。
+模板本身就是 `export default { fetch }` 的形式，和这份代码结构一致，
+不需要改任何写法。
+
+### 3. 绑定数据库
+
+Worker 详情页 → **Settings → Bindings → Add → D1 database**：
+
+- Variable name：**`DB`** —— 必须一字不差，代码里写的是 `env.DB`
+- D1 database：选 `visitors`
+
+保存后 Cloudflare 会重新部署一次。
+
+### 4. 挂路由
+
+同样在 **Settings**，找 **Domains & Routes**（或 Triggers → Routes）
+→ **Add → Route**，加两条，Zone 都选 `caozhijun.top`：
+
+```
+caozhijun.top/api/*
+www.caozhijun.top/api/*
+```
+
+路由只在**橙云代理**的域名上生效。你两个域名都是代理状态，没问题。
+
+加完之后，`/api/*` 会被 Worker 截住，其余所有路径照常走 GitHub Pages。
+
+### 5. 验证
+
+跳到下面的「验证」小节，和命令行路径是同一套 curl。
+
+## 命令行部署
+
+
+
+全部在 `worker/` 目录下执行。走网页面板的话跳过本节。
 
 ### 1. 登录
 
@@ -70,7 +136,7 @@ npx wrangler deploy
 
 成功后会打印出路由 `caozhijun.top/api/*`。
 
-### 5. 验证
+## 验证
 
 ```bash
 curl -X POST https://caozhijun.top/api/visit     # 期望 {"ok":true,"recorded":true}
@@ -80,7 +146,7 @@ curl https://caozhijun.top/api/visitors          # 期望一个 JSON 数组
 如果 `recorded` 是 `false`，说明 Cloudflare 没能定位你这个出口 IP ——
 换个网络（手机热点）再试一次，这是正常现象而不是配置错误。
 
-### 6. 前端切到真实数据
+## 前端切到真实数据
 
 编辑 `assets/js/worldmap.js`：
 
