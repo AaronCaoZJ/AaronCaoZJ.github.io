@@ -155,11 +155,6 @@ img { max-width: 100%; }
   width: 230px; height: 230px; object-fit: cover;
   border-radius: 12px; border: 1px solid var(--card-b);
   background: #fff;
-  transition: transform .35s ease, box-shadow .35s ease;
-}
-.avatar-wrap:hover .avatar {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(45, 42, 41, .12);
 }
 
 /* 联系方式行 */
@@ -356,7 +351,7 @@ footer.wrap {
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
   }
-  .links a:hover, .pub:hover .thumb, .tags a:hover, .hero .avatar:hover {
+  .links a:hover, .pub:hover .thumb, .tags a:hover {
     transform: none;
   }
 }
