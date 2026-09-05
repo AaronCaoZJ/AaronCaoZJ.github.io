@@ -1,9 +1,16 @@
-# 全站允许抓取
+# 全站允许抓取。
+#
+# 线上实际内容比这份文件长：Cloudflare 的 Managed robots.txt 会在前面注入
+# 它自己的一段 User-agent: *（Content-Signal，外加对 GPTBot / ClaudeBot /
+# CCBot / Bytespider 等的 Disallow）。于是线上会出现两个同名分组。
+#
+# RFC 9309 与 Google 的实现都要求把同名分组合并，所以这不会出问题；
+# 但这里仍然只保留最基本的放行规则，不依赖那个行为。
+# 原先写的 Disallow: /assets/**/src/ 已删除 —— 那些目录被 .gitignore 排除、
+# 从未进入发布产物，线上直接 404，挡一个不存在的路径没有意义，
+# 反而会向爬虫暴露"这里可能有东西"。
+
 User-agent: *
 Allow: /
-
-# 源素材目录不对外（本就不在仓库里，写明以防将来误传）
-Disallow: /assets/img/src/
-Disallow: /assets/pdf/src/
 
 Sitemap: https://caozhijun.top/sitemap.xml

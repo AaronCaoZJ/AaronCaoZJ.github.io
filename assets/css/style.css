@@ -42,6 +42,12 @@
 :root {
   --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 —— 标题 */
   --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 数字/强调 */
+
+  /* Show Lab logo 四色 —— 见 .shx 与 #collaboration */
+  --sl-blue:   #669ED3;
+  --sl-green:  #67A651;
+  --sl-red:    #D85E5D;
+  --sl-orange: #F3AA68;
   --link:   #5c8299;   /* 莫兰迪石青 —— 链接 */
   --rule:   #cec9c6;   /* 莫兰迪浅暖灰 —— 分隔线 */
   --subtle: #8d8481;   /* 莫兰迪暖灰 —— 次要文字 */
@@ -314,18 +320,32 @@ strong { font-weight: 700; }
 /* ---------- News 时间线 ---------- */
 .news { margin: 14px 0 0; padding: 0; list-style: none; }
 .news li {
-  /* 日期列宽随内容而定，不再固定 82px —— 原先日期只占约 55px，
-     余下的空位加上 gap 把两栏推开了近 40px */
-  display: grid; grid-template-columns: auto 1fr;
+  /* 每个 li 各自是一个 grid，auto 列只按自己这行的日期收缩 ——
+     "2026.09.08:" 比 "2026.07:" 宽，正文起点就参差不齐。
+     真正的对齐交给下面的 subgrid，这里 70px 只是不支持时的兜底。 */
+  display: grid; grid-template-columns: 70px 1fr;
   gap: 11px; padding: 5px 0; font-size: 15px;
   /* 按基线对齐：日期是 13px 无衬线、正文是 15px 衬线，
      顶对齐会让日期看上去矮半行，只有基线才是两种字号的共同参照 */
   align-items: baseline;
 }
 .news li > div { min-width: 0; }
+/* 同一个月里的多条消息各占一行；用 <p> 而不是嵌套 <ul>，
+   否则内层 li 会被 .news li 的 grid 规则命中 */
+.news li > div p { margin: 0 0 5px; }
+.news li > div p:last-child { margin-bottom: 0; }
+/* subgrid 让所有 li 共用 ul 上的同一条列轨，宽度由最宽的那条日期决定。
+   好处是不写死数值：以后日期格式再变（补上日、去掉年）都自动跟上。 */
+@supports (grid-template-columns: subgrid) {
+  .news { display: grid; grid-template-columns: auto 1fr; column-gap: 11px; }
+  .news li { grid-template-columns: subgrid; grid-column: 1 / -1; }
+}
 .news time {
   font-family: var(--sans); font-size: 13px; font-weight: 600;
   color: var(--accent); white-space: nowrap;
+  /* Inter 默认是比例数字，1 比 0 窄一截，"2026.09.08" 和 "2026.07.16"
+     的像素宽度并不相同，冒号就参差不齐。tabular-nums 让每个数字等宽。 */
+  font-variant-numeric: tabular-nums;
 }
 .news-more {
   font-family: var(--sans); font-size: 13px; color: var(--subtle);
@@ -373,6 +393,14 @@ strong { font-weight: 700; }
 .pub .venue em { color: var(--high); font-weight: 600; font-style: normal; }
 .pub .venue .dot { margin: 0 5px; opacity: .6; font-style: normal; }
 .star { color: var(--high); font-weight: 700; }
+
+/* Show-Harness 的 "Show" 用 Show Lab logo 的四色。
+   四个 <span> 之间不能有任何空白 —— HTML 会把换行折叠成空格，
+   渲染出 "S h o w"，复制出来也会带空格。 */
+.shx span:nth-child(1) { color: var(--sl-blue); }
+.shx span:nth-child(2) { color: var(--sl-green); }
+.shx span:nth-child(3) { color: var(--sl-red); }
+.shx span:nth-child(4) { color: var(--sl-orange); }
 .note {
   font-size: 13px; color: var(--subtle); font-style: italic;
   margin: 0 0 8px;
@@ -470,7 +498,58 @@ strong { font-weight: 700; }
   border-bottom: 0; padding-bottom: 0;
 }
 .info-block p:last-child { margin-bottom: 0; }
+/* section > p:first-of-type 给章节首段留了 14px 上边距（正文排版需要），
+   但玻璃卡片自己有 24px padding，两者相加就比底部多出 14px。
+   这里把它清零，卡片内的上下留白由 padding 单独决定。 */
+.info-block > p:first-of-type { margin-top: 0; }
 
+/* 求职意向单独用 Show Lab 红描边，把这块从其余玻璃卡片里拎出来。
+   只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
+   文字保持正常色，红色只承担边界这一件事。 */
+#collaboration {
+  border-width: 2px;
+  /* 半透明的红：backdrop-filter 模糊过的背景会从描边里透出来，
+     线条不再是压在玻璃上的一道实色，而像是玻璃自身的边缘染了色。
+     两条声明各写一遍，老引擎取上面的 rgba，新引擎取 color-mix。 */
+  border-color: rgba(216, 94, 93, .42);
+  border-color: color-mix(in srgb, var(--sl-red) 42%, transparent);
+  /* 中性投影保留（把卡片压在页面上），红色辉光减到 11% 只作氛围 */
+  box-shadow: 0 12px 36px var(--glass-cast), 0 14px 44px rgba(216, 94, 93, .11);
+  box-shadow: 0 12px 36px var(--glass-cast),
+              0 14px 44px color-mix(in srgb, var(--sl-red) 11%, transparent);
+}
+
+/* ---------- 访客地图 ---------- */
+/* 无标题、无分隔线、无说明文字 —— 只有地图本身，
+   靠一段留白与上方的求职卡片拉开距离。 */
+#visitors { padding-top: 72px; }
+.vmap {
+  position: relative;
+  width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
+  --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
+  --vmap-pin: var(--sl-red);
+}
+:root[data-theme="dark"] .vmap { --vmap-dot: #333a42; }
+.vmap-land { display: block; width: 100%; }
+.vmap-pins { position: absolute; inset: 0; }
+/* 用 <button> 而不是 <span>：键盘可聚焦，读屏能念出城市和次数 */
+.vmap-pin {
+  position: absolute; width: var(--s); height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  padding: 0; border: 0; border-radius: 50%;
+  background: var(--vmap-pin); opacity: .75; cursor: pointer;
+  transition: transform .2s ease, opacity .2s ease;
+}
+.vmap-pin:hover, .vmap-pin:focus-visible {
+  transform: scale(1.45); opacity: 1; outline: none;
+}
+.vmap-tip {
+  position: absolute; transform: translate(-50%, -180%);
+  font-family: var(--sans); font-size: 12px; white-space: nowrap;
+  padding: 4px 9px; border-radius: 6px;
+  background: var(--fg); color: var(--bg);
+  pointer-events: none; z-index: 2;
+}
 /* ---------- 页脚 ---------- */
 /* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
    margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，
@@ -498,8 +577,8 @@ footer.wrap {
   .hero .avatar { width: 150px; height: 150px; }
   .hero h1 { font-size: 28px; }
   .pub { grid-template-columns: 1fr; gap: 14px; }
-  .news li { grid-template-columns: 1fr; gap: 0; }
-  .news time { padding-top: 0; }
+  /* 窄屏日期单独占一行；连 ul 一起退回块级，否则 subgrid 还在生效 */
+  .news, .news li { display: block; }
   .info-block { margin-top: 34px; padding: 20px 18px; }
 }
 
