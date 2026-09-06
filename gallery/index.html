@@ -74,6 +74,13 @@
 
   .sign { text-align: center; padding: 58px 0 8px; }
   .sign img { width: 170px; opacity: .55; }
+  /* 深浅两版签名各放一张，靠 data-theme 切换。
+     不能用 <picture> 的 prefers-color-scheme —— 本站不跟随系统偏好，
+     明暗完全由 theme.js 写在 <html data-theme> 上，媒体查询看不到它。
+     display:none 的那张会退出无障碍树，所以两张都保留同样的 alt。 */
+  .sign .on-dark { display: none; }
+  :root[data-theme="dark"] .sign .on-light { display: none; }
+  :root[data-theme="dark"] .sign .on-dark  { display: inline; }
 
 
   /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */
@@ -205,7 +212,10 @@
     </div>
   </section>
 
-  <div class="sign rise"><img src="/assets/img/gallery/signature.png" alt="Cao Zhijun Aaron"></div>
+  <div class="sign rise">
+    <img class="on-light" src="/assets/img/gallery/signature.png" alt="Cao Zhijun Aaron">
+    <img class="on-dark" src="/assets/img/gallery/signature-dark.png" alt="Cao Zhijun Aaron">
+  </div>
 
   <!-- <section class="gsec wrap" id="back">
     <p class="rise">Back to 👉 <a href="/"><strong>🏠 Home</strong></a></p>
