@@ -23,7 +23,7 @@
     │   ├── gallery/        相册图片目录（当前为空）
     │   └── src/            未压缩源素材，本地保留、不进 git
     └── pdf/
-        ├── CV_ZhijunCao.pdf            中文简历（172 KB）
+        ├── CV_ZhijunCao.pdf            中文简历（162 KB）
         ├── BGTree_ChinaCampus_2025.pdf 《大学生》报道抽印（459 KB）
         └── src/                        未压缩源文件，不进 git
 ```
