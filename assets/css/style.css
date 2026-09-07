@@ -506,6 +506,10 @@ strong { font-weight: 700; }
 /* 求职意向单独用 Show Lab 红描边，把这块从其余玻璃卡片里拎出来。
    只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
    文字保持正常色，红色只承担边界这一件事。 */
+/* 求职关键词用与描边同源的 Show Lab 红。这里用满色而非描边那样的 42%
+   透明：文字太细，掺了透明度会显得发灰、读起来吃力。 */
+#collaboration strong { color: var(--sl-red); }
+
 #collaboration {
   border-width: 2px;
   /* 半透明的红：backdrop-filter 模糊过的背景会从描边里透出来，
