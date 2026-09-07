@@ -268,3 +268,27 @@ Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
 
 这些做完，通常一到两周内搜索姓名就能出现在首页。
 纯粹等待自然抓取则可能要一两个月。
+
+## 改了 CSS / JS 之后：记得撞版本号
+
+`index.html` 与 `gallery/index.html` 里对 CSS 和 JS 的引用都带着 `?v=YYYYMMDD`：
+
+```html
+<link rel="stylesheet" href="assets/css/style.css?v=20260907">
+<script src="assets/js/theme.js?v=20260907"></script>
+```
+
+**改完样式或脚本，把所有 `?v=` 后面的日期一起换成当天**，再提交推送。
+
+为什么需要它：Cloudflare 给静态资源加了 `max-age=14400`（4 小时的浏览器缓存），
+边缘自己也会缓存。于是 HTML 更新了、CSS 还是旧的，页面就会呈现出"改动没生效"的
+假象 —— 这个坑在开发过程中连踩了五次，每次都得去面板 Purge Everything。
+
+版本串把它变成了非问题：URL 变了，浏览器和边缘都没有对应的旧副本可用，必然回源取新的。
+不改的时候仍然享受 4 小时缓存。
+
+一条命令全部撞号：
+
+```bash
+sed -i '' "s/?v=[0-9]\{8\}/?v=$(date +%Y%m%d)/g" index.html gallery/index.html
+```
