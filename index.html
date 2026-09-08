@@ -94,7 +94,7 @@
           <img src="assets/img/icon/googlescholar.png" alt="" width="15" height="15">Google Scholar
         </a>
         <a href="https://github.com/AaronCaoZJ">
-          <img src="assets/img/icon/github.png" alt="" width="15" height="15">GitHub
+          <img class="on-light" src="assets/img/icon/github.png" alt="" width="15" height="15"><img class="on-dark" src="assets/img/icon/github-dark.png" alt="" width="15" height="15">GitHub
         </a>
         <a href="https://huggingface.co/aaroncaozj">
           <img src="assets/img/icon/huggingface.png" alt="" width="15" height="15">Hugging Face
@@ -475,8 +475,8 @@
   var ctx    = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
 
-  var STEPS  = 30;    // 采样步数
-  var DT     = 45;    // 每步毫秒（30 x 45ms 约 1.35s）
+  var STEPS  = 20;    // 采样步数
+  var DT     = 45;    // 每步毫秒（20 x 45ms 约 0.90s）
   var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
   var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
   var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显

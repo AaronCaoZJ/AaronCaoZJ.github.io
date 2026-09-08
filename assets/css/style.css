@@ -297,6 +297,13 @@ img { max-width: 100%; }
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
 
+/* 深浅两版图片：同一处放两张，加 .on-light / .on-dark，由 data-theme 决定
+   显示哪张。display:none 的那张会退出无障碍树，所以两张都可以带同样的 alt。
+   gallery 的签名也用这一套。 */
+.on-dark { display: none; }
+:root[data-theme="dark"] .on-light { display: none; }
+:root[data-theme="dark"] .on-dark  { display: inline; }
+
 /* ---------- 章节 ---------- */
 section { padding-top: 34px; }
 h2 {
