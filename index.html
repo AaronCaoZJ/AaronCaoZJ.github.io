@@ -17,9 +17,9 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="assets/css/style.css?v=20260909">
-<script src="assets/js/reveal.js?v=20260909"></script>
-<script src="assets/js/theme.js?v=20260909"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=20260910">
+<script src="assets/js/reveal.js?v=20260910"></script>
+<script src="assets/js/theme.js?v=20260910"></script>
 
 
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
@@ -155,7 +155,14 @@
     <h2 class="rise">Publications</h2>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-showharness.jpg" alt="" loading="lazy"></div>
+      <div class="thumb">
+        <!-- preload="none" + 进入视口才 play()：不滚到这里就一个字节都不下载。
+             poster 用原来那张 teaser，视频没加载/不支持时它就是缩略图。 -->
+        <video class="thumb-video" src="assets/video/showharness-demo.mp4"
+               poster="assets/img/pub/pub-showharness.jpg"
+               muted loop playsinline preload="none"
+               aria-label="Show-Harness demo"></video>
+      </div>
       <div>
         <h3><span class="shx"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness: Just a VLM Agent Can Play Robot</h3>
         <p class="authors">
@@ -432,6 +439,32 @@
 </footer>
 
 <script>
+/* 论文卡片里的视频：滚进视口才开始播，滚出就暂停。
+   preload="none" 让它在此之前完全不占带宽 —— 首页七张卡片，
+   若都预加载会白白吃掉几 MB。
+   尊重"减少动态效果"：那种情况下只留 poster 静帧，并给出播放控件。 */
+(function () {
+  var vids = document.querySelectorAll('.thumb-video');
+  if (!vids.length) return;
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    [].forEach.call(vids, function (v) { v.controls = true; });
+    return;
+  }
+  if (!('IntersectionObserver' in window)) return;
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.play().catch(function () {}); }
+      else { e.target.pause(); }
+    });
+  }, { threshold: 0.25 });
+
+  [].forEach.call(vids, function (v) { io.observe(v); });
+})();
+</script>
+
+<script>
 // News 展开
 (function () {
   var btn = document.getElementById('newsMore');
@@ -566,7 +599,7 @@
 })();
 </script>
 
-<script src="assets/js/worldmap.js?v=20260909"></script>
+<script src="assets/js/worldmap.js?v=20260910"></script>
 
 </body>
 </html>
