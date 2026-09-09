@@ -1,7 +1,8 @@
-/* 明暗模式：两态切换，默认浅色，不跟随系统。
+/* 明暗模式：两态切换，默认深色，不跟随系统。
 
-   同步加载于 <head>，第一件事是把存档写进 data-theme —— 若等到
-   DOMContentLoaded 再写，深色用户会先看到一帧浅色再跳。
+   默认值写死在 <html data-theme="dark"> 上，所以浏览器解析到文档第一行
+   时深色就已生效 —— 这一层不依赖 JS，脚本加载失败或被禁用也不会退回浅色。
+   本文件只负责一件事：读到存档是 'light' 时把属性改掉。
    localStorage 在隐私模式下访问本身就会抛异常，故全部包 try/catch。 */
 (function () {
   var KEY = 'theme';
@@ -11,8 +12,8 @@
   function read() {
     var v;
     try { v = localStorage.getItem(KEY); } catch (e) {}
-    // 早期版本存过 'auto'，一律按浅色处理
-    return v === 'dark' ? 'dark' : 'light';
+    // 只认显式存下的 'light'；'auto' 等历史值一律按默认的深色处理
+    return v === 'light' ? 'light' : 'dark';
   }
   function apply(m) {
     document.documentElement.setAttribute('data-theme', m);

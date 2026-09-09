@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,9 @@
 <link rel="canonical" href="https://caozhijun.top/gallery/">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="/assets/css/style.css?v=20260907">
-<script src="/assets/js/reveal.js?v=20260907"></script>
-<script src="/assets/js/theme.js?v=20260907"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=20260909">
+<script src="/assets/js/reveal.js?v=20260909"></script>
+<script src="/assets/js/theme.js?v=20260909"></script>
 
 
 <link rel="preload" href="/assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -77,13 +77,9 @@
 
   .sign { text-align: center; padding: 58px 0 8px; }
   .sign img { width: 170px; opacity: .55; }
-  /* 深浅两版签名各放一张，靠 data-theme 切换。
+  /* 签名的深浅两版切换用 style.css 里的通用 .on-light / .on-dark。
      不能用 <picture> 的 prefers-color-scheme —— 本站不跟随系统偏好，
-     明暗完全由 theme.js 写在 <html data-theme> 上，媒体查询看不到它。
-     display:none 的那张会退出无障碍树，所以两张都保留同样的 alt。 */
-  .sign .on-dark { display: none; }
-  :root[data-theme="dark"] .sign .on-light { display: none; }
-  :root[data-theme="dark"] .sign .on-dark  { display: inline; }
+     明暗由 data-theme 决定，媒体查询看不到它。 */
 
 
   /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */

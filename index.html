@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,9 +17,9 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="assets/css/style.css?v=20260907">
-<script src="assets/js/reveal.js?v=20260907"></script>
-<script src="assets/js/theme.js?v=20260907"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=20260909">
+<script src="assets/js/reveal.js?v=20260909"></script>
+<script src="assets/js/theme.js?v=20260909"></script>
 
 
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
@@ -88,13 +88,13 @@
 
       <div class="links rise">
         <a href="mailto:aaroncaozj@gmail.com">
-          <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
+          <img class="on-light" src="assets/img/icon/email.png" alt="" width="15" height="15"><img class="on-dark" src="assets/img/icon/email-dark.png" alt="" width="15" height="15">Email
         </a>
         <a href="https://scholar.google.com/citations?hl=en&amp;user=HPWngY4AAAAJ">
           <img src="assets/img/icon/googlescholar.png" alt="" width="15" height="15">Google Scholar
         </a>
         <a href="https://github.com/AaronCaoZJ">
-          <img src="assets/img/icon/github.png" alt="" width="15" height="15">GitHub
+          <img class="on-light" src="assets/img/icon/github.png" alt="" width="15" height="15"><img class="on-dark" src="assets/img/icon/github-dark.png" alt="" width="15" height="15">GitHub
         </a>
         <a href="https://huggingface.co/aaroncaozj">
           <img src="assets/img/icon/huggingface.png" alt="" width="15" height="15">Hugging Face
@@ -131,7 +131,7 @@
     <h2 class="rise">News</h2>
     <ul class="news rise">
       <li><time>2026.09:</time><div>
-        <!-- <p>🦾 Released <strong><span class="shx"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness</strong>, along with a survey on multimodal embodied agents.</p> -->
+        <p>🦾 Released <strong><span class="shx"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness</strong> — <a href="https://showlab.github.io/Show-Harness/">Project Page</a> · <a href="https://github.com/showlab/Show-Harness">Code</a>.</p>
         <p>🎉 Two papers (<em>Where Success Breaks</em>, <em>Supervise What Survives</em>) accepted <strong>@ CoRL 2026</strong>.</p>
       </div></li>
       <li><time>2026.07:</time><div>
@@ -171,18 +171,18 @@
           Mike Zheng Shou
         </p>
         <p class="authors">Co-first Author<span class="star">*</span></p>
-        <p class="venue">Preprint in preparation <span class="dot">·</span> 2026.09</p>
+         <p class="venue">2026.09</p>
         <div class="tags">
-          <span>Paper link to be updated</span>
+          <a href="https://arxiv.org/abs/2609.xxxx">arXiv Preprint</a>
           <a href="https://showlab.github.io/Show-Harness/">Project Page</a>
           <a href="https://github.com/showlab/Show-Harness">Github</a>
           <a href="https://huggingface.co/showlab/ShowHarness-VLMs">Models</a>
           <a href="https://huggingface.co/showlab/ShowHarness-Data">Data</a>
         </div>
       </div>
-    </article>
+    </article> -->
 
-    <article class="pub rise">
+    <!-- <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-mmeasurvey.jpg" alt="" loading="lazy"></div>
       <div>
         <h3>When Agents Enter the Physical World: A Capability-Centric Survey of Multimodal Embodied Agents</h3>
@@ -223,7 +223,9 @@
         </p>
         <p class="authors">Co-first Author<span class="star">*</span></p>
         <p class="venue"><b>2026 Conference on Robot Learning (CoRL)</b><span class="dot">·</span> 2026.05</p>
-        <div class="tags"><span>Camera-ready Paper to be Updated</span></div>
+        <div class="tags">
+          <a href="https://arxiv.org/abs/2609.06114">arXiv Preprint</a>
+        </div>
       </div>
     </article>
 
@@ -234,7 +236,7 @@
         <p class="authors">Danze Chen, Yanzhe Chen, Qiming Huang, <span class="me">Zhijun Cao</span>, Chen Gao, Mike Zheng Shou</p>
         <p class="venue"><b>2026 Conference on Robot Learning (CoRL)</b><span class="dot">·</span> 2026.05</p>
         <div class="tags">
-          <a href="https://arxiv.org/abs/2606.24448">Arxiv Preprint</a>
+          <a href="https://arxiv.org/abs/2606.24448">arxiv Preprint</a>
         </div>
       </div>
     </article>
@@ -473,8 +475,8 @@
   var ctx    = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
 
-  var STEPS  = 30;    // 采样步数
-  var DT     = 45;    // 每步毫秒（30 x 45ms 约 1.35s）
+  var STEPS  = 20;    // 采样步数
+  var DT     = 45;    // 每步毫秒（20 x 45ms 约 0.90s）
   var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
   var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
   var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
@@ -564,7 +566,7 @@
 })();
 </script>
 
-<script src="assets/js/worldmap.js?v=20260907"></script>
+<script src="assets/js/worldmap.js?v=20260909"></script>
 
 </body>
 </html>
