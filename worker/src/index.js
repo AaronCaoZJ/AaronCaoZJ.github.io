@@ -92,6 +92,8 @@ export default {
       // Workers 的出口 IP 被大量 Worker 共用，额度常常早被别人耗尽，直接 403。
       // 认证后按 token 计，每小时 5000 次，与 IP 无关。
       if (env.GITHUB_TOKEN) headers.authorization = 'Bearer ' + env.GITHUB_TOKEN;
+      // 只说有没有，不透露值：排查 403 时第一个要确认的就是 token 是否真的被读到
+      const auth = env.GITHUB_TOKEN ? 'token' : 'none';
 
       let stars = null, upstream = 0;
       try {
@@ -102,7 +104,8 @@ export default {
 
       let res;
       if (typeof stars === 'number') {
-        res = json({ stars }, { 'cache-control': 'public, max-age=3600', 'x-upstream': String(upstream) });
+        res = json({ stars }, { 'cache-control': 'public, max-age=3600',
+                              'x-upstream': String(upstream), 'x-auth': auth });
         const keep = json({ stars }, { 'cache-control': 'public, max-age=2592000' });
         ctx.waitUntil(Promise.all([cache.put(freshKey, res.clone()), cache.put(staleKey, keep)]));
         return res;
@@ -112,8 +115,8 @@ export default {
       const stale = await cache.match(staleKey);
       const last = stale ? (await stale.json()).stars : null;
       res = json({ stars: last, stale: last !== null },
-                 { 'cache-control': 'public, max-age=' + (last !== null ? 600 : 300),
-                   'x-upstream': String(upstream) });
+                 { 'cache-control': 'public, max-age=' + (last !== null ? 600 : 60),
+                   'x-upstream': String(upstream), 'x-auth': auth });
       ctx.waitUntil(cache.put(freshKey, res.clone()));
       return res;
     }
