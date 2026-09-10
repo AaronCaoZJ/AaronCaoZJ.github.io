@@ -203,3 +203,40 @@ npx wrangler d1 execute visitors --remote --command "DELETE FROM visits"
 - **爬虫也会被计数**。Worker 没有做 UA 过滤，搜索引擎抓取会落进
   某个数据中心所在的城市。想过滤就在 `/api/visit` 里加一层判断，
   不过前端是用 fetch 发的 POST，大多数爬虫不执行 JS，实际影响很小。
+
+## GitHub star 数（/api/stars）
+
+同一个 Worker 还提供 `/api/stars?repo=owner/name`，页面上带
+`data-gh-stars="owner/name"` 的链接会显示 `★ 147`。仓库必须在
+`worker/src/index.js` 的 `STAR_REPOS` 白名单里。
+
+### 必须配 GITHUB_TOKEN
+
+不配也能跑，但**基本等于不能用**：GitHub 对未认证请求按**出口 IP** 限流，
+每小时 60 次；Cloudflare Workers 的出口 IP 被大量 Worker 共用，这 60 次
+常常早被别人耗尽，接口会一直拿到 403。上线后第一天就踩到了。
+
+配置：
+
+1. GitHub → Settings → Developer settings → Personal access tokens →
+   **Fine-grained tokens** → Generate new token
+2. Repository access 选 **Public Repositories (read-only)**，
+   Permissions **一项都不用勾**（读公开仓库的 star 数不需要任何权限）
+3. 过期时间按喜好（最长一年，到期要回来换）
+4. Cloudflare → Worker → Settings → **Variables and Secrets** → Add →
+   类型选 **Secret**，名字 `GITHUB_TOKEN`，值粘 token
+
+认证后按 token 计额度，每小时 5000 次，与出口 IP 无关。
+
+### 失败时的行为
+
+Worker 会在边缘缓存里另存一份"上次成功的数"，保留 30 天。GitHub 拒绝时
+返回那个旧数（响应里带 `"stale": true`），10 分钟后再重试。
+只有从来没成功过的时候才返回 `{"stars": null}`，此时前端只显示 `Github`。
+
+排查时看响应头 `x-upstream`，它是 Worker 从 GitHub 拿到的状态码：
+`403` 就是限流，`404` 是仓库不公开或名字错了。
+
+```bash
+curl -si "https://caozhijun.top/api/stars?repo=showlab/Show-Harness" | grep -iE "x-upstream|^\{"
+```
