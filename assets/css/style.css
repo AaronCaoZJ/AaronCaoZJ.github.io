@@ -428,6 +428,14 @@ strong { font-weight: 700; }
   border-color: var(--link); text-decoration: none; transform: translateY(-1px);
 }
 .tags span { color: var(--subtle); }
+/* Github 标签后追加的 star 数：细竖线隔开、次要色、等宽数字。
+   它是嵌在 <a> 里的 <span>，会被上面 .tags span 的"标签块"样式命中
+   （底色、四边框、圆角、内边距），不逐项复位就会变成标签里套标签。 */
+.tags .gh-stars {
+  margin-left: 6px; padding: 0 0 0 6px;
+  background: none; border: 0; border-left: 1px solid var(--rule); border-radius: 0;
+  font-size: inherit; color: var(--subtle); font-variant-numeric: tabular-nums;
+}
 
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
 .item { padding: 13px 0; border-bottom: 1px solid var(--rule); }
