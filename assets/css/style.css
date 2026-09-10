@@ -447,6 +447,25 @@ strong { font-weight: 700; }
 }
 .item .s { font-size: 14.5px; color: var(--subtle); margin-top: 2px; }
 .item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
+/* 论文作者列表里的自己：淡蓝底色，从一长串人名里一眼找到。
+   颜色由 --accent 混出，浅色是 #4d6e8a、深色是 #8fb4d0，
+   两套主题各自得到合适的浅蓝，不用分别写。
+   box-decoration-break 保证万一折行时两段都带完整的圆角与内边距。 */
+.pub .authors .me {
+  background: rgba(77, 110, 138, .15);
+  background: color-mix(in srgb, var(--accent) 17%, transparent);
+  padding: 0 4px; border-radius: 4px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+/* 共一的 * 是紧跟在后面的兄弟元素，不在 .me 里面。不改 HTML，
+   而是让 * 接着铺同一块底色，两段拼成一整块：
+   名字去掉右侧圆角和内边距，* 去掉左侧的，接缝处无缝。 */
+.pub .authors .me:has(+ .star) { border-radius: 4px 0 0 4px; padding-right: 1px; }
+.pub .authors .me + .star {
+  background: rgba(77, 110, 138, .15);
+  background: color-mix(in srgb, var(--accent) 17%, transparent);
+  padding: 0 4px 0 1px; border-radius: 0 4px 4px 0;
+}
 
 /* 工作条目下的产出列表：字段名 + 每个产物一行。
    左侧竖线表明从属于上方的经历，右侧状态与日期列对齐，
