@@ -278,7 +278,9 @@ Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
 <script src="assets/js/theme.js?v=20260907"></script>
 ```
 
-**改完样式或脚本，把所有 `?v=` 后面的日期一起换成当天**，再提交推送。
+**改完样式或脚本，把所有 `?v=` 后面的时间戳一起换成当前时刻**，再提交推送。
+精确到分钟（`YYYYMMDDHHMM`）：按天的话，同一天第二次改 CSS 时版本号不变，
+而那个 URL 可能已经被边缘缓存了 —— 这正是本方案要防的情况。
 
 为什么需要它：Cloudflare 给静态资源加了 `max-age=14400`（4 小时的浏览器缓存），
 边缘自己也会缓存。于是 HTML 更新了、CSS 还是旧的，页面就会呈现出"改动没生效"的
@@ -290,5 +292,5 @@ Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
 一条命令全部撞号：
 
 ```bash
-sed -i '' "s/?v=[0-9]\{8\}/?v=$(date +%Y%m%d)/g" index.html gallery/index.html
+sed -i '' "s/?v=[0-9]\{8,\}/?v=$(date +%Y%m%d%H%M)/g" index.html gallery/index.html
 ```

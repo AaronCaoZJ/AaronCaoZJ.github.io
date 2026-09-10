@@ -382,7 +382,8 @@ strong { font-weight: 700; }
   box-shadow: 0 10px 24px rgba(45, 42, 41, .10);
   border-color: var(--rule);
 }
-.pub .thumb img { display: block; width: 100%; }
+.pub .thumb img,
+.pub .thumb video { display: block; width: 100%; }
 .pub h3 {
   font-family: var(--sans); font-size: 16px; font-weight: 650;
   line-height: 1.4; margin: 0 0 5px;
@@ -427,6 +428,14 @@ strong { font-weight: 700; }
   border-color: var(--link); text-decoration: none; transform: translateY(-1px);
 }
 .tags span { color: var(--subtle); }
+/* Github 标签后追加的 star 数：细竖线隔开、次要色、等宽数字。
+   它是嵌在 <a> 里的 <span>，会被上面 .tags span 的"标签块"样式命中
+   （底色、四边框、圆角、内边距），不逐项复位就会变成标签里套标签。 */
+.tags .gh-stars {
+  margin-left: 6px; padding: 0 0 0 6px;
+  background: none; border: 0; border-left: 1px solid var(--rule); border-radius: 0;
+  font-size: inherit; color: var(--subtle); font-variant-numeric: tabular-nums;
+}
 
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
 .item { padding: 13px 0; border-bottom: 1px solid var(--rule); }
@@ -446,6 +455,25 @@ strong { font-weight: 700; }
 }
 .item .s { font-size: 14.5px; color: var(--subtle); margin-top: 2px; }
 .item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
+/* 论文作者列表里的自己：淡蓝底色，从一长串人名里一眼找到。
+   颜色由 --accent 混出，浅色是 #4d6e8a、深色是 #8fb4d0，
+   两套主题各自得到合适的浅蓝，不用分别写。
+   box-decoration-break 保证万一折行时两段都带完整的圆角与内边距。 */
+.pub .authors .me {
+  background: rgba(77, 110, 138, .15);
+  background: color-mix(in srgb, var(--accent) 17%, transparent);
+  padding: 0 4px; border-radius: 4px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+/* 共一的 * 是紧跟在后面的兄弟元素，不在 .me 里面。不改 HTML，
+   而是让 * 接着铺同一块底色，两段拼成一整块：
+   名字去掉右侧圆角和内边距，* 去掉左侧的，接缝处无缝。 */
+.pub .authors .me:has(+ .star) { border-radius: 4px 0 0 4px; padding-right: 1px; }
+.pub .authors .me + .star {
+  background: rgba(77, 110, 138, .15);
+  background: color-mix(in srgb, var(--accent) 17%, transparent);
+  padding: 0 4px 0 1px; border-radius: 0 4px 4px 0;
+}
 
 /* 工作条目下的产出列表：字段名 + 每个产物一行。
    左侧竖线表明从属于上方的经历，右侧状态与日期列对齐，
