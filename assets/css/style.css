@@ -568,7 +568,7 @@ strong { font-weight: 700; }
   --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
   --vmap-pin: var(--sl-red);    /* 接口没给 ago 时的单色兜底 */
 
-  /* 按"多久前访问"着色的三个锚点：红（刚刚）→ 白（约一天）→ 蓝（一个月+）。
+  /* 按"多久前访问"着色的三个锚点：红（本周）→ 白（一个月）→ 蓝（半年+）。
      两极直接用 Show Lab 的红和蓝，与页面其他处的品牌色同源。 */
   --vmap-hot:  var(--sl-red);
   --vmap-mid:  #ffffff;
@@ -580,9 +580,8 @@ strong { font-weight: 700; }
 :root[data-theme="dark"] .vmap {
   --vmap-dot: #333a42;
   --vmap-mid: #ece9e5;          /* 深底上纯白太刺眼，退半档到暖白 */
-  /* 深色下三色对底都在 4.9:1 以上，描边不再负责可见性，
-     只用底色把挨在一起的点切开 */
-  --vmap-ring: #14161a;
+  /* 深色下三色对底都在 4.9:1 以上，不需要描边帮忙显形，去掉 */
+  --vmap-ring: transparent;
 }
 .vmap-land { display: block; width: 100%; }
 .vmap-pins { position: absolute; inset: 0; }
@@ -591,7 +590,8 @@ strong { font-weight: 700; }
   position: absolute; width: var(--s); height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   padding: 0; border: 0; border-radius: 50%;
-  background: var(--vmap-pin); opacity: .9; cursor: pointer;
+  /* 半透明：点叠在点阵上时不把底下的陆地完全盖死，重叠处也能透出层次 */
+  background: var(--vmap-pin); opacity: .72; cursor: pointer;
   box-shadow: 0 0 0 1px var(--vmap-ring);
   transition: transform .2s ease, opacity .2s ease;
 }

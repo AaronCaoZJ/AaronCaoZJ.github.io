@@ -95,32 +95,32 @@
 
   /* ⚠️ 原型数据，非真实访问，仅供 USE_MOCK 时预览版式。 */
   var MOCK = [
-    { city: 'Singapore',     cc: 'SG', lat:   1.29, lon:  103.85, n: 486, ago: 0 },
-    { city: 'Hangzhou',      cc: 'CN', lat:  30.27, lon:  120.15, n: 341, ago: 1 },
-    { city: 'Shanghai',      cc: 'CN', lat:  31.23, lon:  121.47, n: 208, ago: 2 },
-    { city: 'Beijing',       cc: 'CN', lat:  39.90, lon:  116.40, n: 152, ago: 3 },
-    { city: 'Shenzhen',      cc: 'CN', lat:  22.54, lon:  114.06, n:  97, ago: 5 },
-    { city: 'Hong Kong',     cc: 'HK', lat:  22.32, lon:  114.17, n:  84, ago: 8 },
-    { city: 'Tokyo',         cc: 'JP', lat:  35.68, lon:  139.69, n:  73, ago: 12 },
-    { city: 'Seoul',         cc: 'KR', lat:  37.57, lon:  126.98, n:  51, ago: 18 },
-    { city: 'Bengaluru',     cc: 'IN', lat:  12.97, lon:   77.59, n:  44, ago: 24 },
-    { city: 'Sydney',        cc: 'AU', lat: -33.87, lon:  151.21, n:  38, ago: 30 },
-    { city: 'Melbourne',     cc: 'AU', lat: -37.81, lon:  144.96, n:  22, ago: 40 },
-    { city: 'London',        cc: 'GB', lat:  51.51, lon:   -0.13, n:  96, ago: 48 },
-    { city: 'Zurich',        cc: 'CH', lat:  47.38, lon:    8.54, n:  61, ago: 60 },
-    { city: 'Munich',        cc: 'DE', lat:  48.14, lon:   11.58, n:  47, ago: 72 },
-    { city: 'Paris',         cc: 'FR', lat:  48.86, lon:    2.35, n:  35, ago: 96 },
-    { city: 'Amsterdam',     cc: 'NL', lat:  52.37, lon:    4.90, n:  29, ago: 120 },
-    { city: 'Stockholm',     cc: 'SE', lat:  59.33, lon:   18.07, n:  17, ago: 150 },
-    { city: 'Tel Aviv',      cc: 'IL', lat:  32.09, lon:   34.78, n:  14, ago: 200 },
-    { city: 'New York',      cc: 'US', lat:  40.71, lon:  -74.01, n: 174, ago: 260 },
-    { city: 'Boston',        cc: 'US', lat:  42.36, lon:  -71.06, n: 118, ago: 320 },
-    { city: 'San Francisco', cc: 'US', lat:  37.77, lon: -122.42, n: 142, ago: 400 },
-    { city: 'Seattle',       cc: 'US', lat:  47.61, lon: -122.33, n:  66, ago: 480 },
-    { city: 'Pittsburgh',    cc: 'US', lat:  40.44, lon:  -79.996, n: 31, ago: 560 },
-    { city: 'Toronto',       cc: 'CA', lat:  43.65, lon:  -79.38, n:  58, ago: 640 },
-    { city: 'Sao Paulo',     cc: 'BR', lat: -23.55, lon:  -46.63, n:  19, ago: 700 },
-    { city: 'Nairobi',       cc: 'KE', lat:  -1.29, lon:   36.82, n:   8, ago: 720 }
+    { city: 'Singapore',     cc: 'SG', lat:   1.29, lon:  103.85, n: 486, ago: 2 },
+    { city: 'Hangzhou',      cc: 'CN', lat:  30.27, lon:  120.15, n: 341, ago: 10 },
+    { city: 'Shanghai',      cc: 'CN', lat:  31.23, lon:  121.47, n: 208, ago: 30 },
+    { city: 'Beijing',       cc: 'CN', lat:  39.90, lon:  116.40, n: 152, ago: 60 },
+    { city: 'Shenzhen',      cc: 'CN', lat:  22.54, lon:  114.06, n:  97, ago: 100 },
+    { city: 'Hong Kong',     cc: 'HK', lat:  22.32, lon:  114.17, n:  84, ago: 150 },
+    { city: 'Tokyo',         cc: 'JP', lat:  35.68, lon:  139.69, n:  73, ago: 200 },
+    { city: 'Seoul',         cc: 'KR', lat:  37.57, lon:  126.98, n:  51, ago: 260 },
+    { city: 'Bengaluru',     cc: 'IN', lat:  12.97, lon:   77.59, n:  44, ago: 340 },
+    { city: 'Sydney',        cc: 'AU', lat: -33.87, lon:  151.21, n:  38, ago: 420 },
+    { city: 'Melbourne',     cc: 'AU', lat: -37.81, lon:  144.96, n:  22, ago: 520 },
+    { city: 'London',        cc: 'GB', lat:  51.51, lon:   -0.13, n:  96, ago: 640 },
+    { city: 'Zurich',        cc: 'CH', lat:  47.38, lon:    8.54, n:  61, ago: 760 },
+    { city: 'Munich',        cc: 'DE', lat:  48.14, lon:   11.58, n:  47, ago: 900 },
+    { city: 'Paris',         cc: 'FR', lat:  48.86, lon:    2.35, n:  35, ago: 1100 },
+    { city: 'Amsterdam',     cc: 'NL', lat:  52.37, lon:    4.90, n:  29, ago: 1400 },
+    { city: 'Stockholm',     cc: 'SE', lat:  59.33, lon:   18.07, n:  17, ago: 1700 },
+    { city: 'Tel Aviv',      cc: 'IL', lat:  32.09, lon:   34.78, n:  14, ago: 2100 },
+    { city: 'New York',      cc: 'US', lat:  40.71, lon:  -74.01, n: 174, ago: 2500 },
+    { city: 'Boston',        cc: 'US', lat:  42.36, lon:  -71.06, n: 118, ago: 3000 },
+    { city: 'San Francisco', cc: 'US', lat:  37.77, lon: -122.42, n: 142, ago: 3600 },
+    { city: 'Seattle',       cc: 'US', lat:  47.61, lon: -122.33, n:  66, ago: 4300 },
+    { city: 'Pittsburgh',    cc: 'US', lat:  40.44, lon:  -79.996, n: 31, ago: 5000 },
+    { city: 'Toronto',       cc: 'CA', lat:  43.65, lon:  -79.38, n:  58, ago: 6000 },
+    { city: 'Sao Paulo',     cc: 'BR', lat: -23.55, lon:  -46.63, n:  19, ago: 7000 },
+    { city: 'Nairobi',       cc: 'KE', lat:  -1.29, lon:   36.82, n:   8, ago: 9000 }
   ];
 
   var cvs  = document.createElement('canvas');
@@ -166,12 +166,16 @@
     }
   }
 
-  /* 按"多久前访问"着色：红（刚刚）→ 白（约一天）→ 蓝（一个月以上）。
-     用对数刻度：访问集中在最近，线性刻度下几乎所有点都会挤在红端。
-     1 小时到 30 天取对数后，中点恰好落在约 22 小时处。 */
+  /* 按"多久前访问"着色：本周内红，一个月白，半年及以上蓝。
+     三个锚点把刻度分成两臂，每臂内部按对数插值 —— 一周到一个月、
+     一个月到半年，跨度差了好几倍，线性的话前一臂几乎看不出过渡。 */
+  var WEEK = 168, MONTH = 720, HALF_YEAR = 4320;   // 小时
   function heat(ago) {
-    var h = Math.min(Math.max(ago, 1), 720);
-    return Math.log(h) / Math.log(720);
+    if (ago <= WEEK) return 0;
+    if (ago >= HALF_YEAR) return 1;
+    return ago <= MONTH
+      ? 0.5 * Math.log(ago / WEEK) / Math.log(MONTH / WEEK)
+      : 0.5 + 0.5 * Math.log(ago / MONTH) / Math.log(HALF_YEAR / MONTH);
   }
   /* 两段 color-mix：0–0.5 是红→白，0.5–1 是白→蓝。
      颜色本身留在 CSS 变量里，JS 只算比例 —— 切换明暗主题时不用重算，
