@@ -566,9 +566,24 @@ strong { font-weight: 700; }
   position: relative;
   width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
   --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
-  --vmap-pin: var(--sl-red);
+  --vmap-pin: var(--sl-red);    /* 接口没给 ago 时的单色兜底 */
+
+  /* 按"多久前访问"着色的三个锚点：红（刚刚）→ 白（约一天）→ 蓝（一个月+）。
+     两极直接用 Show Lab 的红和蓝，与页面其他处的品牌色同源。 */
+  --vmap-hot:  var(--sl-red);
+  --vmap-mid:  #ffffff;
+  --vmap-cold: var(--sl-blue);
+  /* 浅色底上白点对页面只有 1.02:1 —— 等于隐形，中间那段时间的访客会从
+     地图上消失。一圈暗色细描边让它读成"空心圆"，而不必改掉白色本身。 */
+  --vmap-ring: rgba(43, 42, 41, .42);
 }
-:root[data-theme="dark"] .vmap { --vmap-dot: #333a42; }
+:root[data-theme="dark"] .vmap {
+  --vmap-dot: #333a42;
+  --vmap-mid: #ece9e5;          /* 深底上纯白太刺眼，退半档到暖白 */
+  /* 深色下三色对底都在 4.9:1 以上，描边不再负责可见性，
+     只用底色把挨在一起的点切开 */
+  --vmap-ring: #14161a;
+}
 .vmap-land { display: block; width: 100%; }
 .vmap-pins { position: absolute; inset: 0; }
 /* 用 <button> 而不是 <span>：键盘可聚焦，读屏能念出城市和次数 */
@@ -576,7 +591,8 @@ strong { font-weight: 700; }
   position: absolute; width: var(--s); height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   padding: 0; border: 0; border-radius: 50%;
-  background: var(--vmap-pin); opacity: .75; cursor: pointer;
+  background: var(--vmap-pin); opacity: .9; cursor: pointer;
+  box-shadow: 0 0 0 1px var(--vmap-ring);
   transition: transform .2s ease, opacity .2s ease;
 }
 .vmap-pin:hover, .vmap-pin:focus-visible {

@@ -57,8 +57,13 @@ export default {
 
     // ---------- 读聚合结果 ----------
     if (pathname === '/api/visitors') {
+      // ago = 距最近一次访问的小时数，用于地图按时间着色。
+      // 返回"几小时前"而非精确时间戳：只有一位访客的小城市，精确到秒的
+      // 时间戳等于公开了"某人在某时刻打开过这个页面"；按小时取整就够上色了。
+      // 在服务端算，也免掉了访客本机时钟不准带来的偏差。
       const { results } = await env.DB.prepare(
-        `SELECT city, country AS cc, lat, lon, n
+        `SELECT city, country AS cc, lat, lon, n,
+                CAST((unixepoch() - last_seen) / 3600 AS INTEGER) AS ago
          FROM visits ORDER BY n DESC LIMIT 300`
       ).all();
 

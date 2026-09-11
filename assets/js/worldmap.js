@@ -95,32 +95,32 @@
 
   /* ⚠️ 原型数据，非真实访问，仅供 USE_MOCK 时预览版式。 */
   var MOCK = [
-    { city: 'Singapore',     cc: 'SG', lat:   1.29, lon:  103.85, n: 486 },
-    { city: 'Hangzhou',      cc: 'CN', lat:  30.27, lon:  120.15, n: 341 },
-    { city: 'Shanghai',      cc: 'CN', lat:  31.23, lon:  121.47, n: 208 },
-    { city: 'Beijing',       cc: 'CN', lat:  39.90, lon:  116.40, n: 152 },
-    { city: 'Shenzhen',      cc: 'CN', lat:  22.54, lon:  114.06, n:  97 },
-    { city: 'Hong Kong',     cc: 'HK', lat:  22.32, lon:  114.17, n:  84 },
-    { city: 'Tokyo',         cc: 'JP', lat:  35.68, lon:  139.69, n:  73 },
-    { city: 'Seoul',         cc: 'KR', lat:  37.57, lon:  126.98, n:  51 },
-    { city: 'Bengaluru',     cc: 'IN', lat:  12.97, lon:   77.59, n:  44 },
-    { city: 'Sydney',        cc: 'AU', lat: -33.87, lon:  151.21, n:  38 },
-    { city: 'Melbourne',     cc: 'AU', lat: -37.81, lon:  144.96, n:  22 },
-    { city: 'London',        cc: 'GB', lat:  51.51, lon:   -0.13, n:  96 },
-    { city: 'Zurich',        cc: 'CH', lat:  47.38, lon:    8.54, n:  61 },
-    { city: 'Munich',        cc: 'DE', lat:  48.14, lon:   11.58, n:  47 },
-    { city: 'Paris',         cc: 'FR', lat:  48.86, lon:    2.35, n:  35 },
-    { city: 'Amsterdam',     cc: 'NL', lat:  52.37, lon:    4.90, n:  29 },
-    { city: 'Stockholm',     cc: 'SE', lat:  59.33, lon:   18.07, n:  17 },
-    { city: 'Tel Aviv',      cc: 'IL', lat:  32.09, lon:   34.78, n:  14 },
-    { city: 'New York',      cc: 'US', lat:  40.71, lon:  -74.01, n: 174 },
-    { city: 'Boston',        cc: 'US', lat:  42.36, lon:  -71.06, n: 118 },
-    { city: 'San Francisco', cc: 'US', lat:  37.77, lon: -122.42, n: 142 },
-    { city: 'Seattle',       cc: 'US', lat:  47.61, lon: -122.33, n:  66 },
-    { city: 'Pittsburgh',    cc: 'US', lat:  40.44, lon:  -79.996, n: 31 },
-    { city: 'Toronto',       cc: 'CA', lat:  43.65, lon:  -79.38, n:  58 },
-    { city: 'Sao Paulo',     cc: 'BR', lat: -23.55, lon:  -46.63, n:  19 },
-    { city: 'Nairobi',       cc: 'KE', lat:  -1.29, lon:   36.82, n:   8 }
+    { city: 'Singapore',     cc: 'SG', lat:   1.29, lon:  103.85, n: 486, ago: 0 },
+    { city: 'Hangzhou',      cc: 'CN', lat:  30.27, lon:  120.15, n: 341, ago: 1 },
+    { city: 'Shanghai',      cc: 'CN', lat:  31.23, lon:  121.47, n: 208, ago: 2 },
+    { city: 'Beijing',       cc: 'CN', lat:  39.90, lon:  116.40, n: 152, ago: 3 },
+    { city: 'Shenzhen',      cc: 'CN', lat:  22.54, lon:  114.06, n:  97, ago: 5 },
+    { city: 'Hong Kong',     cc: 'HK', lat:  22.32, lon:  114.17, n:  84, ago: 8 },
+    { city: 'Tokyo',         cc: 'JP', lat:  35.68, lon:  139.69, n:  73, ago: 12 },
+    { city: 'Seoul',         cc: 'KR', lat:  37.57, lon:  126.98, n:  51, ago: 18 },
+    { city: 'Bengaluru',     cc: 'IN', lat:  12.97, lon:   77.59, n:  44, ago: 24 },
+    { city: 'Sydney',        cc: 'AU', lat: -33.87, lon:  151.21, n:  38, ago: 30 },
+    { city: 'Melbourne',     cc: 'AU', lat: -37.81, lon:  144.96, n:  22, ago: 40 },
+    { city: 'London',        cc: 'GB', lat:  51.51, lon:   -0.13, n:  96, ago: 48 },
+    { city: 'Zurich',        cc: 'CH', lat:  47.38, lon:    8.54, n:  61, ago: 60 },
+    { city: 'Munich',        cc: 'DE', lat:  48.14, lon:   11.58, n:  47, ago: 72 },
+    { city: 'Paris',         cc: 'FR', lat:  48.86, lon:    2.35, n:  35, ago: 96 },
+    { city: 'Amsterdam',     cc: 'NL', lat:  52.37, lon:    4.90, n:  29, ago: 120 },
+    { city: 'Stockholm',     cc: 'SE', lat:  59.33, lon:   18.07, n:  17, ago: 150 },
+    { city: 'Tel Aviv',      cc: 'IL', lat:  32.09, lon:   34.78, n:  14, ago: 200 },
+    { city: 'New York',      cc: 'US', lat:  40.71, lon:  -74.01, n: 174, ago: 260 },
+    { city: 'Boston',        cc: 'US', lat:  42.36, lon:  -71.06, n: 118, ago: 320 },
+    { city: 'San Francisco', cc: 'US', lat:  37.77, lon: -122.42, n: 142, ago: 400 },
+    { city: 'Seattle',       cc: 'US', lat:  47.61, lon: -122.33, n:  66, ago: 480 },
+    { city: 'Pittsburgh',    cc: 'US', lat:  40.44, lon:  -79.996, n: 31, ago: 560 },
+    { city: 'Toronto',       cc: 'CA', lat:  43.65, lon:  -79.38, n:  58, ago: 640 },
+    { city: 'Sao Paulo',     cc: 'BR', lat: -23.55, lon:  -46.63, n:  19, ago: 700 },
+    { city: 'Nairobi',       cc: 'KE', lat:  -1.29, lon:   36.82, n:   8, ago: 720 }
   ];
 
   var cvs  = document.createElement('canvas');
@@ -166,8 +166,32 @@
     }
   }
 
+  /* 按"多久前访问"着色：红（刚刚）→ 白（约一天）→ 蓝（一个月以上）。
+     用对数刻度：访问集中在最近，线性刻度下几乎所有点都会挤在红端。
+     1 小时到 30 天取对数后，中点恰好落在约 22 小时处。 */
+  function heat(ago) {
+    var h = Math.min(Math.max(ago, 1), 720);
+    return Math.log(h) / Math.log(720);
+  }
+  /* 两段 color-mix：0–0.5 是红→白，0.5–1 是白→蓝。
+     颜色本身留在 CSS 变量里，JS 只算比例 —— 切换明暗主题时不用重算，
+     点的颜色会跟着变量自动换。浏览器不支持 color-mix 时这条内联样式
+     整条作废，退回样式表里的单色 --vmap-pin。 */
+  function heatColor(t) {
+    return t <= 0.5
+      ? 'color-mix(in oklab, var(--vmap-mid) ' + (t * 200).toFixed(1) + '%, var(--vmap-hot))'
+      : 'color-mix(in oklab, var(--vmap-cold) ' + ((t - 0.5) * 200).toFixed(1) + '%, var(--vmap-mid))';
+  }
+  function agoText(h) {
+    if (h < 1)   return 'within the hour';
+    if (h < 24)  return h + ' h ago';
+    if (h < 720) return Math.round(h / 24) + ' d ago';
+    return Math.round(h / 720) + ' mo ago';
+  }
+
   function showTip(pin, d) {
-    tip.textContent = d.city + ', ' + d.cc + ' \u00b7 ' + d.n + ' visits';
+    tip.textContent = d.city + ', ' + d.cc + ' \u00b7 ' + d.n + ' visits' +
+                      (typeof d.ago === 'number' ? ' \u00b7 ' + agoText(d.ago) : '');
     tip.style.left = pin.style.left;
     tip.style.top  = pin.style.top;
     tip.hidden = false;
@@ -185,7 +209,10 @@
       b.style.top  = ((LAT_T - d.lat) / (LAT_T - LAT_B) * 100) + '%';
       /* 面积正比于访问量 => 半径开方，否则大城市会大得离谱 */
       b.style.setProperty('--s', (5 + 8 * Math.sqrt(d.n / max)).toFixed(1) + 'px');
-      b.setAttribute('aria-label', d.city + ', ' + d.cc + ', ' + d.n + ' visits');
+      b.setAttribute('aria-label', d.city + ', ' + d.cc + ', ' + d.n + ' visits' +
+                     (typeof d.ago === 'number' ? ', last ' + agoText(d.ago) : ''));
+      // 旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
+      if (typeof d.ago === 'number') b.style.background = heatColor(heat(d.ago));
       b.addEventListener('mouseenter', function () { showTip(b, d); });
       b.addEventListener('focus',      function () { showTip(b, d); });
       b.addEventListener('mouseleave', function () { tip.hidden = true; });
