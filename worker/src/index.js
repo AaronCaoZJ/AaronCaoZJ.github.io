@@ -57,8 +57,13 @@ export default {
 
     // ---------- 读聚合结果 ----------
     if (pathname === '/api/visitors') {
+      // ago = 距最近一次访问的小时数，用于地图按时间着色。
+      // 返回"几小时前"而非精确时间戳：只有一位访客的小城市，精确到秒的
+      // 时间戳等于公开了"某人在某时刻打开过这个页面"；按小时取整就够上色了。
+      // 在服务端算，也免掉了访客本机时钟不准带来的偏差。
       const { results } = await env.DB.prepare(
-        `SELECT city, country AS cc, lat, lon, n
+        `SELECT city, country AS cc, lat, lon, n,
+                CAST((unixepoch() - last_seen) / 3600 AS INTEGER) AS ago
          FROM visits ORDER BY n DESC LIMIT 300`
       ).all();
 
@@ -75,31 +80,49 @@ export default {
         return new Response('Not found', { status: 404 });
       }
 
-      // Worker 的响应不会自动进 CDN 缓存，要自己用 Cache API 存取。
-      // 命中就直接返回：每个边缘节点每小时最多问 GitHub 一次。
+      // 两份缓存：fresh 存一小时，是正常路径；stale 存 30 天，只在 GitHub
+      // 拒绝时拿出来顶上。Worker 的响应不会自动进 CDN 缓存，要自己存取。
       const cache = caches.default;
-      const key = new Request(url.toString(), { method: 'GET' });
-      const hit = await cache.match(key);
+      const freshKey = new Request(url.origin + '/api/stars?repo=' + repo);
+      const staleKey = new Request(url.origin + '/api/stars?repo=' + repo + '&stale=1');
+
+      const hit = await cache.match(freshKey);
       if (hit) return hit;
 
       const headers = {
         'user-agent': 'caozhijun.top',            // GitHub API 强制要求 UA
         accept: 'application/vnd.github+json',
       };
-      // 可选：在 Worker 的 Settings → Variables 里配一个 GITHUB_TOKEN（只读、
-      // 不需要任何权限），额度从 60/小时 提到 5000/小时。不配也能用。
+      // 强烈建议配置：未认证的限额是按出口 IP 计的每小时 60 次，而 Cloudflare
+      // Workers 的出口 IP 被大量 Worker 共用，额度常常早被别人耗尽，直接 403。
+      // 认证后按 token 计，每小时 5000 次，与 IP 无关。
       if (env.GITHUB_TOKEN) headers.authorization = 'Bearer ' + env.GITHUB_TOKEN;
+      // 只说有没有，不透露值：排查 403 时第一个要确认的就是 token 是否真的被读到
+      const auth = env.GITHUB_TOKEN ? 'token' : 'none';
 
-      let stars = null;
+      let stars = null, upstream = 0;
       try {
         const r = await fetch('https://api.github.com/repos/' + repo, { headers });
+        upstream = r.status;
         if (r.ok) stars = (await r.json()).stargazers_count;
-      } catch (e) { /* 取不到就返回 null，前端会只显示 "Github" */ }
+      } catch (e) { upstream = -1; }
 
-      // 成功缓存 1 小时；失败只缓存 5 分钟，免得一次抖动卡住一整小时
-      const ttl = typeof stars === 'number' ? 3600 : 300;
-      const res = json({ stars }, { 'cache-control': 'public, max-age=' + ttl });
-      ctx.waitUntil(cache.put(key, res.clone()));
+      let res;
+      if (typeof stars === 'number') {
+        res = json({ stars }, { 'cache-control': 'public, max-age=3600',
+                              'x-upstream': String(upstream), 'x-auth': auth });
+        const keep = json({ stars }, { 'cache-control': 'public, max-age=2592000' });
+        ctx.waitUntil(Promise.all([cache.put(freshKey, res.clone()), cache.put(staleKey, keep)]));
+        return res;
+      }
+
+      // GitHub 失败：有上次成功的数就用它，10 分钟后再试；从没成功过才回 null
+      const stale = await cache.match(staleKey);
+      const last = stale ? (await stale.json()).stars : null;
+      res = json({ stars: last, stale: last !== null },
+                 { 'cache-control': 'public, max-age=' + (last !== null ? 600 : 60),
+                   'x-upstream': String(upstream), 'x-auth': auth });
+      ctx.waitUntil(cache.put(freshKey, res.clone()));
       return res;
     }
 
