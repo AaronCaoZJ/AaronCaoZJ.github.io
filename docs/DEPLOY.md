@@ -294,3 +294,6 @@ Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
 ```bash
 sed -i '' "s/?v=[0-9]\{8,\}/?v=$(date +%Y%m%d%H%M)/g" index.html gallery/index.html
 ```
+
+简历 PDF 的两处链接同样带 `?v=`，上面那条 sed 会一起撞号。**换简历时务必也跑一次**：
+PDF 属于静态资源，同样被缓存 4 小时，不撞号的话访客会继续下到旧简历。
