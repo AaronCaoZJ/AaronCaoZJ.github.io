@@ -4,6 +4,25 @@
    一个字符管四格，整张图 3.1 KB，不需要任何地图库或瓦片服务。
    掩码由 Natural Earth 110m 陆地边界离线扫描线光栅化生成
    （纬度裁到 83N~56S，去掉南极洲和北冰洋的空行）。 */
+/* ---------- 记一次访问 ----------
+   与地图的显示完全解耦：地图被隐藏、#visitorMap 不存在时照样记录，
+   恢复显示那天看到的是连续的数据，而不是隐藏期间的一段空白。
+
+   同一浏览器 24 小时内只记一次 —— 判断在客户端，能被绕过，但对个人
+   主页足够，也免得自己刷新几次就把本地的点顶大。隐私模式下 localStorage
+   访问本身就会抛异常，所以包 try/catch；存不了就每次都记，无所谓。 */
+(function () {
+  var KEY = 'vmap:seen', now = Date.now();
+  try {
+    if (now - (+localStorage.getItem(KEY) || 0) < 864e5) return;
+    localStorage.setItem(KEY, now);
+  } catch (e) {}
+  if (window.fetch) {
+    fetch('/api/visit', { method: 'POST', keepalive: true }).catch(function () {});
+  }
+})();
+
+/* ---------- 画地图 ---------- */
 (function () {
   var el = document.getElementById('visitorMap');
   if (!el) return;
@@ -89,7 +108,6 @@
      也不能把编出来的数字当成真实访问量摆在页面上。 */
   var USE_MOCK = false;
   var API_READ  = '/api/visitors';
-  var API_WRITE = '/api/visit';
 
   var DATA = [];
 
@@ -243,22 +261,9 @@
       { attributes: true, attributeFilter: ['data-theme'] });
   }
 
-  /* 记一次访问。同一浏览器 24 小时内只记一次 —— 判断在客户端，
-     能被绕过，但对个人主页足够，也免得自己刷新几次就把本地点顶大。
-     隐私模式下 localStorage 会直接抛异常，所以整段包 try/catch。 */
-  function record() {
-    var KEY = 'vmap:seen', now = Date.now();
-    try {
-      if (now - (+localStorage.getItem(KEY) || 0) < 864e5) return;
-      localStorage.setItem(KEY, now);
-    } catch (e) { /* 存不了就每次都记，无所谓 */ }
-    fetch(API_WRITE, { method: 'POST', keepalive: true }).catch(function () {});
-  }
-
   if (USE_MOCK) {
     start(MOCK);
   } else {
-    record();
     fetch(API_READ, { headers: { accept: 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(start)
