@@ -484,6 +484,9 @@ strong { font-weight: 700; }
   color: var(--subtle); margin: 9px 0 4px;
 }
 .item .plist { border-left: 2px solid var(--rule); padding-left: 14px; }
+/* 挂在学校下面的经历（如 ZJU 下的 RA）：沿用 Products 那条左边框，
+   标题比父条目小一档、字重降一级，一眼看出是从属关系而不是并列条目 */
+.item .plist > .row .t { font-size: 14.5px; font-weight: 600; }
 /* 不用 space-between 把状态顶到最右：产品名 + 标签只占三分之一宽，
    撑开的空白会让状态看着像掉队的孤儿。让它紧跟标签自然排布，
    窄屏放不下时整体折行。 */
