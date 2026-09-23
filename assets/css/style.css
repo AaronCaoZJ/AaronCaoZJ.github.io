@@ -360,16 +360,32 @@ strong { font-weight: 700; }
 }
 .news-more:hover { text-decoration: underline; }
 
+/* ---------- 条目卡片 ----------
+   每条经历 / 论文各自一张卡片，不再靠横线分隔。 */
+.item, .pub {
+  background: var(--card);
+  border: 1px solid var(--card-b);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  transition: border-color .22s ease, box-shadow .22s ease;
+}
+.item:last-child, .pub:last-child { margin-bottom: 0; }
+/* 悬停只动描边和投影，不做位移 —— 论文卡内部的缩略图已经有上浮动效，
+   两层一起动会显得晃 */
+.item:hover, .pub:hover {
+  border-color: var(--rule);
+  box-shadow: 0 6px 20px var(--glass-cast);
+}
+
 /* ---------- 论文卡片 ---------- */
 .pub {
   display: grid; grid-template-columns: 264px 1fr;
-  gap: 22px; padding: 20px 0;
-  border-bottom: 1px solid var(--rule);
+  gap: 22px; padding: 18px 20px;
   /* grid item 默认 align-self:stretch，会把 .thumb 拉到与右侧文字等高，
      图片下方留出大片空白边框。改为 center 让缩略图垂直居中对齐正文。 */
   align-items: center;
 }
-.pub:last-child { border-bottom: 0; }
+
 .pub .thumb {
   width: 100%; border-radius: 8px;
   border: 1px solid var(--card-b); background: var(--card);
@@ -438,8 +454,21 @@ strong { font-weight: 700; }
 }
 
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
-.item { padding: 13px 0; border-bottom: 1px solid var(--rule); }
-.item:last-child { border-bottom: 0; }
+.item { padding: 18px 20px; display: flex; gap: 18px; align-items: flex-start; }
+/* 正文一侧必须可收缩：min-width:0 不写的话，flex item 的最小尺寸是内容宽度，
+   长机构名会把卡片撑破而不是在内部折行 */
+.item .ibody { flex: 1 1 auto; min-width: 0; }
+/* logo 底块固定 88x56：ZJU 是正方徽章、mikomiko 是 7:1 的横幅，
+   contain 让两类都完整落进同一个框，视觉上对齐。
+   底色两套主题下都用白 —— logo 是按浅色底设计的，
+   InnoMotion 那张还是不透明白底的 JPG，深色卡片上会露出白块。 */
+.ilogo {
+  flex: 0 0 auto; width: 88px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid var(--card-b);
+  border-radius: 10px; padding: 7px;
+}
+.ilogo img { max-width: 100%; max-height: 100%; width: auto; height: auto; }
 .item .row {
   display: flex; justify-content: space-between;
   align-items: baseline; gap: 6px 16px; flex-wrap: wrap;
@@ -634,7 +663,8 @@ footer.wrap {
   .avatar-wrap { width: 150px; height: 150px; order: -1; justify-self: start; }
   .hero .avatar { width: 150px; height: 150px; }
   .hero h1 { font-size: 28px; }
-  .pub { grid-template-columns: 1fr; gap: 14px; }
+  .pub { grid-template-columns: 1fr; gap: 14px; padding: 14px; }
+  .item { padding: 14px; gap: 14px; }
   /* 窄屏日期单独占一行；连 ul 一起退回块级，否则 subgrid 还在生效 */
   .news, .news li { display: block; }
   .info-block { margin-top: 34px; padding: 20px 18px; }
