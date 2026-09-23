@@ -492,26 +492,10 @@ strong { font-weight: 700; }
 /* 同一个子列表里放多条时，条与条之间留一点气口 */
 .item .plist > .row + .s { margin-bottom: 8px; }
 .item .plist > .s:last-child { margin-bottom: 0; }
-/* 不用 space-between 把状态顶到最右：产品名 + 标签只占三分之一宽，
-   撑开的空白会让状态看着像掉队的孤儿。让它紧跟标签自然排布，
-   窄屏放不下时整体折行。 */
-.item .prow {
-  display: flex; flex-wrap: wrap; align-items: baseline;
-  gap: 4px 10px; font-size: 14.5px; padding: 1px 0;
-}
-.item .product-main {
-  display: flex; align-items: baseline; flex-wrap: wrap;
-  gap: 5px 8px; min-width: 0;
-}
-.item .product-tags {
-  display: inline-flex; flex-wrap: wrap; gap: 4px;
-}
-.item .product-tags span {
-  font-family: var(--sans); font-size: 10.5px; line-height: 1.4;
-  color: var(--subtle); background: var(--chip);
-  border: 1px solid var(--card-b); border-radius: 4px;
-  padding: 1px 6px; white-space: nowrap;
-}
+/* 产品行现在是「名字（一句话说明）」，就是一句普通文字，
+   用块级即可；之前的 flex 会把括号里的说明当成独立 flex item，
+   被 gap 推开一截。 */
+.item .prow { font-size: 13.8px; padding: 1px 0; }
 /* 产品状态标签统一斜体 —— 把"这是元信息"和左侧的产品名区分开，
    Released / To be Announced 的差别交给字面本身表达 */
 .item .pst {
