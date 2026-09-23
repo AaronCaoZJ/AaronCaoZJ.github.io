@@ -367,9 +367,9 @@ strong { font-weight: 700; }
 .pub h3 {
   font-family: var(--sans); font-size: 15px; font-weight: 650;
   line-height: 1.38; margin: 0 0 4px;
-  /* pretty 而非 balance：标题里浮动着共一标注，
-     balance 遇到浮动元素会被忽略；pretty 只管不让尾行剩一个词，仍然生效 */
-  text-wrap: pretty;
+  /* balance 把各行长度调匀，避免尾行只剩两三个词；
+     短文本才适用，标题正是它的目标场景 */
+  text-wrap: balance;
   transition: color .22s ease;
 }
 /* pretty 只管最后一行：不让单个词孤零零掉到下一行，
@@ -386,14 +386,15 @@ strong { font-weight: 700; }
 .pub .venue b,
 .pub .venue em { color: var(--high); font-weight: 600; font-style: normal; }
 .pub .venue .dot { margin: 0 5px; opacity: .6; font-style: normal; }
-/* 共一标注靠右，与大标题同一行 —— 原来它独占一行，
-   为一句四个词的注解多花一行不划算。
-   用 float 而非 flex：h3 里除了文字还有 .shx 那几个字母 span，
-   改成 flex 会把裸文本节点各自变成匿名 flex item，被 gap 拆散。 */
-.pub h3 .cofirst {
-  float: right; margin-left: 16px;
+/* 共一说明放在 Publications 这个章节标题的右端，整节只出现一次。
+   h2 自带 uppercase / letter-spacing / accent 色，这里逐项复位。 */
+#publications h2 {
+  display: flex; justify-content: space-between;
+  align-items: baseline; flex-wrap: wrap; gap: 2px 20px;
+}
+#publications h2 .cofirst {
   font-family: var(--sans); font-size: 12.5px; font-weight: 500;
-  color: var(--subtle);
+  letter-spacing: normal; text-transform: none; color: var(--subtle);
 }
 .star { color: var(--high); font-weight: 700; }
 
