@@ -49,14 +49,14 @@
   --sl-red:    #D85E5D;
   --sl-orange: #F3AA68;
   --link:   #5c8299;   /* 莫兰迪石青 —— 链接 */
-  --rule:   #cec9c6;   /* 莫兰迪浅暖灰 —— 分隔线 */
-  --subtle: #8d8481;   /* 莫兰迪暖灰 —— 次要文字 */
+  --rule:   #c9d3dd;   /* 浅蓝灰 —— 分隔线 */
+  --subtle: #7b8794;   /* 蓝灰 —— 次要文字 */
 
-  --bg:     #f5f4f1;   /* 极浅的暖灰纯色：白色卡片落在上面才有层次 */
-  --fg:     #2b2a29;
+  --bg:     #f3f6f9;   /* 极浅的蓝灰纯色：白色卡片落在上面才有层次 */
+  --fg:     #232a31;
   --card:   #ffffff;
-  --card-b: #e2ddd8;   /* 所有圆角框统一用这条描边 */
-  --chip:   #f2efec;
+  --card-b: #dbe3eb;   /* 所有圆角框统一用这条描边 */
+  --chip:   #eef2f6;
 
   /* 中文不自托管字体：页面上中文只有寥寥几个词，
      为此下载 1–3 MB 字库对大陆访问得不偿失，交给系统字体。 */
@@ -76,7 +76,7 @@
   --glass-fill: rgba(255, 255, 255, .20);
   --glass-blur: 5px;
   --glass-edge: rgba(255, 255, 255, .75);
-  --glass-cast: rgba(45, 42, 41, .09);
+  --glass-cast: rgba(35, 52, 70, .09);
 
   --glass-hover: rgba(255, 255, 255, .55);
   --text-halo: rgba(255, 255, 255, .85);
@@ -104,7 +104,7 @@ body {
 }
 
 
-a { color: var(--link); text-decoration: none; }
+a { color: var(--link); text-decoration: none; font-weight: 600; }
 a:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 img { max-width: 100%; }
@@ -233,7 +233,7 @@ img { max-width: 100%; }
   border-color: var(--accent); color: var(--accent);
   text-decoration: none;
   transform: translateY(-2px);
-  box-shadow: 0 5px 14px rgba(45, 42, 41, .09);
+  box-shadow: 0 5px 14px rgba(35, 52, 70, .09);
 }
 /* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
@@ -319,7 +319,7 @@ strong { font-weight: 700; }
 .item:last-child, .pub:last-child { margin-bottom: 0; }
 /* 页面与卡片同为纯白，静止时给一层极淡投影托一下，
    否则分界只剩那条 1px 边框 */
-.item, .pub { box-shadow: 0 1px 2px rgba(45, 42, 41, .045); }
+.item, .pub { box-shadow: 0 1px 2px rgba(35, 52, 70, .05); }
 /* 悬停只动描边和投影，不做位移 —— 论文卡内部的缩略图已经有上浮动效，
    两层一起动会显得晃 */
 .item:hover, .pub:hover {
@@ -329,7 +329,7 @@ strong { font-weight: 700; }
 
 /* ---------- 论文卡片 ---------- */
 .pub {
-  display: grid; grid-template-columns: 200px 1fr;
+  display: grid; grid-template-columns: 220px 1fr;
   gap: 20px; padding: 18px 20px;
   /* grid item 默认 align-self:stretch，会把 .thumb 拉到与右侧文字等高，
      图片下方留出大片空白边框。改为 center 让缩略图垂直居中对齐正文。 */
@@ -345,7 +345,7 @@ strong { font-weight: 700; }
 /* 悬停整张卡片时缩略图上浮，标题同步点亮 —— 让整块成为一个视觉单元 */
 .pub:hover .thumb {
   transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(45, 42, 41, .10);
+  box-shadow: 0 10px 24px rgba(35, 52, 70, .10);
   border-color: var(--rule);
 }
 .pub .thumb img,
@@ -392,7 +392,7 @@ strong { font-weight: 700; }
 /* 只命中直接子级：star 数是嵌在 <a> 里的 <span>，
    用 .tags span 的话它会被再套一层方括号 */
 .tags > a, .tags > span {
-  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  font-family: var(--sans); font-size: 12px; font-weight: 600;
   color: var(--link);
   transition: color .18s ease;
 }
@@ -505,7 +505,7 @@ strong { font-weight: 700; }
   border-radius: 18px;
   background: var(--card);
   border: 1px solid var(--card-b);
-  box-shadow: 0 1px 2px rgba(45, 42, 41, .045);
+  box-shadow: 0 1px 2px rgba(35, 52, 70, .05);
 }
 .info-block > * { position: relative; }
 
@@ -542,7 +542,7 @@ strong { font-weight: 700; }
 .vmap {
   position: relative;
   width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
-  --vmap-dot: #d9d4d0;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
+  --vmap-dot: #d3dbe3;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
   --vmap-pin: var(--sl-red);    /* 接口没给 ago 时的单色兜底 */
 
   /* 按"多久前访问"着色的三个锚点：红（本周）→ 白（一个月）→ 蓝（半年+）。
