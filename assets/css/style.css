@@ -400,27 +400,25 @@ strong { font-weight: 700; }
   margin: 0 0 8px;
 }
 
-.tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.tags a, .tags span {
+/* 链接不再做成方块标签，改用方括号包裹。没有了底色与边框，
+   彼此之间要靠更大的间距分开，所以列间距从 6px 提到 12px。 */
+.tags { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+/* 只命中直接子级：star 数是嵌在 <a> 里的 <span>，
+   用 .tags span 的话它会被再套一层方括号 */
+.tags > a, .tags > span {
   font-family: var(--sans); font-size: 12px; font-weight: 500;
-  padding: 3px 9px; border-radius: 5px;
-  background: var(--chip); color: var(--link);
-  border: 1px solid var(--rule);
+  color: var(--link);
+  transition: color .18s ease;
 }
-.tags a { transition: border-color .18s ease, color .18s ease, transform .18s ease; }
-/* 原来的悬停只把 background 换成它本来就有的值，等于没有反馈；
-   现在描边点亮成链接色 */
-.tags a:hover {
-  border-color: var(--link); text-decoration: none; transform: translateY(-1px);
-}
-.tags span { color: var(--subtle); }
-/* Github 标签后追加的 star 数：细竖线隔开、次要色、等宽数字。
-   它是嵌在 <a> 里的 <span>，会被上面 .tags span 的"标签块"样式命中
-   （底色、四边框、圆角、内边距），不逐项复位就会变成标签里套标签。 */
+.tags > a::before, .tags > span::before { content: "["; opacity: .5; }
+.tags > a::after,  .tags > span::after  { content: "]"; opacity: .5; }
+.tags > a:hover { color: var(--accent); text-decoration: none; }
+.tags > span { color: var(--subtle); }
+/* Github 后面追加的 star 数：细竖线隔开、次要色、等宽数字 */
 .tags .gh-stars {
-  margin-left: 6px; padding: 0 0 0 6px;
-  background: none; border: 0; border-left: 1px solid var(--rule); border-radius: 0;
-  font-size: inherit; color: var(--subtle); font-variant-numeric: tabular-nums;
+  margin-left: 6px; padding-left: 6px;
+  border-left: 1px solid var(--rule);
+  color: var(--subtle); font-variant-numeric: tabular-nums;
 }
 
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
