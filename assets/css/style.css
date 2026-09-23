@@ -343,8 +343,8 @@ strong { font-weight: 700; }
 
 /* ---------- 论文卡片 ---------- */
 .pub {
-  display: grid; grid-template-columns: 264px 1fr;
-  gap: 22px; padding: 18px 20px;
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 20px; padding: 18px 20px;
   /* grid item 默认 align-self:stretch，会把 .thumb 拉到与右侧文字等高，
      图片下方留出大片空白边框。改为 center 让缩略图垂直居中对齐正文。 */
   align-items: center;
