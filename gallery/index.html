@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,8 @@
 <link rel="canonical" href="https://caozhijun.top/gallery/">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="/assets/css/style.css?v=202609240150">
-<script src="/assets/js/reveal.js?v=202609240150"></script>
-<script src="/assets/js/theme.js?v=202609240150"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=202609240155">
+<script src="/assets/js/reveal.js?v=202609240155"></script>
 
 
 <link rel="preload" href="/assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -77,9 +76,6 @@
 
   .sign { text-align: center; padding: 58px 0 8px; }
   .sign img { width: 170px; opacity: .55; }
-  /* 签名的深浅两版切换用 style.css 里的通用 .on-light / .on-dark。
-     不能用 <picture> 的 prefers-color-scheme —— 本站不跟随系统偏好，
-     明暗由 data-theme 决定，媒体查询看不到它。 */
 
 
   /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */
@@ -212,8 +208,7 @@
   </section>
 
   <div class="sign rise">
-    <img class="on-light" src="/assets/img/gallery/signature.png" alt="Cao Zhijun Aaron">
-    <img class="on-dark" src="/assets/img/gallery/signature-dark.png" alt="Cao Zhijun Aaron">
+    <img src="/assets/img/gallery/signature.png" alt="Cao Zhijun Aaron">
   </div>
 
   <!-- <section class="gsec wrap" id="back">

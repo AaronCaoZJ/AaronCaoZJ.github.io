@@ -52,7 +52,7 @@
   --rule:   #cec9c6;   /* 莫兰迪浅暖灰 —— 分隔线 */
   --subtle: #8d8481;   /* 莫兰迪暖灰 —— 次要文字 */
 
-  --bg:     #fdfcfb;
+  --bg:     #ffffff;   /* 纯白 */
   --fg:     #2b2a29;
   --card:   #ffffff;
   --card-b: #ece8e5;
@@ -86,39 +86,6 @@
   --glass-hover: rgba(255, 255, 255, .55);
   --text-halo: rgba(255, 255, 255, .85);
 }
-
-/* 深色模式：仅在用户手动切换时生效，不跟随系统偏好。
-   明暗关系整体翻转，但玻璃的构造不变，只是数值换了一套。 */
-:root[data-theme="dark"] {
-  --accent: #8fb4d0;
-  --high:   #d9a68c;
-  --link:   #8fb4d0;
-  --rule:   #343a40;
-  --subtle: #8e8783;
-
-  --bg:     #14161a;
-  --fg:     #dcd9d6;
-  --card:   #1b1e23;
-  --card-b: #2a2f36;
-  --chip:   #22262c;
-
-  color-scheme: dark;
-
-  --glass-fill: rgba(28, 32, 38, .34);
-  --glass-blur: 10px;
-  --glass-edge: rgba(255, 255, 255, .12);
-  --glass-cast: rgba(0, 0, 0, .32);
-
-  /* 深色下光晕要压得更低：深底上同样的浓度会显得脏 */
-  --glow-a: rgba(70, 110, 150, .22);
-  --glow-b: rgba(150, 100, 80, .17);
-  --glow-c: rgba(70, 110, 140, .16);
-  --glow-d: rgba(80, 110, 100, .15);
-  --glow-e: rgba(110, 90, 125, .15);
-  --glass-hover: rgba(255, 255, 255, .12);
-  --text-halo: rgba(0, 0, 0, .55);
-}
-
 
 * { box-sizing: border-box; }
 
@@ -297,12 +264,6 @@ img { max-width: 100%; }
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
 
-/* 深浅两版图片：同一处放两张，加 .on-light / .on-dark，由 data-theme 决定
-   显示哪张。display:none 的那张会退出无障碍树，所以两张都可以带同样的 alt。
-   gallery 的签名也用这一套。 */
-.on-dark { display: none; }
-:root[data-theme="dark"] .on-light { display: none; }
-:root[data-theme="dark"] .on-dark  { display: inline; }
 
 /* ---------- 章节 ---------- */
 section { padding-top: 34px; }
@@ -370,6 +331,9 @@ strong { font-weight: 700; }
   transition: border-color .22s ease, box-shadow .22s ease;
 }
 .item:last-child, .pub:last-child { margin-bottom: 0; }
+/* 页面与卡片同为纯白，静止时给一层极淡投影托一下，
+   否则分界只剩那条 1px 边框 */
+.item, .pub { box-shadow: 0 1px 2px rgba(45, 42, 41, .045); }
 /* 悬停只动描边和投影，不做位移 —— 论文卡内部的缩略图已经有上浮动效，
    两层一起动会显得晃 */
 .item:hover, .pub:hover {
@@ -454,21 +418,24 @@ strong { font-weight: 700; }
 }
 
 /* ---------- 通用条目（经历 / 项目 / 写作）---------- */
-.item { padding: 18px 20px; display: flex; gap: 18px; align-items: flex-start; }
-/* 正文一侧必须可收缩：min-width:0 不写的话，flex item 的最小尺寸是内容宽度，
-   长机构名会把卡片撑破而不是在内部折行 */
-.item .ibody { flex: 1 1 auto; min-width: 0; }
-/* logo 底块固定 88x56：ZJU 是正方徽章、mikomiko 是 7:1 的横幅，
-   contain 让两类都完整落进同一个框，视觉上对齐。
-   底色两套主题下都用白 —— logo 是按浅色底设计的，
-   InnoMotion 那张还是不透明白底的 JPG，深色卡片上会露出白块。 */
-.ilogo {
-  flex: 0 0 auto; width: 88px; height: 56px;
-  display: flex; align-items: center; justify-content: center;
-  background: #fff; border: 1px solid var(--card-b);
-  border-radius: 10px; padding: 7px;
+/* 两行网格：第一行是 logo | 标题+日期+职称，第二行整行通栏。
+   子经历（RA、学生工作、产品列表）因此从卡片左缘起排，
+   而不是缩在标题那一栏里 —— 它们是独立条目，不是标题的附属说明。 */
+.item {
+  display: grid; grid-template-columns: 76px 1fr;
+  column-gap: 16px; padding: 18px 20px;
 }
+.ilogo {
+  grid-column: 1; grid-row: 1; align-self: center;
+  display: flex; align-items: center; justify-content: center; height: 54px;
+}
+/* 统一装进 76x54 的隐形框：ZJU 是正方徽章、mikomiko 是 7:1 横幅，
+   contain 让两类都完整落进同样大小的位置，左缘和基线才对得齐 */
 .ilogo img { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+/* min-width:0 不写的话，grid item 的最小尺寸是内容宽度，
+   长机构名会把卡片撑破而不是在内部折行 */
+.ihead { grid-column: 2; grid-row: 1; min-width: 0; }
+.irest { grid-column: 1 / -1; margin-top: 10px; }
 .item .row {
   display: flex; justify-content: space-between;
   align-items: baseline; gap: 6px 16px; flex-wrap: wrap;
@@ -609,12 +576,6 @@ strong { font-weight: 700; }
      地图上消失。一圈暗色细描边让它读成"空心圆"，而不必改掉白色本身。 */
   --vmap-ring: rgba(43, 42, 41, .42);
 }
-:root[data-theme="dark"] .vmap {
-  --vmap-dot: #333a42;
-  --vmap-mid: #ece9e5;          /* 深底上纯白太刺眼，退半档到暖白 */
-  /* 深色下三色对底都在 4.9:1 以上，不需要描边帮忙显形，去掉 */
-  --vmap-ring: transparent;
-}
 .vmap-land { display: block; width: 100%; }
 .vmap-pins { position: absolute; inset: 0; }
 /* 用 <button> 而不是 <span>：键盘可聚焦，读屏能念出城市和次数 */
@@ -699,13 +660,3 @@ footer.wrap {
 }
 
 
-/* ---------- 明暗切换 ---------- */
-.mode-btn {
-  font-family: var(--sans); font-size: 14px; line-height: 1;
-  background: none; border: 0; cursor: pointer;
-  color: var(--subtle); padding: 7px 9px; margin-left: 2px;
-  border-radius: 999px;
-  transition: background .2s ease, color .2s ease;
-}
-.mode-btn:hover { color: var(--accent); background: rgba(255, 255, 255, .5); }
-:root[data-theme="dark"] .mode-btn:hover { background: rgba(255, 255, 255, .1); }
