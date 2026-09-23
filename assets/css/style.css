@@ -475,11 +475,6 @@ strong { font-weight: 700; }
 /* 工作条目下的产出列表：字段名 + 每个产物一行。
    左侧竖线表明从属于上方的经历，右侧状态与日期列对齐，
    避免多个产物共用一行时状态归属不明。 */
-.item .plabel {
-  font-family: var(--sans); font-size: var(--fs-xs); font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: var(--subtle); margin: 9px 0 4px;
-}
 .item .plist { border-left: 2px solid var(--rule); padding-left: 14px; }
 /* 挂在学校下面的经历（如 ZJU 下的 RA）：沿用 Products 那条左边框，
    标题比父条目小一档、字重降一级，一眼看出是从属关系而不是并列条目 */
@@ -491,11 +486,11 @@ strong { font-weight: 700; }
    用块级即可；之前的 flex 会把括号里的说明当成独立 flex item，
    被 gap 推开一截。 */
 .item .prow { font-size: var(--fs-sm); padding: 1px 0; }
-/* 产品状态标签统一斜体 —— 把"这是元信息"和左侧的产品名区分开，
-   Released / To be Announced 的差别交给字面本身表达 */
+/* 产品状态标签：次要色、小一号、正体，跟在产品名后面，
+   靠颜色和字号而不是斜体与产品名区分 */
 .item .pst {
   font-family: var(--sans); font-size: var(--fs-xs); color: var(--subtle);
-  font-style: italic; white-space: nowrap;
+  white-space: nowrap;
 }
 .item .t a { color: inherit; }
 .item .t a:hover { color: inherit; }
