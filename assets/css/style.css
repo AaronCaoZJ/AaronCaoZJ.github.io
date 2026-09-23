@@ -44,7 +44,7 @@
   --heading: #34526b;  /* 比 accent 深一档：章节标题、News 描边 */
   --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 数字/强调 */
 
-  /* Show Lab logo 四色 —— 见 .shx 与 #collaboration */
+  /* Show Lab logo 四色 —— 见 .shx 与页首求职句 */
   --sl-blue:   #669ED3;
   --sl-green:  #67A651;
   --sl-red:    #D85E5D;
@@ -523,29 +523,12 @@ strong { font-weight: 700; }
    这里把它清零，卡片内的上下留白由 padding 单独决定。 */
 .info-block > p:first-of-type { margin-top: 0; }
 
-/* 求职意向单独用 Show Lab 红描边，把这块从其余玻璃卡片里拎出来。
-   只换 border-color，圆角 / 玻璃填充 / 投影全部沿用 .info-block；
-   文字保持正常色，红色只承担边界这一件事。 */
-/* 求职关键词用与描边同源的 Show Lab 红。这里用满色而非描边那样的 42%
-   透明：文字太细，掺了透明度会显得发灰、读起来吃力。 */
-#collaboration strong { color: var(--sl-red); }
-
-#collaboration {
-  border-width: 2px;
-  /* 半透明的红：backdrop-filter 模糊过的背景会从描边里透出来，
-     线条不再是压在玻璃上的一道实色，而像是玻璃自身的边缘染了色。
-     两条声明各写一遍，老引擎取上面的 rgba，新引擎取 color-mix。 */
-  border-color: rgba(216, 94, 93, .42);
-  border-color: color-mix(in srgb, var(--sl-red) 42%, transparent);
-  /* 中性投影保留（把卡片压在页面上），红色辉光减到 11% 只作氛围 */
-  box-shadow: 0 12px 36px var(--glass-cast), 0 14px 44px rgba(216, 94, 93, .11);
-  box-shadow: 0 12px 36px var(--glass-cast),
-              0 14px 44px color-mix(in srgb, var(--sl-red) 11%, transparent);
-}
+/* 页首求职句里的关键词用 Show Lab 红；页尾那段只是邀约，不再强调。 */
+.hero .affil strong { color: var(--sl-red); }
 
 /* ---------- 访客地图 ---------- */
 /* 无标题、无分隔线、无说明文字 —— 只有地图本身，
-   靠一段留白与上方的求职卡片拉开距离。 */
+   靠一段留白与上方的内容拉开距离。 */
 #visitors { padding-top: 72px; }
 .vmap {
   position: relative;
