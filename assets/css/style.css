@@ -60,10 +60,14 @@
 
   /* 中文不自托管字体：页面上中文只有寥寥几个词，
      为此下载 1–3 MB 字库对大陆访问得不偿失，交给系统字体。 */
-  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
   --serif: "Charis", "Charter", "Iowan Old Style", Georgia,
            "PingFang SC", "Microsoft YaHei", serif;
+  /* 全站统一用衬线体：--sans 直接指向 --serif，原先用无衬线的十几处
+     （标题、导航、日期、卡片标题、方括号链接……）一处改动全部跟过来。
+     要恢复 Inter，把这一行改回
+     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif
+     并在两个页面加回 Inter 的 preload 即可；@font-face 仍保留着。 */
+  --sans: var(--serif);
 
   --w: 920px;
 
