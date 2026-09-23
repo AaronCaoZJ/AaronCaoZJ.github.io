@@ -384,7 +384,7 @@ strong { font-weight: 700; }
   text-wrap: pretty; }
 .pub .authors .me { font-weight: 700; }
 .pub .venue {
-  font-size: var(--fs-sm); color: var(--subtle); font-style: italic; margin: 0 0 8px;
+  font-size: var(--fs-sm); color: var(--fg); font-style: italic; margin: 0 0 8px;
 }
 /* 未定稿状态（Under Review、Preprint in preparation）走默认的斜体灰；
    已发表的会议 / 期刊名反过来 —— 正体 + 暖赤陶高亮，直立的字形在一片
@@ -412,7 +412,7 @@ strong { font-weight: 700; }
 /* 只命中直接子级：star 数是嵌在 <a> 里的 <span>，
    用 .tags span 的话它会被再套一层方括号 */
 .tags > a, .tags > span {
-  font-family: var(--sans); font-size: var(--fs-xs); font-weight: 600;
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 600;
   color: var(--link);
   transition: color .18s ease;
 }
