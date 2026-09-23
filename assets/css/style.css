@@ -437,9 +437,11 @@ strong { font-weight: 700; }
    上下空出一大截，整行也被撑高。现在行高由标题那一栏决定，
    logo 只受最大高度约束。 */
 .ilogo img { max-width: 100%; max-height: 42px; width: auto; height: auto; }
-/* 圆形徽章填满整个外接方框，同样高度下视觉重量明显大于横幅式标识，
-   所以单独压小一档。按 src 选择，不必为此在 HTML 里加类。 */
-.ilogo img[src$="zju.png"] { max-height: 34px; }
+/* 圆形徽章填满整个外接方框，同样高度下比横幅式标识重，所以压一档；
+   但也不能按外接框等宽 —— NUS 是 33x42 的盾形，ZJU 若取 34px 就成了
+   34x34，矮了 8px，看着明显小一圈。按填充面积估，圆形取 38px 才与之相当。
+   按 src 选择，不必为此在 HTML 里加类；代价是改文件名会让这条静默失效。 */
+.ilogo img[src$="zju.png"] { max-height: 38px; }
 /* min-width:0 不写的话，grid item 的最小尺寸是内容宽度，
    长机构名会把卡片撑破而不是在内部折行 */
 .ihead { grid-column: 2; grid-row: 1; min-width: 0; }
