@@ -524,7 +524,9 @@ strong { font-weight: 700; }
 /* ---------- 访客地图 ---------- */
 /* 无标题、无分隔线、无说明文字 —— 只有地图本身，
    靠一段留白与上方的内容拉开距离。 */
-#visitors { padding-top: 72px; }
+/* 地图上方：段落自带约 17px 的下边距，再加这 24px，与正文拉开约 40px。
+   原先 72px 叠上段落边距近 95px，地图像是孤零零悬在页尾。 */
+#visitors { padding-top: 24px; }
 .vmap {
   position: relative;
   width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
@@ -567,7 +569,7 @@ strong { font-weight: 700; }
    margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，
    会把这里设的上下间距整个覆盖掉。 */
 footer.wrap {
-  margin: 120px auto 0; padding: 60px 22px 40px;
+  margin: 64px auto 0; padding: 60px 22px 40px;
   border-top: 1px solid var(--rule);
   font-family: var(--sans); font-size: var(--fs-xs); color: var(--subtle);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
