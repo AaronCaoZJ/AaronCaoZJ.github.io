@@ -40,7 +40,8 @@
 }
 
 :root {
-  --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 —— 标题 */
+  --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 */
+  --heading: #34526b;  /* 比 accent 深一档：章节标题、News 描边 */
   --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 数字/强调 */
 
   /* Show Lab logo 四色 —— 见 .shx 与 #collaboration */
@@ -256,7 +257,7 @@ h2 {
   font-family: var(--sans);
   font-size: 19px; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase;
-  color: #34526b;
+  color: var(--heading);
   margin: 0 0 14px;
 }
 /* 只有 Biography 保留那条粗下划线；其余章节靠卡片本身分组，不再画线 */
@@ -520,6 +521,9 @@ strong { font-weight: 700; }
   box-shadow: 0 1px 2px rgba(35, 52, 70, .05);
 }
 .info-block > * { position: relative; }
+/* News 单独用深色描边，从一众浅描边的卡片里拎出来。
+   只改 border，圆角、底色、投影仍沿用 .info-block。 */
+#news { border: 2px solid var(--heading); }
 
 .info-block p:last-child { margin-bottom: 0; }
 /* section > p:first-of-type 给章节首段留了 14px 上边距（正文排版需要），
