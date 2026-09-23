@@ -357,9 +357,11 @@ strong { font-weight: 700; }
 .pub h3 {
   font-family: var(--sans); font-size: 15px; font-weight: 650;
   line-height: 1.38; margin: 0 0 4px;
-  /* balance 把各行长度调匀，避免尾行只剩两三个词；
-     短文本才适用，标题正是它的目标场景 */
-  text-wrap: balance;
+  /* pretty 而非 balance：balance 会把两行调成等长，于是第一行本来能铺满，
+     却被故意在中间截断 —— 实测两行标题的首行只占宽度的 52%–75%，
+     右边空出一大截，还常断在连字符上。pretty 按正常方式铺满每一行，
+     只在尾行会孤零零剩一个词时才往回调，首行回到 85%–98%。 */
+  text-wrap: pretty;
   transition: color .22s ease;
 }
 /* pretty 只管最后一行：不让单个词孤零零掉到下一行，
@@ -444,7 +446,7 @@ strong { font-weight: 700; }
    把右侧日期整个挤到下一行的左边，视觉上错位。 */
 .item .t { flex: 1 1 340px; min-width: 0; transition: color .22s ease; }
 .item .d { flex: 0 0 auto; }
-.item .t { font-family: var(--sans); font-size: 14.8px; font-weight: 650; text-wrap: balance; }
+.item .t { font-family: var(--sans); font-size: 14.8px; font-weight: 650; text-wrap: pretty; }
 .item .d {
   font-family: var(--sans); font-size: 13px; color: var(--subtle);
   white-space: nowrap;
