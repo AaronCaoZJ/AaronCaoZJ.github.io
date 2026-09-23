@@ -70,17 +70,7 @@
      并在两个页面加回 Inter 的 preload 即可；@font-face 仍保留着。 */
   --sans: var(--serif);
 
-  /* 1020：实测三篇机器人论文与 BG Tree 的标题在这个宽度下都排成一行，
-     且各留 10–25px 余量。Survey 那篇需 1148 才放得下，那时正文一行近 150 字符，
-     太长，不追。 */
-  /* 字号只有五档。原先散落着 17 种，13 / 13.2 / 13.5 / 13.8 / 14 / 14.8 这类
-     只差零点几像素，肉眼分不出层级，只显得乱。新增样式请从这五档里选。 */
-  --fs-xs: 13px;   /* 小标签、方括号链接、状态、页脚 */
-  --fs-sm: 15px;   /* 作者、职位、列表、venue、日期、导航、胶囊按钮 */
-  --fs-md: 17px;   /* 正文、News 条目、论文与经历标题 */
-  --fs-lg: 20px;   /* 章节标题 */
-  --fs-xl: 34px;   /* 名字 */
-  --w: 1020px;
+  --w: 920px;
 
   /* 明确声明只支持浅色：阻止浏览器或系统的“强制深色模式”
      擅自反转配色（那种自动反转的效果通常很糟）。 */
@@ -366,11 +356,17 @@ strong { font-weight: 700; }
   box-shadow: 0 10px 24px rgba(35, 52, 70, .10);
   border-color: var(--rule);
 }
+/* 文字栏：标题、作者、venue、链接之间的空隙统一。原先各行 margin
+   （4 / 3 / 8px）和行高（1.38 / 1.55 / 1.68）都不一样，而视觉空隙 =
+   margin + 上下两行各自的半行距，四段间隔于是各不相等。现在行高统一、
+   margin 归零，间距只由 gap 一个值决定。 */
+.pub > div:not(.thumb) { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pub > div:not(.thumb) > * { margin: 0; line-height: 1.45; }
+
 .pub .thumb img,
 .pub .thumb video { display: block; width: 100%; }
 .pub h3 {
   font-family: var(--sans); font-size: var(--fs-md); font-weight: 650;
-  line-height: 1.38; margin: 0 0 4px;
   /* pretty 而非 balance：balance 会把两行调成等长，于是第一行本来能铺满，
      却被故意在中间截断 —— 实测两行标题的首行只占宽度的 52%–75%，
      右边空出一大截，还常断在连字符上。pretty 按正常方式铺满每一行，
@@ -380,11 +376,11 @@ strong { font-weight: 700; }
 }
 /* pretty 只管最后一行：不让单个词孤零零掉到下一行，
    其余断行照常，适合作者列表这类较长的文本 */
-.pub .authors { font-size: var(--fs-sm); line-height: 1.55; color: var(--subtle); margin: 0 0 3px;
+.pub .authors { font-size: var(--fs-sm); color: var(--subtle);
   text-wrap: pretty; }
 .pub .authors .me { font-weight: 700; }
 .pub .venue {
-  font-size: var(--fs-sm); color: var(--fg); font-style: italic; margin: 0 0 8px;
+  font-size: var(--fs-sm); color: var(--fg); font-style: italic;
 }
 /* 未定稿状态（Under Review、Preprint in preparation）走默认的斜体灰；
    已发表的会议 / 期刊名反过来 —— 正体 + 暖赤陶高亮，直立的字形在一片
