@@ -431,11 +431,15 @@ strong { font-weight: 700; }
 }
 .ilogo {
   grid-column: 1; grid-row: 1; align-self: center;
-  display: flex; align-items: center; justify-content: center; height: 54px;
+  display: flex; align-items: center; justify-content: center;
 }
-/* 统一装进 76x54 的隐形框：ZJU 是正方徽章、mikomiko 是 7:1 横幅，
-   contain 让两类都完整落进同样大小的位置，左缘和基线才对得齐 */
-.ilogo img { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+/* 不再固定槽高：写死 54px 时，7:1 的 mikomiko 只占其中 11px，
+   上下空出一大截，整行也被撑高。现在行高由标题那一栏决定，
+   logo 只受最大高度约束。 */
+.ilogo img { max-width: 100%; max-height: 42px; width: auto; height: auto; }
+/* 圆形徽章填满整个外接方框，同样高度下视觉重量明显大于横幅式标识，
+   所以单独压小一档。按 src 选择，不必为此在 HTML 里加类。 */
+.ilogo img[src$="zju.png"] { max-height: 34px; }
 /* min-width:0 不写的话，grid item 的最小尺寸是内容宽度，
    长机构名会把卡片撑破而不是在内部折行 */
 .ihead { grid-column: 2; grid-row: 1; min-width: 0; }
