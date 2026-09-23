@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,13 +17,11 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="assets/css/style.css?v=202609221725">
-<script src="assets/js/reveal.js?v=202609221725"></script>
-<script src="assets/js/theme.js?v=202609221725"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=202609240329">
+<script src="assets/js/reveal.js?v=202609240329"></script>
 
 
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
-<link rel="preload" href="assets/fonts/Inter-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/Charis-400.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- 结构化数据：告诉搜索引擎这个页面描述的是"一个人"，而不是泛泛的网页。
@@ -82,19 +80,19 @@
   <header class="hero">
     <div>
       <h1 class="rise">Cao Zhijun Aaron<span class="cn">曹植竣</span></h1>
-      <div class="role rise">M.Sc. Electrical Engineering</div>
-      <p class="affil rise">Show Lab, College of Design and Engineering, National University of Singapore</p>
+      <div class="role rise">M.Sc. Student at Show Lab, NUS</div>
+      <p class="affil rise">Currently seeking <strong>AI Researcher or Algorithm Engineer</strong> roles in <strong>Generative AI and Embodied Foundation Models</strong>, and open to <strong>PhD</strong> opportunities. See my <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202609240329">CV</a> for details.</p>
 
 
       <div class="links rise">
         <a href="mailto:aaroncaozj@gmail.com">
-          <img class="on-light" src="assets/img/icon/email.png" alt="" width="15" height="15"><img class="on-dark" src="assets/img/icon/email-dark.png" alt="" width="15" height="15">Email
+          <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
         </a>
         <a href="https://scholar.google.com/citations?hl=en&amp;user=HPWngY4AAAAJ">
           <img src="assets/img/icon/googlescholar.png" alt="" width="15" height="15">Google Scholar
         </a>
         <a href="https://github.com/AaronCaoZJ">
-          <img class="on-light" src="assets/img/icon/github.png" alt="" width="15" height="15"><img class="on-dark" src="assets/img/icon/github-dark.png" alt="" width="15" height="15">GitHub
+          <img src="assets/img/icon/github.png" alt="" width="15" height="15">GitHub
         </a>
         <a href="https://huggingface.co/aaroncaozj">
           <img src="assets/img/icon/huggingface.png" alt="" width="15" height="15">Hugging Face
@@ -109,8 +107,8 @@
           <img src="assets/img/icon/instagram.png" alt="" width="15" height="15">Instagram
         </a>
         -->
-        <a href="assets/pdf/CV_ZhijunCao.pdf?v=202609222107">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        <a href="assets/pdf/CV_ZhijunCao.pdf?v=202609240329">
+          <img src="assets/img/icon/cv.png" alt="" width="15" height="15">
           CV(EN)
         </a>
       </div>
@@ -125,28 +123,28 @@
   <!-- ============ Biography ============ -->
   <section id="biography">
     <h2 class="rise">Biography</h2>
-    <p>I am an M.Sc. student in ECE. I am also conducting research on <strong>robot policy learning</strong> at <a href="https://github.com/showlab">Show Lab</a> under the advice of <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>. My research interests include <strong>Diffusion Models</strong>, <strong>VLA Models</strong> and <strong>World Models</strong>.</p>
-    <p>Previously, I received my bachelor's degree in Automation from Zhejiang University, where my early research focused on control for robots.</p>
+    <p class="rise">I am an M.Sc. student in Electrical Engineering at the National University of Singapore, working on <strong>Robot Learning</strong> at <a href="https://github.com/showlab">Show Lab</a> under the supervision of <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>. My research interests include <strong>Vision-Language-Action Models</strong>, <strong>World Models</strong>, and <strong>Diffusion Models</strong>.</p>
+    <p class="rise">Previously, I received my B.Eng. in Automation from Zhejiang University, where my early research focused on robot control.</p>
   </section>
 
   <!-- ============ News ============ -->
-  <section class="info-block" id="news">
-    <h2 class="rise">News</h2>
-    <ul class="news rise">
-      <li><time>2026.09:</time><div>
+  <section class="info-block rise" id="news">
+    <h2>News</h2>
+    <ul class="news">
+      <li><time datetime="2026-09">Sep. 2026</time><div>
         <p>🦾 Released <strong><span class="shx"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness</strong> [<a href="https://showlab.github.io/Show-Harness/">Project Page</a>, <a href="https://github.com/showlab/Show-Harness">Code</a>], and a [<a href="https://github.com/showlab/Awesome-Multimodal-Embodied-Agent/blob/main/assets/SURVEY_Multimodal_Embodied_Agent.pdf">Survey</a>] on robot-use agent.</p>
         <p>🎉 Two papers (<em>Where Success Breaks</em>, <em>Supervise What Survives</em>) accepted <strong>@ CoRL 2026</strong>.</p>
       </div></li>
-      <li><time>2026.06:</time><div>
+      <li><time datetime="2026-06">Jun. 2026</time><div>
         <p>🐈‍⬛ Rejoined <strong>Mikomiko</strong> (Singapore), focusing on next-generation image generation model.</p>
       </div></li>
-      <li><time>2025.08:</time><div>
+      <li><time datetime="2025-08">Aug. 2025</time><div>
         <p>📸 Joined <strong>Show Lab @ NUS</strong> as an M.Sc. student.</p>
       </div></li>
-      <li><time>2024.11:</time><div>
+      <li><time datetime="2024-11">Nov. 2024</time><div>
         <p><em>🎉 Imitation Learning Based Manipulator Skill Training for Home Environment</em> presented <strong>@ CAC 2024</strong>.</p>
       </div></li>
-      <li class="news-hidden" hidden><time>2024.06:</time><div>
+      <li class="news-hidden" hidden><time datetime="2024-06">Jun. 2024</time><div>
         <p>🎓 Graduated from <strong>Zhejiang University</strong> with a bachelor's degree in Automation.</p>
       </div></li>
     </ul>
@@ -155,7 +153,7 @@
 
   <!-- ============ Publications ============ -->
   <section id="publications">
-    <h2 class="rise">Publications</h2>
+    <h2 class="rise">Publications <span class="cofirst">(Co-first Author<span class="star">*</span>)</span></h2>
 
     <article class="pub rise">
       <div class="thumb">
@@ -178,12 +176,11 @@
           <!-- <a href="https://github.com/ceilingFan456/"> -->Qiming Huang<!-- </a> -->,
           Mike Zheng Shou
         </p>
-        <p class="authors">Co-first Author<span class="star">*</span></p>
-         <p class="venue">Hugging Face #2 Paper of the day <span class="dot">·</span> 2026.09</p>
+        <p class="venue">arXiv Preprint <span class="dot">·</span> 2026.09</p>
         <div class="tags">
-          <a href="https://arxiv.org/abs/2609.10522">arXiv Preprint</a>
-          <a href="https://showlab.github.io/Show-Harness/">Project Page</a>
-          <a href="https://github.com/showlab/Show-Harness" data-gh-stars="showlab/Show-Harness">Github</a>
+          <a href="https://arxiv.org/abs/2609.10522">Paper</a>
+          <a href="https://showlab.github.io/Show-Harness/">Page</a>
+          <a href="https://github.com/showlab/Show-Harness" data-gh-stars="showlab/Show-Harness">GitHub</a>
           <a href="https://huggingface.co/showlab/ShowHarness-VLMs">Models</a>
           <a href="https://huggingface.co/showlab/ShowHarness-Data">Data</a>
         </div>
@@ -205,19 +202,22 @@
           <!-- <a href="https://github.com/Jackupjcup"> -->Runda Liu<!-- </a> -->,
           <!-- <a href="https://github.com/seizethe-day"> -->Chang Gong<!-- </a> -->,
           <span class="me">Zhijun Cao</span>,
+          …,
+          <!-- 省略的作者（删掉这段注释的首尾即可恢复）：
           Zechen Bai,
           Wenzheng Zeng,
           Yiqi Lin,
           Guoqiang Liang,
           Kevin Yuchen Ma,
           Kevin Qinghong Lin,
+          -->
           Mike Zheng Shou
         </p>
         <p class="venue">TEchRxiv Preprint <span class="dot">·</span> 2026.09</p>
         <div class="tags">
-          <a href="https://doi.org/10.6084/m9.figshare.33529048">Paper Link</a>
-          <a href="https://showlab.github.io/Awesome-Multimodal-Embodied-Agent">Project Page</a>
-          <a href="https://github.com/showlab/Awesome-Multimodal-Embodied-Agent">Github</a>
+          <a href="https://doi.org/10.6084/m9.figshare.33529048">Paper</a>
+          <a href="https://showlab.github.io/Awesome-Multimodal-Embodied-Agent">Page</a>
+          <a href="https://github.com/showlab/Awesome-Multimodal-Embodied-Agent">GitHub</a>
         </div>
       </div>
     </article>
@@ -230,10 +230,9 @@
           <span class="me">Zhijun Cao</span><span class="star">*</span>,
           Mike Zheng Shou
         </p>
-        <p class="authors">Co-first Author<span class="star">*</span></p>
         <p class="venue"><b>2026 Conference on Robot Learning (CoRL)</b><span class="dot">·</span> 2026.05</p>
         <div class="tags">
-          <a href="https://arxiv.org/abs/2609.06114">arXiv Preprint</a>
+          <a href="https://arxiv.org/abs/2609.06114">Paper</a>
         </div>
       </div>
     </article>
@@ -248,7 +247,7 @@
         </p>
         <p class="venue"><b>2026 Conference on Robot Learning (CoRL)</b><span class="dot">·</span> 2026.05</p>
         <div class="tags">
-          <a href="https://arxiv.org/abs/2606.24448">arxiv Preprint</a>
+          <a href="https://arxiv.org/abs/2606.24448">Paper</a>
         </div>
       </div>
     </article>
@@ -256,9 +255,7 @@
     <article class="pub rise">
       <div class="thumb"><img src="assets/img/pub/pub-face.jpg" alt="" loading="lazy"></div>
       <div>
-        <h3>When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>
-        <p class="authors">Co-first Author<span class="star">*</span></p>
-        <p class="venue">CCF-A Conference Under Review <span class="dot">·</span> 2026.05</p>
+        <h3>When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>        <p class="venue">CCF-A Conference Under Review <span class="dot">·</span> 2026.05</p>
         <div class="tags"><span>Paper link to be updated</span></div>
       </div>
     </article>
@@ -270,7 +267,7 @@
         <p class="authors"><!-- <a href="https://xplorestaging.ieee.org/author/37085709926"> -->Lingxia Lu<!-- </a> -->, Zile Feng, <span class="me">Zhijun Cao</span>, Bao Zhejing, <!-- <a href="https://xplorestaging.ieee.org/author/37534419800"> -->Miao Yu<!-- </a> --></p>
         <p class="venue"><b>Research and Exploration in Laboratory</b> <span class="dot">·</span> 2026.02</p>
         <div class="tags">
-          <a href="https://kns.cnki.net/kcms2/article/abstract?v=lLcTIqQqO-1HFlwhazrYORVIuJ6f29rxJu-NYQ1_NQq7W4PP2ng1B5AhxyGgdGkoSR_0pil0U1Rf5kFld7U63LA2w33ohXoNSeqNrLe5iPhvzZ2vzHViHFEmvX66rM07WMbHwbi_QYKm2EsfPc9itQ12nhAjd3w7&amp;uniplatform=NZKPT">Paper Link</a>
+          <a href="https://kns.cnki.net/kcms2/article/abstract?v=lLcTIqQqO-1HFlwhazrYORVIuJ6f29rxJu-NYQ1_NQq7W4PP2ng1B5AhxyGgdGkoSR_0pil0U1Rf5kFld7U63LA2w33ohXoNSeqNrLe5iPhvzZ2vzHViHFEmvX66rM07WMbHwbi_QYKm2EsfPc9itQ12nhAjd3w7&amp;uniplatform=NZKPT">Paper</a>
         </div>
       </div>
     </article>
@@ -283,7 +280,7 @@
         <p class="venue"><b>2024 China Automation Congress, EI</b> <span class="dot">·</span> 2024.11</p>
         <p class="note">Supported by the CNSF under Grant No. U21A20485</p>
         <div class="tags">
-          <a href="https://ieeexplore.ieee.org/abstract/document/10865776">Paper Link</a>
+          <a href="https://ieeexplore.ieee.org/abstract/document/10865776">Paper</a>
         </div>
       </div>
     </article>
@@ -301,7 +298,7 @@
         <p class="venue">Course Blog for NUS EE5311 <span class="dot">·</span> 2026.03</p>
         <div class="tags">
           <a href="https://diffusion.kowyo.workers.dev/posts/ddpms-to-continus-time-diffusions/">Blog Page</a>
-          <a href="https://github.com/AaronCaoZJ/julia-diffusion">Github</a>
+          <a href="https://github.com/AaronCaoZJ/julia-diffusion">GitHub</a>
         </div>
       </div>
     </article>
@@ -324,43 +321,36 @@
     <h2 class="rise">Internship</h2>
 
     <div class="item rise">
+      <div class="ilogo"><img src="assets/img/logo/mikomiko.png" alt="" loading="lazy"></div>
+      <div class="ihead">
       <div class="row">
         <span class="t">Mikomiko Pte. Ltd, Singapore</span>
         <span class="d">2025.08 – 2026.02 · 2026.06 – present</span>
       </div>
       <div class="s">AI Engineer Intern</div>
-      <div class="plabel">Products</div>
+      </div>
+      <div class="irest">
       <div class="plist">
-        <div class="prow">
-          <span class="product-main">
-            <a href="https://kokorolab.net/en/home"><strong>Kokoro Lab</strong></a>
-            <span class="product-tags">
-              <span>Image Generation</span><span>Native Image Editing</span>
-              <span>Anime &amp; Photorealistic</span>
-            </span>
-          </span>
-        </div>
-        <div class="prow">
-          <span class="product-main">
-            <span><strong>Kokoro Studio</strong> <span class="pst">(To be Announced)</span></span>
-            <span class="product-tags">
-              <span>Video Generation</span>
-              <span>Infinite Canvas</span><span>Creative Workspace</span>
-            </span>
-          </span>
-        </div>
+        <div class="prow"><a href="https://kokorolab.net/en/home"><strong>Kokoro Lab</strong></a>
+          — Native image generation and editing model</div>
+        <div class="prow"><strong>Kokoro Studio</strong> <span class="pst">(to be announced)</span>
+          — Video generation canvas</div>
       </div>
       <!-- <ul>
         <li>Main work focusing on the inference efficiency and diffusion distillation of any-to-any models.</li>
       </ul> -->
+      </div>
     </div>
 
     <div class="item rise">
+      <div class="ilogo"><img src="assets/img/logo/innomotion.png" alt="" loading="lazy"></div>
+      <div class="ihead">
       <div class="row">
         <span class="t">InnoMotion Co. Ltd, Shanghai — R&amp;D Department</span>
         <span class="d">2023.07 – 2023.09</span>
       </div>
       <div class="s">ML Engineer Intern</div>
+      </div>
     </div>
   </section>
 
@@ -369,41 +359,40 @@
     <h2 class="rise">Education</h2>
 
     <div class="item rise">
+      <div class="ilogo"><img src="assets/img/logo/nus.png" alt="" loading="lazy"></div>
+      <div class="ihead">
       <div class="row">
         <span class="t">National University of Singapore</span>
         <span class="d">2025.08 – present</span>
       </div>
       <div class="s">M.Sc. in Electrical Engineering · Show Lab, advised by Prof. Mike Zheng Shou</div>
+      </div>
     </div>
 
     <div class="item rise">
+      <div class="ilogo"><img src="assets/img/logo/zju.png" alt="" loading="lazy"></div>
+      <div class="ihead">
       <div class="row">
         <span class="t">Zhejiang University</span>
         <span class="d">2020.09 – 2024.06</span>
       </div>
       <div class="s">B.Eng. in Automation · College of Electrical Engineering</div>
-      <div class="plabel">Research</div>
+      </div>
+      <div class="irest">
       <div class="plist">
         <div class="row">
-          <span class="t">Zhejiang Key Laboratory of Electrical Technology and System on Renewable Energy</span>
+          <span class="t">Zhejiang Key Lab of Electrical Technology and System on Renewable Energy</span>
           <span class="d">2024.06 – 2025.07</span>
         </div>
         <div class="s">Research Assistant · Advised by Prof. Miao Yu</div>
-      </div>
-      <div class="plabel">Student Work</div>
-      <div class="plist">
         <div class="row">
-          <span class="t">Student Press Corps of Convergence Media Center of Zhejiang University</span>
+          <span class="t">Student Press Corps, Convergence Media Center</span>
           <span class="d">2021.10 – 2025.07</span>
         </div>
         <div class="s">Vice-minister &amp; Consultant</div>
-        <ul>
-          <li>Honored with the <strong>2023 Excellent Campus News Award</strong> from People's Daily
-              Online of China, the <strong>2023 Good News Award</strong> of Zhejiang University,
-              the <strong>2025 Good News Award</strong> from CMIC (ZJU), etc.</li>
-          <li>Want to find more about me? Go to 👉
-              <a href="/gallery/"><strong>🖼️ Gallery</strong></a></li>
-        </ul>
+        <div class="s"><strong>2023 Excellent Campus News Award</strong> (People's Daily Online)
+          · <strong>Good News Award</strong> ZJU 2023, CMIC 2025</div>
+      </div>
       </div>
     </div>
   </section>
@@ -431,29 +420,20 @@
   </section> -->
 
   <!-- ============ Opportunities ============ -->
-<!-- 暂时隐藏求职信息块。整段取消注释即可恢复。
-  <section class="info-block" id="collaboration">
+  <section id="collaboration">
     <p class="rise">
-      I am currently seeking <strong>AI Researcher / Algorithm Engineer</strong> roles in <strong>Generative AI and Embodied Foundation Models</strong>, and am also open to <strong>PhD</strong> opportunities. See my
-      <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202609222107">CV(EN)</a> for details.
-    </p>
-    <p class="rise">
-      I am always glad to hear from you. Please feel free to
-      <a href="mailto:aaroncaozj@gmail.com">email me</a> about any of the work above,
-      a possible collaboration, or simply to say hello 🤗.
+      Want to find more about me? Go to 👉 <a href="/gallery/"><strong>🖼️ Gallery</strong></a>.<br>
+      Feel free to <a href="mailto:aaroncaozj@gmail.com">email me</a> to discuss the work above,
+      explore a possible collaboration, or simply say hello 🤗.
     </p>
   </section>
-  -->
 
   <!-- ============ Visitors ============ -->
   <!-- 整段带 hidden，由 worldmap.js 在建好之后移除：
        脚本挂了或接口无数据时，这一节连同它的留白一起不出现。 -->
-<!-- 暂时隐藏访客地图。注意：隐藏期间 worldmap.js 找不到 #visitorMap 会直接返回，
-       因此也不再记录访问；恢复显示后才会继续累积。
   <section id="visitors" hidden>
     <div class="vmap rise" id="visitorMap"></div>
   </section>
-  -->
 
 </main>
 
@@ -623,8 +603,8 @@
 })();
 </script>
 
-<script src="assets/js/worldmap.js?v=202609221725"></script>
-<script src="assets/js/ghstars.js?v=202609221725" defer></script>
+<script src="assets/js/worldmap.js?v=202609240329"></script>
+<script src="assets/js/ghstars.js?v=202609240329" defer></script>
 
 </body>
 </html>
