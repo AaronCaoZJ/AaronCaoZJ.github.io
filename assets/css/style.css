@@ -69,7 +69,10 @@
      并在两个页面加回 Inter 的 preload 即可；@font-face 仍保留着。 */
   --sans: var(--serif);
 
-  --w: 920px;
+  /* 1020：实测三篇机器人论文与 BG Tree 的标题在这个宽度下都排成一行，
+     且各留 10–25px 余量。Survey 那篇需 1148 才放得下，那时正文一行近 150 字符，
+     太长，不追。 */
+  --w: 1020px;
 
   /* 明确声明只支持浅色：阻止浏览器或系统的“强制深色模式”
      擅自反转配色（那种自动反转的效果通常很糟）。 */
@@ -246,12 +249,15 @@ img { max-width: 100%; }
 
 /* ---------- 章节 ---------- */
 section { padding-top: 34px; }
+/* 章节标题要压得住下面的卡片：Charis 最粗只有 700，已经用到顶，
+   所以分量从别处来 —— 字号 15 → 19px；字距 .13em → .08em（拉得太开的
+   大写字母读起来是轻的、散的）；颜色比 --accent 再深一档。 */
 h2 {
   font-family: var(--sans);
-  font-size: 15px; font-weight: 700;
-  letter-spacing: .13em; text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 12px;
+  font-size: 19px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: #34526b;
+  margin: 0 0 14px;
 }
 /* 只有 Biography 保留那条粗下划线；其余章节靠卡片本身分组，不再画线 */
 #biography h2 {
