@@ -540,7 +540,7 @@ strong { font-weight: 700; }
   --vmap-cold: var(--sl-blue);
   /* 浅色底上白点对页面只有 1.02:1 —— 等于隐形，中间那段时间的访客会从
      地图上消失。一圈暗色细描边让它读成"空心圆"，而不必改掉白色本身。 */
-  --vmap-ring: rgba(43, 42, 41, .42);
+  --vmap-ring: rgba(35, 52, 70, .28);
 }
 .vmap-land { display: block; width: 100%; }
 .vmap-pins { position: absolute; inset: 0; }
@@ -549,13 +549,31 @@ strong { font-weight: 700; }
   position: absolute; width: var(--s); height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   padding: 0; border: 0; border-radius: 50%;
-  /* 半透明：点叠在点阵上时不把底下的陆地完全盖死，重叠处也能透出层次 */
-  background: var(--vmap-pin); opacity: .72; cursor: pointer;
-  box-shadow: 0 0 0 1px var(--vmap-ring);
+  color: var(--vmap-pin);          /* JS 按时间色阶覆盖；下面全部取 currentColor */
+  background: currentColor;
+  /* 由内到外：一圈细白边把点从点阵底纹里切出来，一圈淡描边让白色（约一个月前）
+     的点也看得见，最外一层同色柔光。第一行是不支持 color-mix 时的兜底。 */
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .95), 0 0 0 2.5px var(--vmap-ring);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .95), 0 0 0 2.5px var(--vmap-ring),
+              0 0 12px 1px color-mix(in srgb, currentColor 55%, transparent);
+  opacity: .92; cursor: pointer;
   transition: transform .2s ease, opacity .2s ease;
 }
 .vmap-pin:hover, .vmap-pin:focus-visible {
-  transform: scale(1.45); opacity: 1; outline: none;
+  transform: scale(1.4); opacity: 1; outline: none; z-index: 1;
+}
+/* 24 小时内的访客：一圈缓慢向外扩散、逐渐消失的涟漪 */
+.vmap-pin.fresh::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  border: 1.5px solid currentColor; pointer-events: none;
+  animation: vmap-pulse 2.6s cubic-bezier(.2, .6, .3, 1) infinite;
+}
+@keyframes vmap-pulse {
+  from { transform: scale(1); opacity: .75; }
+  to   { transform: scale(3.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vmap-pin.fresh::after { animation: none; display: none; }
 }
 .vmap-tip {
   position: absolute; transform: translate(-50%, -180%);
