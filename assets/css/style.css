@@ -540,22 +540,47 @@ strong { font-weight: 700; }
   --vmap-cold: var(--sl-blue);
   /* 浅色底上白点对页面只有 1.02:1 —— 等于隐形，中间那段时间的访客会从
      地图上消失。一圈暗色细描边让它读成"空心圆"，而不必改掉白色本身。 */
-  --vmap-ring: rgba(43, 42, 41, .42);
+  --vmap-ring: rgba(35, 52, 70, .4);
 }
 .vmap-land { display: block; width: 100%; }
+/* 裁切窗口：放大后超出范围的点阵与访客点藏在里面。
+   未放大时 touch-action: pan-y —— 手指在地图上上下滑，照常滚动页面；
+   放大后才接管触摸，用来平移。 */
+.vmap-view {
+  position: relative; overflow: hidden; border-radius: 12px;
+  cursor: zoom-in; touch-action: pan-y;
+  -webkit-user-select: none; user-select: none;
+}
+.vmap.zoomed .vmap-view {
+  cursor: grab; touch-action: none;
+  box-shadow: inset 0 0 0 1px var(--card-b);   /* 放大后给一道细框，提示这是局部视窗 */
+}
+.vmap.zoomed.panning .vmap-view { cursor: grabbing; }
 .vmap-pins { position: absolute; inset: 0; }
+/* 放大后右上角的"缩回全图" */
+.vmap-out {
+  position: absolute; top: 10px; right: 10px; z-index: 3;
+  width: 28px; height: 28px; padding: 0; border-radius: 50%;
+  border: 1px solid var(--card-b); background: var(--card); color: var(--fg);
+  font: 700 18px/1 var(--sans); cursor: pointer;
+  box-shadow: 0 1px 3px rgba(35, 52, 70, .12);
+}
+.vmap-out:hover { color: var(--accent); }
 /* 用 <button> 而不是 <span>：键盘可聚焦，读屏能念出城市和次数 */
 .vmap-pin {
   position: absolute; width: var(--s); height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   padding: 0; border: 0; border-radius: 50%;
-  /* 半透明：点叠在点阵上时不把底下的陆地完全盖死，重叠处也能透出层次 */
-  background: var(--vmap-pin); opacity: .72; cursor: pointer;
+  color: var(--vmap-pin);          /* JS 按时间色阶覆盖；下面全部取 currentColor */
+  background: currentColor;
+  /* 半透明 + 一圈细描边：点挨在一起时能透出彼此，不会一个压死一个；
+     描边让白色（约一个月前）的点也看得见。 */
   box-shadow: 0 0 0 1px var(--vmap-ring);
+  opacity: .72; cursor: pointer;
   transition: transform .2s ease, opacity .2s ease;
 }
 .vmap-pin:hover, .vmap-pin:focus-visible {
-  transform: scale(1.45); opacity: 1; outline: none;
+  transform: scale(1.4); opacity: 1; outline: none; z-index: 1;
 }
 .vmap-tip {
   position: absolute; transform: translate(-50%, -180%);

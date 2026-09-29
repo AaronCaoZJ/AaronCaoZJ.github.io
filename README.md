@@ -18,13 +18,13 @@
     ├── img/
     │   ├── avatar.jpg      头像（640×640）
     │   ├── pub/            论文配图，宽 900px
-    │   ├── write/          Writing & Media 配图，宽 900px
+    │   ├── write/          Writing & Media 配图，宽 900px（bgtree 用原图）
     │   ├── icon/           联系方式图标，64×64 透明 PNG
     │   ├── gallery/        相册图片目录（当前为空）
     │   └── src/            未压缩源素材，本地保留、不进 git
     └── pdf/
-        ├── CV_ZhijunCao.pdf            英文简历（40 KB）
-        ├── BGTree_ChinaCampus_2025.pdf 《大学生》报道抽印（459 KB）
+        ├── CV_ZhijunCao.pdf            英文简历，原件（288 KB）
+        ├── BGTree_ChinaCampus_2025.pdf 《大学生》报道抽印，原件（1.4 MB）
         └── src/                        未压缩源文件，不进 git
 ```
 
@@ -88,19 +88,19 @@ PY
 magick out.png -resize 900x -quality 86 assets/img/pub-xxx.jpg
 ```
 
-### 压缩简历 PDF
+### 简历与文章 PDF：原样发布，不压缩
 
-LaTeX 生成的 PDF 内嵌高分辨率照片，动辄 3 MB 以上，对大陆访客是明显负担。
-降采样到 144 dpi 视觉无损，体积可降 95%：
+`CV_ZhijunCao.pdf` 与 `BGTree_ChinaCampus_2025.pdf` **一律用原件逐字节替换**，
+不要用 gs / PyMuPDF 等任何工具重新压缩或重写 —— 体积大就大。
+以前按 144 dpi 降采样过，简历头像被压到 124×124，点开明显糊。
 
 ```bash
-gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.5 -dNOPAUSE -dQUIET -dBATCH \
-   -dDownsampleColorImages=true -dColorImageResolution=144 \
-   -dColorImageDownsampleType=/Bicubic -dDownsampleGrayImages=true \
-   -dGrayImageResolution=144 -dAutoFilterColorImages=false \
-   -dColorImageFilter=/DCTEncode -dEmbedAllFonts=true -dSubsetFonts=true \
-   -sOutputFile=CV_ZhijunCao.pdf 原始简历.pdf
+cp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf
+cmp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf   # 无输出即一致
 ```
+
+`assets/img/write/write-bgtree.jpg` 同理，用原图，不缩不压。
+替换后照常更新 `?v=` 版本串，避免浏览器和 Cloudflare 继续给旧文件。
 
 ### 添加相册图片
 
