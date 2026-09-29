@@ -35,7 +35,7 @@
   "news.item3": "📸 以硕士研究生身份加入<strong>新加坡国立大学 Show Lab</strong>。",
   "news.item4": "🎉 在 <strong>CAC 2024</strong> 发表论文《<em>基于模仿学习的面向家庭环境机器人技能学习</em>》。",
   "news.item5": "🎓 毕业于<strong>浙江大学</strong>，获得自动化专业工学学士学位。",
-  "section.publications": "学术论文 <span class=\"cofirst\">（共同第一作者<span class=\"star\">*</span>）</span>",
+  "section.publications": "学术论文 <span class=\"cofirst\">（共同第一作者<span class=\"star\">*</span>，通讯作者<span class=\"star\">†</span>）</span>",
   "video.demo": "Show-Harness 演示视频",
   "paper.title0": "<span class=\"shx\"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness：仅用一个视觉语言模型智能体即可操控机器人",
   "paper.title1": "多模态具身智能体综述：从计算机操作到机器人操作的统一能力视角",
