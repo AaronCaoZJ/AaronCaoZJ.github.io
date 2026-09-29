@@ -115,7 +115,7 @@ magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
 ## 搜索引擎收录
 
 站内已备好 `robots.txt`、`sitemap.xml` 与 JSON-LD 结构化数据（`index.html` 的 `<head>`）。
-新增页面后记得往 `sitemap.xml` 里补一条 `<url>`。
+新增页面后记得往 `sitemap.xml` 里补一条 `<url>`；内容有实质改动时，顺手把 `<lastmod>` 改成当天日期。
 
 提交入口与外链建议见 [docs/DEPLOY.md](docs/DEPLOY.md) 的「搜索引擎收录」一节。
 

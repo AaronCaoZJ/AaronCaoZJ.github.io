@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-i18n="home.title">Cao Zhijun Aaron</title>
-<meta name="description" content="Cao Zhijun Aaron (曹植竣) — M.Sc. Electrical Engineering, Show Lab, NUS. Diffusion Models, VLA Models, World Models. ZJU." data-i18n-content="home.description">
+<title data-i18n="home.title">Cao Zhijun Aaron · 曹植竣</title>
+<meta name="description" content="Cao Zhijun Aaron (曹植竣), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
 <meta name="author" content="Cao Zhijun Aaron">
 
 <!-- Open Graph：分享到社交平台时的预览卡片 -->
 <meta property="og:type" content="profile">
-<meta property="og:title" content="Cao Zhijun Aaron" data-i18n-content="home.title">
+<meta property="og:title" content="Cao Zhijun Aaron · 曹植竣" data-i18n-content="home.title">
 <meta property="og:description" content="M.Sc. Electrical Engineering, Show Lab, National University of Singapore. Diffusion Models, VLA Models, World Models." data-i18n-content="home.description">
 <meta property="og:url" content="https://caozhijun.top/">
 <meta property="og:image" content="https://caozhijun.top/assets/img/avatar.jpg">
@@ -24,39 +24,63 @@
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
 <link rel="preload" href="assets/fonts/Charis-400.woff2" as="font" type="font/woff2" crossorigin>
 
-<!-- 结构化数据：告诉搜索引擎这个页面描述的是"一个人"，而不是泛泛的网页。
-     sameAs 把 Scholar / GitHub / LinkedIn 等身份关联到同一实体。 -->
+<!-- 结构化数据：WebSite 给出站点名称（Google 据此显示搜索结果里的站名），
+     ProfilePage 声明这一页以一个人为主体，Person 是那个人本身。
+     sameAs 把 Scholar / GitHub / LinkedIn 等身份关联到同一实体；
+     alternateName 里的中文名让「曹植竣」的搜索也能对上这个人。 -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Person",
-  "name": "Cao Zhijun Aaron",
-  "alternateName": ["\u66f9\u690d\u7ae3", "Zhijun Cao"],
-  "url": "https://caozhijun.top/",
-  "image": "https://caozhijun.top/assets/img/avatar.jpg",
-  "email": "mailto:aaroncaozj@gmail.com",
-  "jobTitle": "M.Sc. Student in Electrical Engineering",
-  "affiliation": {
-    "@type": "CollegeOrUniversity",
-    "name": "National University of Singapore",
-    "department": "Show Lab, College of Design and Engineering"
-  },
-  "alumniOf": {
-    "@type": "CollegeOrUniversity",
-    "name": "Zhejiang University"
-  },
-  "knowsAbout": [
-    "Diffusion Models",
-    "Vision-Language-Action Models",
-    "World Models",
-    "Robot Policy Learning",
-    "Multimodal Generation"
-  ],
-  "sameAs": [
-    "https://scholar.google.com/citations?user=HPWngY4AAAAJ",
-    "https://github.com/AaronCaoZJ",
-    "https://www.linkedin.com/in/aaron-cao-zhijun/",
-    "https://huggingface.co/aaroncaozj"
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://caozhijun.top/#website",
+      "url": "https://caozhijun.top/",
+      "name": "Cao Zhijun Aaron",
+      "alternateName": ["曹植竣", "Zhijun Cao", "caozhijun.top"]
+    },
+    {
+      "@type": "ProfilePage",
+      "@id": "https://caozhijun.top/#profile",
+      "url": "https://caozhijun.top/",
+      "name": "Cao Zhijun Aaron · 曹植竣",
+      "isPartOf": { "@id": "https://caozhijun.top/#website" },
+      "mainEntity": { "@id": "https://caozhijun.top/#person" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://caozhijun.top/#person",
+      "name": "Cao Zhijun Aaron",
+      "alternateName": ["曹植竣", "Zhijun Cao", "Aaron Cao"],
+      "url": "https://caozhijun.top/",
+      "image": "https://caozhijun.top/assets/img/avatar.jpg",
+      "email": "mailto:aaroncaozj@gmail.com",
+      "jobTitle": "M.Sc. Student in Electrical Engineering",
+      "affiliation": {
+        "@type": "CollegeOrUniversity",
+        "name": "National University of Singapore",
+        "alternateName": "新加坡国立大学",
+        "department": "Show Lab, College of Design and Engineering"
+      },
+      "alumniOf": {
+        "@type": "CollegeOrUniversity",
+        "name": "Zhejiang University",
+        "alternateName": "浙江大学"
+      },
+      "knowsAbout": [
+        "Diffusion Models",
+        "Vision-Language-Action Models",
+        "World Models",
+        "Robot Policy Learning",
+        "Multimodal Generation"
+      ],
+      "sameAs": [
+        "https://scholar.google.com/citations?user=HPWngY4AAAAJ",
+        "https://github.com/AaronCaoZJ",
+        "https://www.linkedin.com/in/aaron-cao-zhijun/",
+        "https://huggingface.co/aaroncaozj"
+      ]
+    }
   ]
 }
 </script>
