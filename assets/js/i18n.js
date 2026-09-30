@@ -100,7 +100,6 @@
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
   var entries = [];
   var pagePaths = { '/': true, '/index.html': true, '/gallery/': true, '/gallery/index.html': true };
-  var pageLinks = [];
   ['', 'content', 'title', 'alt', 'aria-label'].forEach(function (attribute) {
     var marker = 'data-i18n' + (attribute ? '-' + attribute : '');
     document.querySelectorAll('[' + marker + ']').forEach(function (element) {
@@ -137,17 +136,6 @@
 
   // 语言状态写进 URL，而不是永久保存在浏览器里：直接打开任何页面都默认英文，
   // 中文页面之间的跳转则通过 ?lang=zh-CN 明确传递状态，链接也可以直接分享。
-  document.querySelectorAll('a[href]').forEach(function (link) {
-    var href = link.getAttribute('href');
-    if (!href || href.charAt(0) === '#') return;
-    try {
-      var url = new URL(href, window.location.href);
-      if (url.origin === window.location.origin && pagePaths[url.pathname]) {
-        pageLinks.push({ element: link, href: href });
-      }
-    } catch (error) { /* 非标准链接保持原样。 */ }
-  });
-
   function withLanguage(href, language) {
     var url = new URL(href, window.location.href);
     if (language === 'zh-CN') url.searchParams.set('lang', 'zh-CN');
@@ -156,8 +144,17 @@
   }
 
   function syncLanguageUrls(language) {
-    pageLinks.forEach(function (link) {
-      link.element.setAttribute('href', withLanguage(link.href, language));
+    // 翻译正文时 innerHTML 会创建新的链接节点，因此每次都扫描当前 DOM，
+    // 不能复用初始化时保存的元素引用。
+    document.querySelectorAll('a[href]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (!href || href.charAt(0) === '#') return;
+      try {
+        var url = new URL(href, window.location.href);
+        if (url.origin === window.location.origin && pagePaths[url.pathname]) {
+          link.setAttribute('href', withLanguage(href, language));
+        }
+      } catch (error) { /* 非标准链接保持原样。 */ }
     });
     if (!window.history || !window.history.replaceState) return;
     var current = new URL(window.location.href);
