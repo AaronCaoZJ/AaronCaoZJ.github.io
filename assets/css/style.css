@@ -194,9 +194,13 @@ img { max-width: 100%; }
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
 }
 .nav a.language-pair {
-  /* 六个入口等宽，避免中文短标签在英文预留宽度里形成忽大忽小的间隔。
-     100px × 6 与原英文导航的总长度接近；窄屏仍由外层横向滚动。 */
+  /* 五个入口等宽，中英文切换后文字中心仍落在同一组位置。 */
   display: grid; flex: 0 0 100px; text-align: center;
+}
+.nav-divider {
+  /* 负边距抵消分割线两侧的 flex gap，不改变五个入口的等距中心点。 */
+  flex: 0 0 0; width: 0; height: 18px; margin: 0 -1px;
+  border-left: 1px solid var(--rule); opacity: .85;
 }
 .language-label {
   grid-area: 1 / 1;
