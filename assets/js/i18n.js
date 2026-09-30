@@ -95,11 +95,12 @@
   "gallery.more": "在路上",
   "nav.label": "主导航"
 };
-  var storageKey = 'homepage-language';
   var root = document.documentElement;
   var toggle = document.querySelector('.language-toggle');
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
   var entries = [];
+  var pagePaths = { '/': true, '/index.html': true, '/gallery/': true, '/gallery/index.html': true };
+  var pageLinks = [];
   ['', 'content', 'title', 'alt', 'aria-label'].forEach(function (attribute) {
     var marker = 'data-i18n' + (attribute ? '-' + attribute : '');
     document.querySelectorAll('[' + marker + ']').forEach(function (element) {
@@ -134,6 +135,38 @@
     pairedLabels(toggle, 'EN', '中');
   }
 
+  // 语言状态写进 URL，而不是永久保存在浏览器里：直接打开任何页面都默认英文，
+  // 中文页面之间的跳转则通过 ?lang=zh-CN 明确传递状态，链接也可以直接分享。
+  document.querySelectorAll('a[href]').forEach(function (link) {
+    var href = link.getAttribute('href');
+    if (!href || href.charAt(0) === '#') return;
+    try {
+      var url = new URL(href, window.location.href);
+      if (url.origin === window.location.origin && pagePaths[url.pathname]) {
+        pageLinks.push({ element: link, href: href });
+      }
+    } catch (error) { /* 非标准链接保持原样。 */ }
+  });
+
+  function withLanguage(href, language) {
+    var url = new URL(href, window.location.href);
+    if (language === 'zh-CN') url.searchParams.set('lang', 'zh-CN');
+    else url.searchParams.delete('lang');
+    return url.pathname + url.search + url.hash;
+  }
+
+  function syncLanguageUrls(language) {
+    pageLinks.forEach(function (link) {
+      link.element.setAttribute('href', withLanguage(link.href, language));
+    });
+    if (!window.history || !window.history.replaceState) return;
+    var current = new URL(window.location.href);
+    if (language === 'zh-CN') current.searchParams.set('lang', 'zh-CN');
+    else current.searchParams.delete('lang');
+    window.history.replaceState(window.history.state, '',
+      current.pathname + current.search + current.hash);
+  }
+
   function apply(language) {
     var chinese = language === 'zh-CN';
     root.lang = chinese ? 'zh-CN' : 'en';
@@ -155,13 +188,12 @@
       toggle.title = toggle.getAttribute('aria-label');
       toggle.hidden = false;
     }
+    syncLanguageUrls(root.lang);
     document.dispatchEvent(new CustomEvent('languagechange', { detail: root.lang }));
   }
 
-  var initial = 'en';
-  try {
-    if (localStorage.getItem(storageKey) === 'zh-CN') initial = 'zh-CN';
-  } catch (error) { /* Storage may be unavailable; switching still works. */ }
+  var initial = new URL(window.location.href).searchParams.get('lang') === 'zh-CN'
+    ? 'zh-CN' : 'en';
   apply(initial);
 
   var switching = false;
@@ -192,7 +224,6 @@
         await outgoing.finished;
       }
       apply(language);
-      try { localStorage.setItem(storageKey, language); } catch (error) {}
       if (animate) {
         outgoing.clear();
         incoming = fade(0, 1, 180);
