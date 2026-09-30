@@ -148,7 +148,8 @@ img { max-width: 100%; }
 /* ---------- 顶部导航 ----------
    悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。 */
 .nav {
-  position: sticky; top: 12px; z-index: 50;
+  /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
+  position: sticky; top: 14px; z-index: 50;
   display: flex; align-items: center; gap: 10px;
   width: fit-content; max-width: calc(100% - 28px);
   margin: 14px auto 0;
