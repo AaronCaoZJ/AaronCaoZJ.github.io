@@ -188,12 +188,14 @@ img { max-width: 100%; }
   font-family: var(--sans);
   font-size: var(--fs-sm); font-weight: 700; letter-spacing: .02em;
   color: var(--fg);
-  padding: 7px 13px; border-radius: 999px; white-space: nowrap;
+  padding: 7px 8px; border-radius: 999px; white-space: nowrap;
   /* 玻璃是透明的，背后可能是深色照片，加一层淡描边保证可读 */
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
 }
 .nav a.language-pair {
-  display: grid; flex-shrink: 0; text-align: center;
+  /* 六个入口等宽，避免中文短标签在英文预留宽度里形成忽大忽小的间隔。
+     100px × 6 与原英文导航的总长度接近；窄屏仍由外层横向滚动。 */
+  display: grid; flex: 0 0 100px; text-align: center;
 }
 .language-label {
   grid-area: 1 / 1;
