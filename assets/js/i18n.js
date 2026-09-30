@@ -2,11 +2,11 @@
 (function () {
   'use strict';
   var zh = {
-  "nav.home": "首页",
+  "nav.home": "🏠 首页",
   "nav.biography": "简介",
   "nav.publications": "发表物",
   "nav.experiences": "经历",
-  "nav.gallery": "相册",
+  "nav.gallery": "🖼️ 相册",
   "footer.copyright": "Copyright © Cao Zhijun. All Rights Reserved.",
   "footer.updated": "最后更新：2026 年 9 月",
   "home.title": "曹植竣 Aaron · 个人主页",
