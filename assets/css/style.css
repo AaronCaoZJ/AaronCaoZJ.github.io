@@ -218,6 +218,68 @@ img { max-width: 100%; }
   text-decoration: none;
 }
 
+/* ☰ 菜单按钮：只在窄屏横幅里出现。三条线由一个 span 和它的前后伪元素画成，
+   展开时中间那条淡出、上下两条转成 ×。 */
+.nav-menu {
+  display: none; place-items: center;
+  flex: 0 0 44px; width: 44px; height: 50px; margin-left: auto; padding: 0;
+  border: 0; border-radius: 999px; background: none;
+  color: var(--fg); cursor: pointer;
+}
+.nav-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.nav-menu span, .nav-menu span::before, .nav-menu span::after {
+  display: block; width: 18px; height: 2px; border-radius: 1px;
+  background: currentColor;
+  transition: transform .25s ease, background-color .2s ease;
+}
+.nav-menu span { position: relative; }
+.nav-menu span::before, .nav-menu span::after { content: ''; position: absolute; left: 0; }
+.nav-menu span::before { top: -6px; }
+.nav-menu span::after  { top: 6px; }
+.nav.open .nav-menu span { background-color: transparent; }
+.nav.open .nav-menu span::before { transform: translateY(6px) rotate(45deg); }
+.nav.open .nav-menu span::after  { transform: translateY(-6px) rotate(-45deg); }
+
+/* 窄屏横幅：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
+   见 i18n.js 的 language-pair）。再窄就改成横贯屏幕的一条：左首页、右 ☰，
+   其余入口收进下方，点 ☰ 时整条向下长成卡片。
+   页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。
+
+   .wrap 绝对定位、.nav 固定 50px 高：展开的卡片浮在正文上面，
+   不会把下面的内容往下推。 */
+@media (max-width: 660px) {
+  .nav {
+    width: auto; max-width: none; height: 50px; margin: 14px 14px 0;
+    justify-content: flex-end;
+  }
+  .nav .wrap {
+    position: absolute; top: 0; left: 0; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
+    flex-wrap: wrap; align-content: flex-start;
+    height: auto; max-height: 50px; padding: 0 3px 0 8px;
+    overflow: hidden; border-radius: 25px;              /* 25 = 半个高度：收起时仍是胶囊 */
+    transition: max-height .32s cubic-bezier(.32,.72,0,1);
+  }
+  /* 展开后是一整张卡片压在正文上，20% 的玻璃底会透出头像等图片，
+     字就不好认了：底色调到接近实心，模糊仍保留 */
+  .nav.open .wrap { max-height: 320px; padding-bottom: 8px; background: rgba(255, 255, 255, .92); }
+  .nav-menu { display: grid; }
+  .nav .wrap > a { flex: 0 0 100%; justify-items: start; text-align: left; padding: 12px 14px; }
+  .nav .wrap > a:first-child { flex: 0 0 auto; padding: 7px 14px; }
+  /* 收起时把下面几行设为 visibility: hidden：仅靠 overflow 藏起来，
+     Tab 键仍会聚焦到看不见的链接上。关闭时等收起动画走完再隐藏。 */
+  .nav .wrap > a:not(:first-child), .nav .wrap > .nav-divider {
+    visibility: hidden;
+    transition: background .2s ease, box-shadow .2s ease, visibility 0s linear .32s;
+  }
+  .nav.open .wrap > a:not(:first-child), .nav.open .wrap > .nav-divider {
+    visibility: visible; transition-delay: 0s;
+  }
+  .nav-divider {
+    flex: 0 0 calc(100% - 28px); height: 0; margin: 4px 14px;
+    border-left: 0; border-top: 1px solid var(--rule);
+  }
+}
+
 /* ---------- 头部名片 ---------- */
 .hero {
   display: grid;
@@ -661,6 +723,9 @@ footer.wrap {
   .item { padding: 14px; gap: 14px; }
   /* 窄屏日期单独占一行；连 ul 一起退回块级，否则 subgrid 还在生效 */
   .news, .news li { display: block; }
+  /* 两段任期连写的那条太长，窄屏下放它折行；段内用的是不换行空格，
+     所以只会在「·」处折开，不会把「2026.06 –」和「present」拆到两行 */
+  .item .d { white-space: normal; flex-shrink: 1; }   /* 原本 flex: 0 0 auto 不许收缩，光放开换行没用 */
   .info-block { margin-top: 34px; padding: 20px 18px; }
 }
 
