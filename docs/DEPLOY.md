@@ -229,8 +229,9 @@ curl -s --resolve caozhijun.top:443:185.199.110.153 https://caozhijun.top/ | gre
 | 文件 | 作用 |
 |---|---|
 | `robots.txt` | 允许全站抓取，并指出 sitemap 位置 |
-| `sitemap.xml` | 列出所有页面。**新增页面要手动补一条 `<url>`** |
-| `index.html` 中的 JSON-LD | 声明这是一个 `Person`，并用 `sameAs` 关联 Scholar / GitHub / LinkedIn / HuggingFace |
+| `sitemap.xml` | 列出所有页面。**新增页面要手动补一条 `<url>`**，内容有实质改动时更新 `<lastmod>` |
+| `<title>` 与 `description` | 都带中文名「曹植竣」。页面只有一个网址，爬虫读到的是英文版，中文名必须写在这些静态位置 |
+| `index.html` 中的 JSON-LD | `WebSite`（站点名称）+ `ProfilePage` + `Person`，`alternateName` 含「曹植竣」，`sameAs` 关联 Scholar / GitHub / LinkedIn / HuggingFace |
 
 `sameAs` 是学者主页最值得填的一项：它把散落各处的身份指向同一个实体，
 Google 才可能把它们并进同一条 Knowledge Graph 记录，
@@ -246,6 +247,9 @@ Google 才可能把它们并进同一条 Knowledge Graph 记录，
 3. 左侧「站点地图」→ 提交 `sitemap.xml`
 4. 「网址检查」输入首页 → 请求编入索引（可跳过等待）
 
+不需要 `<meta name="keywords">`：Google 明确不用它参与索引或排名。
+`sitemap.xml` 里的 `priority` 与 `changefreq` Google 也会忽略，只参考准确的 `lastmod`。
+
 **Bing Webmaster Tools** — https://www.bing.com/webmasters
 
 支持从 Google Search Console 一键导入，验证与 sitemap 都省了。
@@ -254,6 +258,29 @@ Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
 **百度**（可选）— https://ziyuan.baidu.com
 
 需要网站备案后才能正常收录，属于第二步的事。
+
+### 旧网址：Google Sites 时代的 `/home`
+
+搜索结果里还留着 Google Sites 时代的 `www.caozhijun.top/home`。
+`www` 已由 Cloudflare 301 到根域名，但 `/home` 在新站不存在，落到 404。
+GitHub Pages 不能配置服务端跳转，在 Cloudflare 上加一条规则：
+
+**Rules → Redirect Rules → Create rule**（Single Redirect）
+
+| 项 | 值 |
+|---|---|
+| 匹配 | 自定义过滤表达式：`(http.request.uri.path in {"/home" "/home/"})` |
+| 类型 | Static |
+| 目标 URL | `https://caozhijun.top/` |
+| 状态码 | **301** |
+| 保留查询字符串 | 关 |
+
+验证：`curl -sI https://caozhijun.top/home` 应返回 `301` 与 `location: https://caozhijun.top/`。
+旧的 `/gallery` 不用管，GitHub Pages 会自动 301 到 `/gallery/`。
+
+Google Sites 本身的地址（`sites.google.com/view/caozhijun`）无法从这边跳转。
+等新站在 Search Console 里显示已编入索引后，在 Google Sites 后台
+**取消发布**，旧页面会随之从搜索结果中消失，不再分散权重。
 
 ### 真正决定排名的是外链
 
@@ -265,6 +292,9 @@ Bing 的索引会同步给 DuckDuckGo 与 Yahoo。
 - **实验室主页**（Show Lab）的成员列表
 - **LinkedIn** 个人资料的网站栏
 - 论文项目页（Show-Harness、PAPAV）的作者链接
+
+这些地方的姓名统一写成 **Zhijun Cao（曹植竣）**，网站一律填 `https://caozhijun.top`。
+同一个人名在各处写法一致、都指向同一个网址，搜索引擎才会把它们认作同一个人。
 
 这些做完，通常一到两周内搜索姓名就能出现在首页。
 纯粹等待自然抓取则可能要一两个月。

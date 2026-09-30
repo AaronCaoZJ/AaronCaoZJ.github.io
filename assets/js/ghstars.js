@@ -32,7 +32,12 @@
       s.className = 'gh-stars';
       s.textContent = '★ ' + fmt(n);
       a.appendChild(s);
-      a.title = n + ' stars on GitHub';
+      function updateTitle() {
+        a.title = document.documentElement.lang === 'zh-CN'
+          ? 'GitHub 上获得 ' + n + ' 颗星标' : n + ' stars on GitHub';
+      }
+      updateTitle();
+      document.addEventListener('languagechange', updateTitle);
     });
   });
 })();

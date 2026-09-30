@@ -47,8 +47,8 @@ instancer.instantiateVariableFont(f, {'opsz': 16}, inplace=True)
 f.flavor = 'woff2'; f.save('Newsreader-normal.woff2')"
 ```
 
-中文（"曹植竣""报告树"等）走系统字体：苹果设备落到苹方，Windows 落到微软雅黑。
-页面上中文只有寥寥几个词，为此下载 1–3 MB 中文字库对大陆访问得不偿失。
+中文版使用系统中文字体：苹果设备落到苹方，Windows 落到微软雅黑。
+无需额外下载大型中文字体文件；中文模式下同时调整正文行距和标题字距。
 
 ## 本地预览
 
@@ -115,7 +115,7 @@ magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
 ## 搜索引擎收录
 
 站内已备好 `robots.txt`、`sitemap.xml` 与 JSON-LD 结构化数据（`index.html` 的 `<head>`）。
-新增页面后记得往 `sitemap.xml` 里补一条 `<url>`。
+新增页面后记得往 `sitemap.xml` 里补一条 `<url>`；内容有实质改动时，顺手把 `<lastmod>` 改成当天日期。
 
 提交入口与外链建议见 [docs/DEPLOY.md](docs/DEPLOY.md) 的「搜索引擎收录」一节。
 
@@ -135,3 +135,20 @@ git add -A && git commit -m "update" && git push
 
 - `index.html` 里 Google Scholar 链接是占位符 `YOUR_SCHOLAR_ID`，需替换
 - 论文作者列表目前写的是 `et al.`，需补全合作者姓名
+
+## 中英文切换
+
+主页和相册共用导航右侧的圆形液态玻璃按钮：英文页显示「中」，中文页显示「EN」。
+普通打开主页或相册时默认显示英文。切换中文后，当前地址和站内页面链接会加上
+`?lang=zh-CN`；刷新或进入相册时继续显示中文。切回英文会移除该参数，之后的站内跳转也保持英文。
+语言状态不写入浏览器存储；JavaScript 不可用时保留完整英文内容。
+导航为中英文标签预留相同宽度，以淡入淡出切换文字，避免胶囊和按钮跳位。
+正文切换采用 100 ms 淡出、180 ms 淡入；系统开启“减少动态效果”时直接切换。
+
+英文原文仍在 HTML 中，中文集中在 `assets/js/i18n.js` 的 `zh` 对象中。
+新增翻译时给对应元素加 `data-i18n="键名"`，并在 `zh` 中补上同名中文文案。
+提示和元信息分别使用 `data-i18n-title`、`data-i18n-alt`、`data-i18n-aria-label` 和
+`data-i18n-content`。翻译可包含可信的静态 HTML；请勿嵌套翻译标记，或将标记放在包含动态控件的父元素上。
+动态文案（新闻展开、访客地图、GitHub 星标）监听 `languagechange` 事件更新。
+中文文案中，汉字与英文、数字之间留一个半角空格（包括跨行内标签的边界），
+全角标点两侧不额外留空格；纯中文链接与前后中文之间不添加空格。

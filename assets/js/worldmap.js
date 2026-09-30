@@ -362,15 +362,35 @@
       : 'color-mix(in oklab, var(--vmap-cold) ' + ((t - 0.5) * 200).toFixed(1) + '%, var(--vmap-mid))';
   }
   function agoText(h) {
+    if (document.documentElement.lang === 'zh-CN') {
+      if (h < 1) return '一小时内';
+      if (h < 24) return h + ' 小时前';
+      if (h < 720) return Math.round(h / 24) + ' 天前';
+      return Math.round(h / 720) + ' 个月前';
+    }
     if (h < 1)   return 'within the hour';
     if (h < 24)  return h + ' h ago';
     if (h < 720) return Math.round(h / 24) + ' d ago';
     return Math.round(h / 720) + ' mo ago';
   }
 
+  function visitLabel(d) {
+    var chinese = document.documentElement.lang === 'zh-CN';
+    return d.city + ', ' + d.cc + ' \u00b7 ' + d.n + (chinese ? ' 次访问' : ' visits') +
+      (typeof d.ago === 'number' ? ' \u00b7 ' + agoText(d.ago) : '');
+  }
+  function updateLanguage() {
+    out.setAttribute('aria-label', document.documentElement.lang === 'zh-CN' ? '缩回全图' : 'Zoom out');
+    pins.querySelectorAll('.vmap-pin').forEach(function (pin) {
+      pin.setAttribute('aria-label', visitLabel(pin._visit));
+    });
+    if (tip._pin) tip.textContent = visitLabel(tip._pin._visit);
+  }
+  document.addEventListener('languagechange', updateLanguage);
+  updateLanguage();
+
   function showTip(pin, d) {
-    tip.textContent = d.city + ', ' + d.cc + ' \u00b7 ' + d.n + ' visits' +
-                      (typeof d.ago === 'number' ? ' \u00b7 ' + agoText(d.ago) : '');
+    tip.textContent = visitLabel(d);
     tip._pin = pin;
     tip.style.left = pin.style.left;
     tip.style.top  = pin.style.top;
@@ -390,8 +410,8 @@
       b._v = pt.y;
       /* 面积正比于访问量 => 半径开方，否则大城市会大得离谱 */
       b.style.setProperty('--s', (5 + 8 * Math.sqrt(d.n / max)).toFixed(1) + 'px');
-      b.setAttribute('aria-label', d.city + ', ' + d.cc + ', ' + d.n + ' visits' +
-                     (typeof d.ago === 'number' ? ', last ' + agoText(d.ago) : ''));
+      b._visit = d;
+      b.setAttribute('aria-label', visitLabel(d));
       // 旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
       if (typeof d.ago === 'number') b.style.color = heatColor(heat(d.ago));  // 圆点取 currentColor
       b.addEventListener('mouseenter', function () { showTip(b, d); });
