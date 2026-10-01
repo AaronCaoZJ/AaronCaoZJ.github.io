@@ -103,14 +103,11 @@ function liquidLens(box, pick, cls) {
      折射逐像素算成位移图交给 SVG 位移滤镜（仅 Chromium），高光画成图片（所有浏览器）。 */
   var G = {
     refraction: .69,        // 折射强度
-    zRadius: 20,            // 弯边深度：截面是半圆，高度 sqrt(d·(2zR − d))。原库默认 40，
-                            // 但它的演示里小元素都按尺寸调小（视频控件 20、标签指示 16）。
-                            // 40 放在 50px 高的胶囊上弯到正中，整条成了玻璃棒，内容上下颠倒；
-                            // 20 时中间是正的，只有上下沿映出对侧，接近 Apple 官方效果
+    zRadius: 40,            // 弯边深度（CSS px）：截面是半圆，高度 sqrt(d·(2zR − d))
     chroma: .05,            // 色散
     edgeHL: .05,            // 边缘高光
     fresnel: 1,             // 菲涅耳反射
-    frost: 1.5              // 背景模糊 σ（原库演示里按钮的 blurAmount 0.3 约合 1.6px）
+    frost: 3.2              // 背景模糊 σ（物理像素）：原库演示里按钮的 blurAmount 0.3
   };
 
   function smooth(a, b, x) {                     // 同 GLSL smoothstep，a > b 时反向
@@ -127,15 +124,22 @@ function liquidLens(box, pick, cls) {
     if (d >= zR) return zR;
     return Math.sqrt(d * (2 * zR - d));
   }
+  function frostCss() { return G.frost / (window.devicePixelRatio || 1); }   // 模糊 σ 换成 CSS 像素
   function radiusOf(pane, w, h) {
     return Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
   }
 
   /* 玻璃上一点 (px, py)（以中心为原点、y 向下，CSS 像素）的光学量，写进 o：
-     sdf、法线 N、折射取样偏移 (rx, ry)、色散偏移 (cx, cy)、白色高光强度 hl。逐行对应 FS_GLASS */
+     sdf、法线 N、折射取样偏移 (rx, ry)、色散偏移 (cx, cy)（都是 CSS 像素）、
+     白色高光强度 hl、边缘遮罩 mask。逐行对应 FS_GLASS。
+     单位要跟原库一致：它把尺寸、圆角、弯边深度都乘以 devicePixelRatio 传进着色器，
+     而着色器里的常数（折射 ×30、色散 ×18、差分步长 2、描边 1.5 …）都按物理像素算。
+     所以这里先换成物理像素算，最后再除回 CSS 像素 —— Retina 屏上偏移只有按 CSS 像素算的一半 */
   var IOR = 1.5, REFR_POW = 1 - 1 / IOR, E = 2;
   function glassAt(px, py, hx, hy, r, o) {
-    var sdf = rrSDF(px, py, hx, hy, r), zR = G.zRadius;
+    var D = window.devicePixelRatio || 1;
+    px *= D; py *= D; hx *= D; hy *= D; r *= D;
+    var sdf = rrSDF(px, py, hx, hy, r), zR = G.zRadius * D;
     o.sdf = sdf;
     var inside = -sdf, maxD = Math.min(hx, hy);
     var edge = smooth(maxD * .35, 0, inside);
@@ -148,9 +152,9 @@ function liquidLens(box, pick, cls) {
     // 双凸：入射、出射各折一次，再加穿过厚度的一段；外加一点朝中心的整体放大
     var thickNorm = hC * 2 / Math.max(zR * 2, 1);
     var k = REFR_POW * (2 + thickNorm * .5) * G.refraction * 30;
-    o.rx = gx * k - px / Math.max(hx, 1) * G.refraction * 4 * depth;
-    o.ry = gy * k - py / Math.max(hy, 1) * G.refraction * 4 * depth;
-    var caS = G.chroma * 18 * (edge * .7 + .3) * 2;
+    o.rx = (gx * k - px / Math.max(hx, 1) * G.refraction * 4 * depth) / D;
+    o.ry = (gy * k - py / Math.max(hy, 1) * G.refraction * 4 * depth) / D;
+    var caS = G.chroma * 18 * (edge * .7 + .3) * 2 / D;
     o.cx = Nx * caS; o.cy = Ny * caS;
     // 高光：菲涅耳、内描边（上沿更亮）、边缘光、内辉光、底部的环境反射
     var fres = Math.pow(1 - Math.abs(Nz), 4) * G.fresnel;
@@ -265,7 +269,7 @@ function liquidLens(box, pick, cls) {
         max = Math.max(max, Math.abs(o.rx) + Math.abs(o.cx), Math.abs(o.ry) + Math.abs(o.cy));
       }
     }
-    var M = Math.ceil(max + G.frost * 3 + 2), CW = Wd + Math.round(2 * M * k), CH = Hd + Math.round(2 * M * k);
+    var M = Math.ceil(max + frostCss() * 3 + 2), CW = Wd + Math.round(2 * M * k), CH = Hd + Math.round(2 * M * k);
     var mk = Math.round(M * k), urls = [];
     [1, 0, -1].forEach(function (sign) {         // 红、绿、蓝
       var cv = document.createElement('canvas');
@@ -304,7 +308,7 @@ function liquidLens(box, pick, cls) {
       primitiveUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' }, defs);
     /* 背景先轻模糊；三个通道各用自己的位移图折射，各取一个颜色分量拼回去（色散）；
        再按遮罩与未折射的背景混合（边缘抗锯齿），最后整体提亮 6%（原着色器 col *= 1 + 0.06·depth） */
-    svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: G.frost, result: 'frost' }, f);
+    var blur = svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: frostCss(), result: 'frost' }, f);
     var ONLY = ['1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0',
                 '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0',
                 '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0'];
@@ -327,7 +331,8 @@ function liquidLens(box, pick, cls) {
     /* 尺寸变化中折射先换成普通模糊，稳定后再生成位移图挂回去 ——
        折射是"显现"出来的，Apple 描述玻璃出现时也是逐渐调制光的弯折 */
     var fit = settled(pane, function (w, h, final) {
-      if (!final) { lyr.style.backdropFilter = 'blur(' + G.frost + 'px)'; return; }
+      if (!final) { lyr.style.backdropFilter = 'blur(' + frostCss() + 'px)'; return; }
+      blur.setAttribute('stdDeviation', frostCss().toFixed(2));   // 拖到另一块屏幕后 dpr 会变
       var m = refractMaps(w, h, radiusOf(pane, w, h));
       lyr.style.inset = -m.margin + 'px';
       f.setAttribute('width', m.fw); f.setAttribute('height', m.fh);
