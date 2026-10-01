@@ -96,8 +96,10 @@
       c.parentNode.replaceChild(img, c);
     })(oList[i], cList[i]);
     [].forEach.call(body.querySelectorAll('script, [data-lg-skip]'), function (n) { n.parentNode.removeChild(n); });
-    // 导航不能删：它是 sticky，在文档流里占着 64px，删了下面整页内容都会上移。只让它不可见
-    [].forEach.call(body.querySelectorAll('.nav'), function (n) { n.setAttribute('style', 'visibility:hidden!important'); });
+    // 导航不能删：它是 sticky，在文档流里占着 64px，删了下面整页内容都会上移。只让它不可见 ——
+    // 用 opacity 而不是 visibility：入口里的双语标签自己写了 visibility: visible，会盖过父级的
+    // hidden，导航文字就被截进背景、再被玻璃折射出来，在空白底色上看得一清二楚
+    [].forEach.call(body.querySelectorAll('.nav'), function (n) { n.setAttribute('style', 'opacity:0!important'); });
 
     return Promise.all(jobs).then(pageCss).then(function (css) {
       var cls = ((root.getAttribute('class') || '') + ' lg-cap').trim();
