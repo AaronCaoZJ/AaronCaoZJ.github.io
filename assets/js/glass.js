@@ -127,7 +127,7 @@
     'uniform sampler2D u_tex;',
     'uniform vec2 u_size;', 'uniform vec2 u_crop;', 'uniform float u_pad;', 'uniform float u_radius;',
     'uniform float u_refract;', 'uniform float u_chroma;', 'uniform float u_edgeHL;', 'uniform float u_fresnel;',
-    'uniform float u_zRadius;', 'uniform float u_alpha;',
+    'uniform float u_zRadius;', 'uniform float u_alpha;', 'uniform float u_shade;', 'uniform float u_spec;',
     'float rrSDF(vec2 p, vec2 b, float r) {',
     '  vec2 q = abs(p) - b + vec2(r);',
     '  return min(max(q.x, q.y), 0.0) + length(max(q, vec2(0.0))) - r;',
@@ -167,6 +167,13 @@
     '  vec2 base = (lp + half_ + vec2(u_pad) + refrPx) / u_crop;',
     '  vec3 col = vec3(texture2D(u_tex, base + caD).r, texture2D(u_tex, base).g, texture2D(u_tex, base - caD).b);',
     '  col *= 1.0 + 0.06 * depth;',
+    // 以下两项是本站加的光照，原库没有：纯色底上折射什么也弯不出来，立体感只能靠光照。
+    // 光从正上方来（y 向下，所以是 -y）；只用法线，左右对称，不碰折射。
+    // 明暗：法线朝光处亮、背光处暗 —— 平坦区 N·L 正好等于 L.z，乘数为 1，不变
+    '  vec3 Ld = normalize(vec3(0.0, -0.75, 1.0));',
+    '  col *= 1.0 + u_shade * (dot(N, Ld) - Ld.z);',
+    // 镜面高光：上沿一道柔和的亮光
+    '  float specTop = pow(max(dot(N, normalize(Ld + vec3(0.0, 0.0, 1.0))), 0.0), 40.0) * (1.0 - depth);',
     '  float fres = pow(1.0 - abs(N.z), 4.0) * u_fresnel;',
     '  float bw = 1.5;',
     '  float stroke = smoothstep(-bw - 1.0, -bw, sdf) * (1.0 - smoothstep(-1.0, 0.0, sdf));',
@@ -174,7 +181,7 @@
     '  float rim = edge * u_edgeHL * 0.22;',
     '  float innerGlow = smoothstep(5.0, 0.0, -sdf) * u_edgeHL * 0.15;',
     '  float envRefl = (N.y * 0.5 + 0.5) * fres * 0.08;',
-    '  vec3 fin = col + vec3(rim + innerGlow + stroke * u_edgeHL * 0.55 + envRefl);',
+    '  vec3 fin = col + vec3(rim + innerGlow + stroke * u_edgeHL * 0.55 + envRefl + specTop * u_spec);',
     '  fin = mix(fin, vec3(1.0), fres * 0.2);',
     '  gl_FragColor = vec4(fin, mask * u_alpha);',
     '}'
@@ -188,7 +195,8 @@
        Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
        窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
-            frost: 3.1, frostOpen: 6 };
+            frost: 3.1, frostOpen: 6,
+            shade: .25, spec: .55 };   // 本站加的光照：纯色底上的立体感（明暗、上沿高光），不影响折射
 
   function makeGL(canvas) {
     var gl = canvas.getContext('webgl', { premultipliedAlpha: false, antialias: false });
@@ -217,7 +225,8 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     var u = {};
-    ['u_tex', 'u_size', 'u_crop', 'u_pad', 'u_radius', 'u_refract', 'u_chroma', 'u_edgeHL', 'u_fresnel', 'u_zRadius', 'u_alpha']
+    ['u_tex', 'u_size', 'u_crop', 'u_pad', 'u_radius', 'u_refract', 'u_chroma', 'u_edgeHL', 'u_fresnel', 'u_zRadius', 'u_alpha',
+     'u_shade', 'u_spec']
       .forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
     return { gl: gl, u: u };
   }
@@ -310,6 +319,8 @@
     gl.uniform1f(u.u_fresnel, G.fresnel);
     gl.uniform1f(u.u_zRadius, Math.min(G.zRadius, G.zRatio * Math.min(w, h)) * d);
     gl.uniform1f(u.u_alpha, 1);
+    gl.uniform1f(u.u_shade, G.shade);
+    gl.uniform1f(u.u_spec, G.spec);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
