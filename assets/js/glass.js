@@ -100,6 +100,10 @@
     // 用 opacity 而不是 visibility：入口里的双语标签自己写了 visibility: visible，会盖过父级的
     // hidden，导航文字就被截进背景、再被玻璃折射出来，在空白底色上看得一清二楚
     [].forEach.call(body.querySelectorAll('.nav'), function (n) { n.setAttribute('style', 'opacity:0!important'); });
+    // 一直在动的内容（如相册的跑马灯）不进静态截图，由 render() 每帧按实时位置画上去
+    [].forEach.call(body.querySelectorAll('[data-lg-live] > *'), function (n) {
+      n.setAttribute('style', (n.getAttribute('style') || '') + ';opacity:0!important');
+    });
 
     return Promise.all(jobs).then(pageCss).then(function (css) {
       var cls = ((root.getAttribute('class') || '') + ' lg-cap').trim();
@@ -202,7 +206,7 @@
        窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
             frost: 3.1, frostOpen: 6,
-            shade: .1, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
+            shade: .06, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
   function makeGL(canvas) {
     var gl = canvas.getContext('webgl', { premultipliedAlpha: false, antialias: false });
@@ -254,6 +258,30 @@
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
+  /* 一直在动的内容：标了 data-lg-live 的容器（相册的跑马灯轨道），其子元素每帧按实时位置画。
+     原库对这类内容（data-dynamic）是每帧重新栅格化；这里只画图片和圆角底色，便宜得多 */
+  var liveEls = [].slice.call(document.querySelectorAll('[data-lg-live] > *'));
+  function drawLive(ctx2, el, x0, y0, k) {
+    var r = el.getBoundingClientRect();
+    if (!el._lg) {
+      var cs = getComputedStyle(el);
+      el._lg = { r: parseFloat(cs.borderTopLeftRadius) || 0, bg: cs.backgroundColor, img: el.querySelector('img') };
+    }
+    var x = (r.left + window.scrollX - x0) * k, y = (r.top + window.scrollY - y0) * k;
+    ctx2.save();
+    ctx2.beginPath();
+    if (ctx2.roundRect) ctx2.roundRect(x, y, r.width * k, r.height * k, el._lg.r * k);
+    else ctx2.rect(x, y, r.width * k, r.height * k);
+    ctx2.clip();
+    ctx2.fillStyle = el._lg.bg;
+    ctx2.fillRect(x, y, r.width * k, r.height * k);
+    var im = el._lg.img;
+    if (im && im.complete && im.naturalWidth) {
+      var ir = im.getBoundingClientRect();
+      ctx2.drawImage(im, (ir.left + window.scrollX - x0) * k, (ir.top + window.scrollY - y0) * k, ir.width * k, ir.height * k);
+    }
+    ctx2.restore();
+  }
   videos.forEach(function (vd) { vd.addEventListener('play', function () { schedule(); }); });
 
   function goLive() {
@@ -300,6 +328,13 @@
       if (vid.readyState < 2 || vx > x0 + cw || vx + vr.width < x0 || vy > y0 + ch || vy + vr.height < y0) continue;
       try { rc2.drawImage(vid, (vx - x0) * k, (vy - y0) * k, vr.width * k, vr.height * k); } catch (e) { continue; }
       if (!vid.paused) moving = true;
+    }
+    for (var li = 0; li < liveEls.length; li++) {
+      var le = liveEls[li], lr = le.getBoundingClientRect();
+      var lx = lr.left + window.scrollX, ly = lr.top + window.scrollY;
+      if (!lr.width || lx > x0 + cw || lx + lr.width < x0 || ly > y0 + ch || ly + lr.height < y0) continue;
+      drawLive(rc2, le, x0, y0, k);
+      moving = true;                        // 跑马灯一直在走：玻璃压在上面时逐帧重画
     }
     // 模糊 σ：收起时按物理像素（同原库），展开的菜单卡片按 CSS 像素
     var frost = pane === wrap && nav.classList.contains('open') ? G.frostOpen * k : G.frost;
