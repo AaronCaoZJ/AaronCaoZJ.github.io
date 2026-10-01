@@ -103,7 +103,7 @@
   var lowT = window.matchMedia && window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
   if (!chromium || lowT || !window.ResizeObserver) return;
 
-  var M = 24;          // 折射层四周外扩，须与 style.css 里 .lg-refract 的 inset 一致
+  var M = 12;          // 折射层四周外扩，给磨砂留取样余量；须与 style.css 里 .lg-refract 的 inset 一致
   var NS = 'http://www.w3.org/2000/svg';
   function svgEl(tag, attrs, parent) {
     var n = document.createElementNS(NS, tag);
@@ -113,10 +113,11 @@
   }
 
   /* 位移图：每个像素存"该处应从哪里取背景"，R、G 分别管 x、y，128 为不动。
-     按圆角矩形的有向距离场算：离边缘 bezel 以内，沿法线**向外**取样，
-     最外缘取到约 dmax 之外，越往里越近（平方衰减）。外面一段内容被压缩着
-     折进边缘，往里逐渐过渡到平坦 —— 这是凸边玻璃的样子。
-     向外取样时，取样点随位置单调变化，再强也不会在边缘翻折成镜像条纹。
+     按圆角矩形的有向距离场算：离边缘 bezel 以内，沿法线**向内**取样 ——
+     边上显示的是往里一点的内容，一小段被摊开到整条边上，即凸透镜边缘的**拉伸放大**。
+     位移按 (1 − t)² 衰减、最外缘为 0.42 个 bezel：此时取样位置对坐标的导数
+     在边上是 1 − 2 × 0.42 = 0.16（约放大 6 倍），且处处为正 —— 超过 0.5
+     导数就会变负，取样点在边缘折返，背景被镜像成一道道条纹。
      图的尺寸是整个折射层（胶囊 + 四周 M），胶囊以外的部分最终被裁掉，填 128。
      B 通道空着没用，拿来存"边缘区"遮罩：边上为 1，进到 bezel 处降到 0 ——
      滤镜据此把清晰的折射边和磨砂的中间区拼起来。 */
@@ -138,8 +139,8 @@
         var t = dist >= 0 && dist < bezel ? 1 - dist / bezel : 0;
         var k = t * t;
         var i = (y * W + x) * 4;
-        d[i]     = 128 + (px < 0 ? -nx : nx) * k * 127;   // 法线朝外，取样也朝外
-        d[i + 1] = 128 + (py < 0 ? -ny : ny) * k * 127;
+        d[i]     = 128 - (px < 0 ? -nx : nx) * k * 127;   // 法线朝外，取样朝内
+        d[i + 1] = 128 - (py < 0 ? -ny : ny) * k * 127;
         d[i + 2] = t * 255; d[i + 3] = 255;
       }
     }
@@ -197,9 +198,7 @@
       w0 = w; h0 = h;
       var r = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
       var bezel = Math.min(18, h * .36);   // 弯边向内延伸的深度；小块玻璃不宜太"鼓"
-      /* 最外缘取到边外 10px 为止：导航吸顶时离视口顶端只有 14px，再远就取到
-         屏幕外面（那里没有内容），上缘会比下缘弱；收在这里也免得边缘太抢眼 */
-      var dmax = Math.min(9, bezel * .5);
+      var dmax = bezel * .42;              // 见 refractMap 的说明：再大就折返
       f.setAttribute('width', w + 2 * M); f.setAttribute('height', h + 2 * M);
       map.setAttribute('width', w + 2 * M); map.setAttribute('height', h + 2 * M);
       map.setAttribute('href', refractMap(w, h, r, bezel));
