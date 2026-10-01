@@ -105,19 +105,25 @@ function liquidLens(box, pick, cls) {
        位移图按实际最大位移归一化后编码，8 位精度用满。
      除"厚度"随玻璃尺寸缩小外（见 thick），取值都是 liquid-dom 的默认值。 */
   var G = {
-    bezel: 14,              // 弯边宽度
+    bezel: 14,              // 弯边宽度上限
+    bezelK: .16,            // 小块玻璃的弯边按短边的这个比例收窄（50px 的胶囊 / 圆约 8px）
+    edgeRamp: 2.5,          // 最外侧这几像素里位移从 0 渐增：边界两侧内容连续，不会被"切断"
     thickness: 90,          // 玻璃厚度上限
     ior: 1.5,               // 折射率
     frost: 1.5,             // 背景模糊 σ。liquid-dom 默认 blur = 8 太糊；shuding 只有 0.25px。
                             // 取 1.5：背后内容仍清楚可见，带一点柔化，导航文字压得住
     minStretch: .2,         // 边缘取样位置的最小前进率：保证不倒转，最多放大 5 倍
-    fieldBlur: 3,           // 位移场模糊：三遍 box 近似高斯（liquid-dom 的 displacementBlur = 6）
+    fieldBlur: 1,           // 位移场模糊：三遍 box 近似高斯。liquid-dom 的 displacementBlur = 6
+                            // 对 50px 的小圆太大，会把斜率抹到圆心，整片变成锥形
     light: -Math.PI / 4,    // 光照方向，0 朝上，−π/4 即左上
     spec: { width: 1, feather: 1, strength: 1, falloff: 1, opposite: 1, sharp: 2, opacity: .45 }
   };
   /* 小块玻璃按短边缩小厚度：90px 是给大面板的，放在 50px 高的胶囊上，
      边缘取样会越过对面的边。Apple 也说小块玻璃更通透、透镜更弱 */
   function thick(w, h) { return Math.min(G.thickness, Math.min(w, h)); }
+  /* 弯边宽度：圆片要中间平、只有边缘一圈弯，才读得出是一片有厚度的玻璃；
+     弯边占满半径就成了锥 */
+  function bezelOf(w, h) { return Math.min(G.bezel, G.bezelK * Math.min(w, h)); }
 
   function smooth(a, b, x) {
     var t = Math.min(Math.max((x - a) / (b - a), 0), 1);
@@ -264,8 +270,8 @@ function liquidLens(box, pick, cls) {
      沿边缘法线按同样的流程（斜率 → 模糊 → 折射）算一遍一维剖面，找出取样位置
      前进最慢的一点，把整张位移场等比缩小到那里仍以 minStretch 的速率前进 ——
      相当于 liquid-dom 的 displacementFactor，只是按"刚好不倒转"自动定。 */
-  function foldGuard(T) {
-    var bz = G.bezel, P = G.fieldBlur * 3 + 2, L = P + bz + 40, i;
+  function foldGuard(T, bz) {
+    var P = G.fieldBlur * 3 + 2, L = P + bz + 40, i;
     var sl = new Float32Array(L), fl = new Float32Array(L), ht = new Float32Array(L), tmp = new Float32Array(L);
     for (i = P; i < L; i++) {                       // 下标 P 处是轮廓，往后是玻璃内部
       var inward = i - P + .5, sq = squircle(inward / bz);
@@ -295,7 +301,8 @@ function liquidLens(box, pick, cls) {
   function refractMap(w, h, r, frost) {
     var P = G.fieldBlur * 3 + 2, FW = w + 2 * P, FH = h + 2 * P, N = FW * FH;
     var vx = new Float32Array(N), vy = new Float32Array(N), fill = new Float32Array(N);
-    var hgt = new Float32Array(N), tmp = new Float32Array(N), o = {}, T = thick(w, h), bz = G.bezel;
+    var hgt = new Float32Array(N), tmp = new Float32Array(N), o = {}, T = thick(w, h), bz = bezelOf(w, h);
+    var ramp = new Float32Array(w * h);
     for (var y = 0; y < FH; y++) {
       for (var x = 0; x < FW; x++) {
         rrect(x + .5 - P - w / 2, y + .5 - P - h / 2, w / 2, h / 2, r, o);
@@ -305,6 +312,8 @@ function liquidLens(box, pick, cls) {
         var slope = inward > bz ? 0 : Math.min(sq[1], TAN85);
         vx[j] = o.nx * slope * f; vy[j] = o.ny * slope * f; fill[j] = f;
         hgt[j] = T + (inward > bz ? 1 : sq[0]) * bz;
+        var px = x - P, py = y - P;
+        if (px >= 0 && py >= 0 && px < w && py < h) ramp[py * w + px] = G.edgeRamp ? smooth(0, G.edgeRamp, inward) : 1;
       }
     }
     for (var pass = 0; pass < 3; pass++) {
@@ -312,7 +321,7 @@ function liquidLens(box, pick, cls) {
       boxBlur(vy, FW, FH, G.fieldBlur, tmp);
       boxBlur(fill, FW, FH, G.fieldBlur, tmp);
     }
-    var dx = new Float32Array(w * h), dy = new Float32Array(w * h), max = 0, F = foldGuard(T);
+    var dx = new Float32Array(w * h), dy = new Float32Array(w * h), max = 0, F = foldGuard(T, bz);
     for (y = 0; y < h; y++) {
       for (x = 0; x < w; x++) {
         var k = (y + P) * FW + x + P, fb = fill[k];
@@ -322,7 +331,7 @@ function liquidLens(box, pick, cls) {
         var c = ETA * cosi - Math.sqrt(Math.max(1 - ETA * ETA * (1 - cosi * cosi), 0));
         var Tz = -ETA + c * cosi;                                  // 折射方向 = ETA·I + c·N
         var e = y * w + x, t = hgt[k] / Math.max(-Tz, 1e-4);
-        dx[e] = c * Nx * t * F; dy[e] = c * Ny * t * F;
+        dx[e] = c * Nx * t * F * ramp[e]; dy[e] = c * Ny * t * F * ramp[e];
         max = Math.max(max, Math.abs(dx[e]), Math.abs(dy[e]));
       }
     }
