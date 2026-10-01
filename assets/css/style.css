@@ -209,8 +209,8 @@ img { max-width: 100%; }
   opacity: 0; transition: opacity .35s ease;
 }
 .nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow { opacity: 1; }
-/* 悬停水滴（nav.js 的 liquidLens）：本身也是一小块玻璃，跟着指针在条目之间滑，
-   换位时被拉长再弹回。导航、联系方式、论文卡片共用这一份样式 */
+/* 悬停水滴（nav.js 的 liquidLens）：本身也是一小块玻璃，跟着指针在入口之间滑，
+   换位时被拉长再弹回 */
 .liquid-lens {
   position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
   border-radius: 999px; opacity: 0;
@@ -408,7 +408,6 @@ img { max-width: 100%; }
 /* 联系方式行 */
 .links {
   display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px;
-  position: relative; isolation: isolate;   /* 水滴绝对定位在里面，垫在胶囊之下 */
 }
 .links a {
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
@@ -420,13 +419,10 @@ img { max-width: 100%; }
   border: 1px solid var(--rule);
   box-shadow: 0 2px 8px var(--glass-cast);
   color: var(--fg);
-  position: relative; z-index: 1;
   transition: border-color .18s ease, color .18s ease;
 }
-/* 悬停不再上浮：交给 nav.js 的玻璃水滴从底下透上来（胶囊是半透明的）。
-   没有 JS 时退回描边与文字变色 */
+/* 悬停只点亮描边和文字，不上浮 */
 .links a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
-.links.lens-live a:hover { border-color: var(--rule); color: var(--fg); }
 /* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
@@ -520,16 +516,6 @@ strong { font-weight: 700; }
   border-color: var(--rule);
   box-shadow: 0 6px 20px var(--glass-cast);
 }
-/* 论文 / 写作卡片：悬停改由 nav.js 的玻璃水滴表现 —— 水滴比卡片大出 6px、垫在下面，
-   在四周露出一圈玻璃光环，换卡片时带着拉伸滑过去。卡片本身保持静止 */
-#publications, #writing { position: relative; isolation: isolate; }
-.pub { position: relative; z-index: 1; }
-.lens-live > .pub:hover { border-color: var(--card-b); box-shadow: 0 1px 2px rgba(35, 52, 70, .05); }
-.pub-lens {
-  box-shadow:
-    inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, .6),
-    0 0 0 .5px rgba(35, 52, 70, .08), 0 10px 28px -8px rgba(35, 52, 70, .24);
-}
 
 /* ---------- 论文卡片 ---------- */
 .pub {
@@ -544,7 +530,10 @@ strong { font-weight: 700; }
   width: 100%; border-radius: 8px;
   border: 1px solid var(--card-b); background: var(--card);
   overflow: hidden;
+  transition: border-color .28s ease;
 }
+/* 悬停整张卡片时缩略图描边一起点亮，不上浮 */
+.pub:hover .thumb { border-color: var(--rule); }
 /* 文字栏：标题、作者、venue、链接之间的空隙统一。原先各行 margin
    （4 / 3 / 8px）和行高（1.38 / 1.55 / 1.68）都不一样，而视觉空隙 =
    margin + 上下两行各自的半行距，四段间隔于是各不相等。现在行高统一、
