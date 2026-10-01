@@ -47,21 +47,15 @@
      小块玻璃不宜太"鼓" */
   function bevelOf(h) { return Math.min(18, h * .36); }
 
-  /* 0. 光照：立体感的主要来源（所有浏览器都有，只是一张图片）。
-     把弯边当成四分之一圆弧的曲面 —— 边上近乎竖直，往里逐渐放平 ——
-     按圆角距离场求出每点的三维法线，光从左上方来：朝光的一侧亮起一片柔和高光，
-     背光一侧压一点暗，对侧再有一抹玻璃内部反射回来的弱光。
-     明暗只落在弯边这一圈，和折射的范围一致，读起来就是同一块有厚度的玻璃。 */
-  var L1 = norm3(-.42, -.78, .62), L2 = norm3(.45, .8, .55), V = [0, 0, 1];
-  function norm3(x, y, z) { var l = Math.sqrt(x * x + y * y + z * z); return [x / l, y / l, z / l]; }
-  function half(a) { return norm3(a[0] + V[0], a[1] + V[1], a[2] + V[2]); }
-  var H1 = half(L1), H2 = half(L2);
-  // 主高光、对侧内反射、朝光面漫射、背光压暗、高光锐度（指数越小越宽）
-  var LIT = { key: 1.1, back: .35, diffuse: .24, shade: .14, sharp: 10 };
-  /* 平面（法线正对屏幕）本身的反光作基线扣掉：否则弯边内侧放平处仍有一层亮，
-     到弯边边界突然归零，会描出一圈内胶囊 —— 正是之前"两层"的观感 */
-  var B1 = Math.pow(H1[2], LIT.sharp), B2 = Math.pow(H2[2], LIT.sharp);
-  function above(v, b) { return Math.max(0, v - b) / (1 - b); }
+  /* 0. 光照：贴着轮廓的一道细亮边，所有浏览器都有（只是一张图片）。
+     按菲涅耳效应来：视线越贴近曲面（越靠轮廓），反射越强 —— 把弯边当作
+     四分之一圆弧，亮度取 (1 − N·V)⁴，几乎全落在最外侧两三个像素里，往内迅速衰减，
+     中间保持通透。再按朝向调强弱：朝左上方光源的一侧最亮，正对面有一道
+     内部反射回来的次高光，两侧最暗。
+     不用宽的高光波瓣：那会在弯边内侧铺开一大片白，压在深色照片上就成了乳白雾斑。 */
+  var LX = -.5, LY = -.85, LN = Math.sqrt(LX * LX + LY * LY);
+  LX /= LN; LY /= LN;
+  var RIM = { key: 1, back: .55, side: .22, power: 4 };
   function lightMap(w, h, r, bezel) {
     var k = Math.min(window.devicePixelRatio || 1, 2), W = Math.round(w * k), Hh = Math.round(h * k);
     var c = document.createElement('canvas');
@@ -78,17 +72,14 @@
         if (dist < 0 || dist >= bezel) continue;            // 弯边以外透明
         if (px < 0) nx = -nx;
         if (py < 0) ny = -ny;
-        var t = dist / bezel, u = 1 - t;                      // u：1 在边上，0 在弯边内侧
-        var slope = Math.min(u / Math.sqrt(Math.max(1 - u * u, 1e-4)), 8);   // 圆弧的斜率
-        var N = norm3(nx * slope, ny * slope, 1);
-        var nl = N[0] * L1[0] + N[1] * L1[1] + N[2] * L1[2];
-        var s1 = above(Math.pow(Math.max(0, N[0] * H1[0] + N[1] * H1[1] + N[2] * H1[2]), LIT.sharp), B1);
-        var s2 = above(Math.pow(Math.max(0, N[0] * H2[0] + N[1] * H2[1] + N[2] * H2[2]), LIT.sharp), B2);
-        var lift = LIT.key * s1 + LIT.back * s2 + LIT.diffuse * u * u * Math.max(0, nl);
-        var shade = LIT.shade * u * Math.max(0, -nl);
+        var u = 1 - dist / bezel;                             // 1 在轮廓上，0 在弯边内侧
+        var nv = Math.sqrt(Math.max(1 - u * u, 0));           // 圆弧上法线与视线夹角的余弦
+        var fres = Math.pow(1 - nv, RIM.power);
+        var facing = nx * LX + ny * LY;                       // 1 朝光，−1 背光
+        var a = fres * (RIM.side + RIM.key * Math.max(0, facing) + RIM.back * Math.max(0, -facing));
         var i = (y * W + x) * 4;
-        if (lift >= shade) { d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = Math.min(lift, .7) * 255; }
-        else { d[i] = 35; d[i + 1] = 52; d[i + 2] = 70; d[i + 3] = shade * 255; }
+        d[i] = d[i + 1] = d[i + 2] = 255;
+        d[i + 3] = Math.min(a, 1) * 235;
       }
     }
     g.putImageData(img, 0, 0);

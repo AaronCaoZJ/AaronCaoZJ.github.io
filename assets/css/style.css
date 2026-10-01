@@ -149,10 +149,10 @@ img { max-width: 100%; }
       改由胶囊自己的 backdrop-filter 模糊兜底。
    2. 体积 ::after：均匀的薄白与上缘内侧一道亮线。Apple 的说法是玻璃"没有固有颜色"，
       实心填充会破坏质感；厚度交给边缘折射去表达，不再额外画内侧明暗。
-   3. 光照 .lg-light（nav.js 按弯边几何算出的明暗图，所有浏览器都有）：
-      朝光一侧的柔和高光、背光一侧的轻微压暗、对侧的一抹内反射 —— 立体感主要靠它。
+   3. 边缘光 .lg-light（nav.js 按弯边几何算出，所有浏览器都有）：贴着轮廓的一道
+      细亮边，按菲涅耳效应只落在最外侧两三个像素；朝左上方的一侧最亮，
+      对侧一道内反射的次高光。不画宽的高光：压在深色照片上会变成乳白雾斑。
    4. 交互：悬停水滴 .nav-lens 在入口间滑动（带回弹与拉伸），光斑 .lg-glow 随光标。
-   5. 镜面高光 ::before：一圈渐变亮边，左上、右下最亮，两侧几乎没有。
    投影不能留在胶囊本身（会被折射层读进去，见 .lg-shadow）。
    饱和度只轻提（130%）：拉到 200% 会把背后的颜色整个拽偏，廉价感就来自那里。
    Apple 没有给出任何数值，也没有网页版实现；这里的取值按 HIG 与 WWDC25 的描述校准：
@@ -194,19 +194,7 @@ img { max-width: 100%; }
   background: var(--lg-tint);
   box-shadow: inset 0 1px 0 var(--lg-rim-in);
 }
-/* 镜面高光：一圈 1.2px 的渐变亮边（遮罩挖空中间，只留边） */
-.nav .wrap::before, .language-toggle::before {
-  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  border-radius: inherit; padding: 1.2px;
-  background: linear-gradient(125deg,
-    rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .35) 16%, rgba(255, 255, 255, 0) 36%,
-    rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, .3) 84%, rgba(255, 255, 255, .75) 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
-/* 弯边光照：nav.js 按几何算好的一张明暗图，铺满胶囊 */
+/* 边缘光：nav.js 按弯边几何算好的一张亮边图，铺满胶囊 */
 .lg-light {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
   border-radius: inherit; background: no-repeat 0 0 / 100% 100%;
