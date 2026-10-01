@@ -97,79 +97,84 @@ function liquidLens(box, pick, cls) {
     return n;
   }
 
-  /* 参数与模型对照两个参考实现：
-     - liquid-dom（github.com/AndrewPrifer/liquid-dom）：折射、高光、阴影的物理模型与默认值。
-       它本身是 WebGPU 渲染器，而且要开 Chrome 实验开关（HTML-in-Canvas）才能把页面 DOM
-       折射进玻璃，公开页面用不了；这里把它的着色模型搬进 SVG 滤镜与 canvas 生成的贴图。
-     - liquid-glass（github.com/shuding/liquid-glass）：把位移滤镜挂在 backdrop-filter 上，
-       位移图按实际最大位移归一化后编码，8 位精度用满。
-     背景模糊、本体、高光、阴影按 liquid-dom；折射的位移剖面另行设计（见 profile）。 */
+  /* 光学模型移植自 ybouane/liquidglass（github.com/ybouane/liquidglass，MIT）的片元着色器
+     FS_GLASS，参数取它的默认值。原库用 html-to-image 把页面栅格化后交给 WebGL 渲染；
+     本页是一整页滚动内容、里面还有视频，每帧重新栅格化代价太大，所以只搬公式：
+     折射逐像素算成位移图交给 SVG 位移滤镜（仅 Chromium），高光画成图片（所有浏览器）。 */
   var G = {
-    bezel: 14,              // 弯边宽度上限
-    bezelK: .3,             // 更小的玻璃按短边的这个比例收窄弯边，圆片中间才留得出平坦区
-                            // （50px 的胶囊 / 圆正好用满 14px）
-    edgeRamp: 6,            // 最外侧这几像素里位移从 0 升到峰值：边界两侧内容连续，不会被"切断"；
-                            // 这一圈里内容被压缩，读成玻璃边缘的厚度。太窄（4px）时压缩与
-                            // 紧接着的拉伸反差太大，压在文字上字会被扭断，过渡显得生硬
-    frost: 1.5,             // 背景模糊 σ。liquid-dom 默认 blur = 8 太糊；shuding 只有 0.25px。
-                            // 取 1.5：背后内容仍清楚可见，带一点柔化，导航文字压得住
-    minStretch: .35,        // 取样位置每往里 1px 至少前进这么多：保证不倒转，最多约放大 3 倍。
-                            // 放大到 8 倍时，大卡片四周的拉伸带会把行间空白铺开，像镶了一圈白框
-    light: -Math.PI / 4,    // 光照方向，0 朝上，−π/4 即左上
-    // 高光带比 liquid-dom 默认的 1px 宽：50px 的小圆上 1px 太细，读不出边缘的厚度
-    spec: { width: 2.5, feather: 1, strength: 1, falloff: .7, opposite: 1, sharp: 2, opacity: .45 },
-    rim: { width: 4, alpha: .12 }   // 四周统一的一圈淡白边：玻璃边缘的厚度在反光
+    refraction: .69,        // 折射强度
+    zRadius: 20,            // 弯边深度：截面是半圆，高度 sqrt(d·(2zR − d))。原库默认 40，
+                            // 但它的演示里小元素都按尺寸调小（视频控件 20、标签指示 16）。
+                            // 40 放在 50px 高的胶囊上弯到正中，整条成了玻璃棒，内容上下颠倒；
+                            // 20 时中间是正的，只有上下沿映出对侧，接近 Apple 官方效果
+    chroma: .05,            // 色散
+    edgeHL: .05,            // 边缘高光
+    fresnel: 1,             // 菲涅耳反射
+    frost: 1.5              // 背景模糊 σ（原库演示里按钮的 blurAmount 0.3 约合 1.6px）
   };
-  /* 小块玻璃按短边缩小厚度：90px 是给大面板的，放在 50px 高的胶囊上，
-     边缘取样会越过对面的边。Apple 也说小块玻璃更通透、透镜更弱 */
-  /* 弯边宽度：圆片要中间平、只有边缘一圈弯，才读得出是一片有厚度的玻璃；
-     弯边占满半径就成了锥 */
-  function bezelOf(w, h) { return Math.min(G.bezel, G.bezelK * Math.min(w, h)); }
 
-  function smooth(a, b, x) {
+  function smooth(a, b, x) {                     // 同 GLSL smoothstep，a > b 时反向
     var t = Math.min(Math.max((x - a) / (b - a), 0), 1);
     return t * t * (3 - 2 * t);
   }
-  /* 圆角矩形的有向距离场：o.d 在内为负、在外为正，(o.nx, o.ny) 为朝外的法线 */
-  function rrect(px, py, hx, hy, r, o) {
-    var qx = Math.abs(px) - hx + r, qy = Math.abs(py) - hy + r, nx, ny;
-    if (qx > 0 && qy > 0) {
-      var L = Math.sqrt(qx * qx + qy * qy) || 1;
-      o.d = L - r; nx = qx / L; ny = qy / L;
-    } else if (qx > qy) { o.d = qx - r; nx = 1; ny = 0; }
-    else { o.d = qy - r; nx = 0; ny = 1; }
-    o.nx = px < 0 ? -nx : nx;
-    o.ny = py < 0 ? -ny : ny;
+  function rrSDF(px, py, hx, hy, r) {            // 圆角矩形有向距离：内负外正
+    var qx = Math.abs(px) - hx + r, qy = Math.abs(py) - hy + r;
+    var ox = Math.max(qx, 0), oy = Math.max(qy, 0);
+    return Math.min(Math.max(qx, qy), 0) + Math.sqrt(ox * ox + oy * oy) - r;
+  }
+  function bevelHeight(d, zR) {
+    if (d <= 0) return 0;
+    if (d >= zR) return zR;
+    return Math.sqrt(d * (2 * zR - d));
   }
   function radiusOf(pane, w, h) {
     return Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
   }
 
-  /* 0. 高光（所有浏览器都有，只是一张图片），即 liquid-dom 的 white specular：
-     只落在轮廓往里 width 像素的一条带上（两侧各羽化 feather），
-     强度 = (法线·光照方向)^sharp，并有一道镜像方向的对侧高光；
-     带内越往里越弱（falloff），整体乘 opacity。 */
-  var LX = Math.sin(G.light), LY = -Math.cos(G.light);
+  /* 玻璃上一点 (px, py)（以中心为原点、y 向下，CSS 像素）的光学量，写进 o：
+     sdf、法线 N、折射取样偏移 (rx, ry)、色散偏移 (cx, cy)、白色高光强度 hl。逐行对应 FS_GLASS */
+  var IOR = 1.5, REFR_POW = 1 - 1 / IOR, E = 2;
+  function glassAt(px, py, hx, hy, r, o) {
+    var sdf = rrSDF(px, py, hx, hy, r), zR = G.zRadius;
+    o.sdf = sdf;
+    var inside = -sdf, maxD = Math.min(hx, hy);
+    var edge = smooth(maxD * .35, 0, inside);
+    var hC = bevelHeight(inside, zR);
+    var hR = bevelHeight(-rrSDF(px + E, py, hx, hy, r), zR), hL = bevelHeight(-rrSDF(px - E, py, hx, hy, r), zR);
+    var hU = bevelHeight(-rrSDF(px, py + E, hx, hy, r), zR), hD = bevelHeight(-rrSDF(px, py - E, hx, hy, r), zR);
+    var gx = (hR - hL) / (2 * E), gy = (hU - hD) / (2 * E);
+    var nl = Math.sqrt(gx * gx + gy * gy + 1), Nx = -gx / nl, Ny = -gy / nl, Nz = 1 / nl;
+    var depth = smooth(0, zR, inside);
+    // 双凸：入射、出射各折一次，再加穿过厚度的一段；外加一点朝中心的整体放大
+    var thickNorm = hC * 2 / Math.max(zR * 2, 1);
+    var k = REFR_POW * (2 + thickNorm * .5) * G.refraction * 30;
+    o.rx = gx * k - px / Math.max(hx, 1) * G.refraction * 4 * depth;
+    o.ry = gy * k - py / Math.max(hy, 1) * G.refraction * 4 * depth;
+    var caS = G.chroma * 18 * (edge * .7 + .3) * 2;
+    o.cx = Nx * caS; o.cy = Ny * caS;
+    // 高光：菲涅耳、内描边（上沿更亮）、边缘光、内辉光、底部的环境反射
+    var fres = Math.pow(1 - Math.abs(Nz), 4) * G.fresnel;
+    var bw = 1.5, stroke = smooth(-bw - 1, -bw, sdf) * (1 - smooth(-1, 0, sdf));
+    stroke *= .4 + .6 * (.5 + .5 * (-py / hy));
+    var add = edge * G.edgeHL * .22 + smooth(5, 0, inside) * G.edgeHL * .15
+            + stroke * G.edgeHL * .55 + (Ny * .5 + .5) * fres * .08;
+    o.hl = 1 - (1 - Math.min(add, 1)) * (1 - fres * .2);   // col + add 再向白色混 fres·0.2
+    o.mask = 1 - smooth(-1.5, .5, sdf);                    // 最外 1.5px 渐回未折射的背景
+  }
+
+  /* 0. 高光图（所有浏览器都有，只是一张图片） */
   function specularMap(w, h, r) {
     var k = Math.min(window.devicePixelRatio || 1, 2), W = Math.round(w * k), H = Math.round(h * k);
-    var S = G.spec, o = {}, c = document.createElement('canvas');
+    var o = {}, c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d'), img = g.createImageData(W, H), d = img.data;
-    var reach = Math.max(S.width + S.feather, G.rim.width), unit = Math.max(S.width, S.feather);
     for (var y = 0; y < H; y++) {
       for (var x = 0; x < W; x++) {
-        rrect((x + .5) / k - w / 2, (y + .5) / k - h / 2, w / 2, h / 2, r, o);
-        var inward = Math.max(-o.d, 0);
-        if (o.d > S.feather || inward > reach) continue;
-        var band = (1 - smooth(0, S.feather, o.d)) * (1 - smooth(S.width, reach, inward));
-        var prog = Math.min(inward / unit, 1), fall = S.falloff * prog * prog;
-        var facing = o.nx * LX + o.ny * LY;
-        var p = Math.min(Math.max(Math.pow(Math.max(facing, 0), S.sharp) * (S.strength - fall), 0), 1);
-        var q = Math.min(Math.max(Math.pow(Math.max(-facing, 0), S.sharp) * (S.opposite - fall), 0), 1);
-        var rim = G.rim.width ? G.rim.alpha * (1 - smooth(0, G.rim.width, inward)) * (1 - smooth(0, S.feather, o.d)) : 0;
+        glassAt((x + .5) / k - w / 2, (y + .5) / k - h / 2, w / 2, h / 2, r, o);
+        if (o.sdf > .5) continue;
         var i = (y * W + x) * 4;
         d[i] = d[i + 1] = d[i + 2] = 255;
-        d[i + 3] = Math.min(Math.min((p + q) * band, 1) * S.opacity + rim, 1) * 255;
+        d[i + 3] = Math.min(o.hl * o.mask, 1) * 255;
       }
     }
     g.putImageData(img, 0, 0);
@@ -242,50 +247,45 @@ function liquidLens(box, pick, cls) {
     return n;
   }
 
-  /* 折射的位移剖面：沿边缘法线、从轮廓往里量 x 像素，取样点往里挪 D(x)。
-       单位剖面 u(x) = smooth(0, edgeRamp, x) × (1 − smooth(0.6·edgeRamp, bezel, x))
-     最外侧 edgeRamp 内从 0 升到峰值 —— 边界两侧的内容是连续的，字弯进玻璃，不会被切断；
-     再往里平滑降回 0 —— 凸边那一圈把靠里的内容拉伸铺开。
-     峰值取"刚好不倒转"的最大值：取样位置每往里 1px 至少前进 minStretch。
-
-     为什么不用 liquid-dom 的物理剖面（squircle 曲面 + Snell 折射）：它在最边上一两个
-     像素里陡得厉害，厚一点就倒转（边上出现上下颠倒的像，滚动时逆向移动）；
-     加上不倒转的约束后，整体位移只剩 3–4px，几乎看不出折射。
-     设计过的剖面在同样的弯边宽度下，能把位移推到接近上限。 */
-  function profile(x, bz) {
-    return smooth(0, G.edgeRamp, x) * (1 - smooth(G.edgeRamp * .6, bz, x));
-  }
-  function peakOf(bz) {
-    var step = .25, worst = 0, prev = profile(0, bz);
-    for (var x = step; x <= bz; x += step) {
-      var cur = profile(x, bz);
-      worst = Math.max(worst, (prev - cur) / step);    // 每往里 1px，单位位移减少多少
-      prev = cur;
-    }
-    return worst > 0 ? (1 - G.minStretch) / worst : 0;
-  }
-
-  /* 位移图：R、G 存 x、y，127.5 为不动；按峰值归一化编码（shuding 的做法），
-     feDisplacementMap 的 scale 取 2 × 峰值。只向内取样，外扩只需给模糊留余量 */
-  function refractMap(w, h, r, frost) {
-    var bz = bezelOf(w, h), pk = peakOf(bz), o = {};
-    var M = Math.ceil(frost * 3 + 2), W = w + 2 * M, H = h + 2 * M;
-    var cv = document.createElement('canvas');
-    cv.width = W; cv.height = H;
-    var g = cv.getContext('2d'), img = g.createImageData(W, H), d = img.data;
-    for (var i = 0; i < d.length; i += 4) { d[i] = d[i + 1] = 128; d[i + 3] = 255; }
-    for (var y = 0; y < h; y++) {
-      for (var x = 0; x < w; x++) {
-        rrect(x + .5 - w / 2, y + .5 - h / 2, w / 2, h / 2, r, o);
-        var inward = -o.d;
-        if (inward <= 0 || inward >= bz) continue;
-        var u = profile(inward, bz), q = ((y + M) * W + x + M) * 4;
-        d[q]     = Math.round(127.5 - o.nx * u * 127.5);   // 法线朝外，取样朝内
-        d[q + 1] = Math.round(127.5 - o.ny * u * 127.5);
+  /* 位移图：R、G、B 三个通道各一张（色散：红取 偏移+色散，蓝取 偏移−色散），
+     每张的 R、G 存 x、y 偏移，127.5 为不动，B 存遮罩（最外 1.5px 渐回背景）。
+     三张共用一个归一化尺度（shuding 的做法），feDisplacementMap 的 scale = 2 × 最大偏移。
+     取样会伸出胶囊之外（边缘能映出对面的内容），折射层四周外扩到最大偏移以外。 */
+  function refractMaps(w, h, r) {
+    var k = Math.min(window.devicePixelRatio || 1, 2), hx = w / 2, hy = h / 2, o = {};
+    var Wd = Math.round(w * k), Hd = Math.round(h * k), N = Wd * Hd;
+    var f = { rx: new Float32Array(N), ry: new Float32Array(N), cx: new Float32Array(N),
+              cy: new Float32Array(N), m: new Float32Array(N) }, max = .5;
+    for (var y = 0; y < Hd; y++) {
+      for (var x = 0; x < Wd; x++) {
+        glassAt((x + .5) / k - hx, (y + .5) / k - hy, hx, hy, r, o);
+        if (o.sdf > .5) continue;
+        var j = y * Wd + x;
+        f.rx[j] = o.rx; f.ry[j] = o.ry; f.cx[j] = o.cx; f.cy[j] = o.cy; f.m[j] = o.mask;
+        max = Math.max(max, Math.abs(o.rx) + Math.abs(o.cx), Math.abs(o.ry) + Math.abs(o.cy));
       }
     }
-    g.putImageData(img, 0, 0);
-    return { url: cv.toDataURL(), margin: M, scale: 2 * pk };
+    var M = Math.ceil(max + G.frost * 3 + 2), CW = Wd + Math.round(2 * M * k), CH = Hd + Math.round(2 * M * k);
+    var mk = Math.round(M * k), urls = [];
+    [1, 0, -1].forEach(function (sign) {         // 红、绿、蓝
+      var cv = document.createElement('canvas');
+      cv.width = CW; cv.height = CH;
+      var g = cv.getContext('2d'), img = g.createImageData(CW, CH), d = img.data;
+      for (var i = 0; i < d.length; i += 4) { d[i] = d[i + 1] = 128; d[i + 3] = 255; }
+      for (var y = 0; y < Hd; y++) {
+        for (var x = 0; x < Wd; x++) {
+          var j = y * Wd + x;
+          if (!f.m[j]) continue;
+          var q = ((y + mk) * CW + x + mk) * 4;
+          d[q]     = Math.round(127.5 + (f.rx[j] + sign * f.cx[j]) / max * 127.5);
+          d[q + 1] = Math.round(127.5 + (f.ry[j] + sign * f.cy[j]) / max * 127.5);
+          d[q + 2] = Math.round(f.m[j] * 255);
+        }
+      }
+      g.putImageData(img, 0, 0);
+      urls.push(cv.toDataURL());
+    });
+    return { urls: urls, margin: M, scale: 2 * max, fw: CW / k, fh: CH / k };
   }
 
   var defs = svgEl('svg', { 'aria-hidden': 'true', width: 0, height: 0 });
@@ -302,22 +302,40 @@ function liquidLens(box, pick, cls) {
     // 整块玻璃就会平白往一个方向偏
     var f = svgEl('filter', { id: id, x: 0, y: 0, filterUnits: 'userSpaceOnUse',
       primitiveUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' }, defs);
-    // 和 liquid-dom 一样，折射取的是模糊过的背景
+    /* 背景先轻模糊；三个通道各用自己的位移图折射，各取一个颜色分量拼回去（色散）；
+       再按遮罩与未折射的背景混合（边缘抗锯齿），最后整体提亮 6%（原着色器 col *= 1 + 0.06·depth） */
     svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: G.frost, result: 'frost' }, f);
-    var map = svgEl('feImage', { x: 0, y: 0, preserveAspectRatio: 'none', result: 'map' }, f);
-    var disp = svgEl('feDisplacementMap', { 'in': 'frost', in2: 'map',
-      xChannelSelector: 'R', yChannelSelector: 'G' }, f);
+    var ONLY = ['1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0',
+                '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0',
+                '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0'];
+    var maps = [], disps = [];
+    ['R', 'G', 'B'].forEach(function (c, i) {
+      maps.push(svgEl('feImage', { x: 0, y: 0, preserveAspectRatio: 'none', result: 'map' + c }, f));
+      disps.push(svgEl('feDisplacementMap', { 'in': 'frost', in2: 'map' + c,
+        xChannelSelector: 'R', yChannelSelector: 'G', result: 'bent' + c }, f));
+      svgEl('feColorMatrix', { 'in': 'bent' + c, type: 'matrix', values: ONLY[i], result: 'only' + c }, f);
+    });
+    svgEl('feComposite', { 'in': 'onlyR', in2: 'onlyG', operator: 'arithmetic', k2: 1, k3: 1, result: 'rg' }, f);
+    svgEl('feComposite', { 'in': 'rg', in2: 'onlyB', operator: 'arithmetic', k2: 1, k3: 1, result: 'glass' }, f);
+    svgEl('feColorMatrix', { 'in': 'mapG', type: 'matrix',
+      values: '0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 1 0 0', result: 'mask' }, f);
+    svgEl('feComposite', { 'in': 'glass', in2: 'mask', operator: 'in', result: 'glassIn' }, f);
+    svgEl('feComposite', { 'in': 'glassIn', in2: 'SourceGraphic', operator: 'over', result: 'lens' }, f);
+    var lift = svgEl('feComponentTransfer', { 'in': 'lens' }, f);
+    ['feFuncR', 'feFuncG', 'feFuncB'].forEach(function (t) { svgEl(t, { type: 'linear', slope: 1.06 }, lift); });
 
     /* 尺寸变化中折射先换成普通模糊，稳定后再生成位移图挂回去 ——
        折射是"显现"出来的，Apple 描述玻璃出现时也是逐渐调制光的弯折 */
     var fit = settled(pane, function (w, h, final) {
       if (!final) { lyr.style.backdropFilter = 'blur(' + G.frost + 'px)'; return; }
-      var m = refractMap(w, h, radiusOf(pane, w, h), G.frost);
+      var m = refractMaps(w, h, radiusOf(pane, w, h));
       lyr.style.inset = -m.margin + 'px';
-      f.setAttribute('width', w + 2 * m.margin); f.setAttribute('height', h + 2 * m.margin);
-      map.setAttribute('width', w + 2 * m.margin); map.setAttribute('height', h + 2 * m.margin);
-      map.setAttribute('href', m.url);
-      disp.setAttribute('scale', m.scale.toFixed(2));
+      f.setAttribute('width', m.fw); f.setAttribute('height', m.fh);
+      maps.forEach(function (mp, i) {
+        mp.setAttribute('width', m.fw); mp.setAttribute('height', m.fh);
+        mp.setAttribute('href', m.urls[i]);
+      });
+      disps.forEach(function (dm) { dm.setAttribute('scale', m.scale.toFixed(2)); });
       lyr.style.backdropFilter = 'url(#' + id + ')';
     });
 
