@@ -95,9 +95,9 @@
      取值对照 liquid-dom（github.com/AndrewPrifer/liquid-dom）的默认值 */
   --lg-tint:        rgba(255, 255, 255, 0);     /* 不叠白：同 ybouane/liquidglass，清玻璃 */
   --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
-  /* 原库默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度约为原值的三分之一：
+  /* 原库默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度只留原值的一小部分：
      原值（0.3）在浅色页面上显得重 */
-  --lg-shadow: 0 1px 10px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+  --lg-shadow: 0 1px 8px rgba(0, 0, 0, .035), 0 0 1px rgba(0, 0, 0, .03);
 }
 
 * { box-sizing: border-box; }
