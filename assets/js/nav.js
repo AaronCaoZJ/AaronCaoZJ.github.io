@@ -107,7 +107,9 @@ function liquidLens(box, pick, cls) {
     chroma: .05,            // 色散
     edgeHL: .05,            // 边缘高光
     fresnel: 1,             // 菲涅耳反射
-    frost: 3.2              // 背景模糊 σ（物理像素）：原库演示里按钮的 blurAmount 0.3
+    frost: 1                // 背景模糊 σ（物理像素）。原库演示里的 Regular Glass 是 0，按钮是 3.2
+                            // （blurAmount 0.3）；3.2 会把纯色交界抹成十几像素宽的渐变。
+                            // 取 1：交界和 0 一样利落，只顺手抹平弯边处逐像素取样的锯齿
   };
 
   function smooth(a, b, x) {                     // 同 GLSL smoothstep，a > b 时反向
