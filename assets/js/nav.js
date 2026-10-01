@@ -109,6 +109,7 @@ function liquidLens(box, pick, cls) {
     thickness: 90,          // 玻璃厚度上限
     ior: 1.5,               // 折射率
     frost: 4,               // 背景模糊 σ（liquid-dom 的 blur = 8 是半径）
+    minStretch: .2,         // 边缘取样位置的最小前进率：保证不倒转，最多放大 5 倍
     fieldBlur: 3,           // 位移场模糊：三遍 box 近似高斯（liquid-dom 的 displacementBlur = 6）
     light: -Math.PI / 4,    // 光照方向，0 朝上，−π/4 即左上
     spec: { width: 1, feather: 1, strength: 1, falloff: 1, opposite: 1, sharp: 2, opacity: .45 }
@@ -257,13 +258,37 @@ function liquidLens(box, pick, cls) {
     }
   }
 
+  /* 防倒转系数。厚玻璃在最外缘取样取得太远，取样位置会折返：边上显示一段压缩、
+     上下颠倒的像，静止时是一圈暗带，滚动时这圈内容会逆着滚动方向走，非常别扭。
+     沿边缘法线按同样的流程（斜率 → 模糊 → 折射）算一遍一维剖面，找出取样位置
+     前进最慢的一点，把整张位移场等比缩小到那里仍以 minStretch 的速率前进 ——
+     相当于 liquid-dom 的 displacementFactor，只是按"刚好不倒转"自动定。 */
+  function foldGuard(T) {
+    var bz = G.bezel, P = G.fieldBlur * 3 + 2, L = P + bz + 40, i;
+    var sl = new Float32Array(L), fl = new Float32Array(L), ht = new Float32Array(L), tmp = new Float32Array(L);
+    for (i = P; i < L; i++) {                       // 下标 P 处是轮廓，往后是玻璃内部
+      var inward = i - P + .5, sq = squircle(inward / bz);
+      sl[i] = inward > bz ? 0 : Math.min(sq[1], TAN85);
+      fl[i] = 1; ht[i] = T + (inward > bz ? 1 : sq[0]) * bz;
+    }
+    for (var pass = 0; pass < 3; pass++) { boxBlur(sl, L, 1, G.fieldBlur, tmp); boxBlur(fl, L, 1, G.fieldBlur, tmp); }
+    var D = new Float32Array(L), worst = 0;
+    for (i = P; i < L; i++) {
+      var sx = fl[i] > 1e-4 ? sl[i] / fl[i] : 0, inv = 1 / Math.sqrt(sx * sx + 1), cosi = inv;
+      var c = ETA * cosi - Math.sqrt(Math.max(1 - ETA * ETA * (1 - cosi * cosi), 0));
+      D[i] = -c * sx * inv * ht[i] / Math.max(ETA - c * cosi, 1e-4);   // 向内的偏移量
+      if (i > P) worst = Math.max(worst, D[i - 1] - D[i]);             // 每往里 1px，偏移减少多少
+    }
+    return worst > 0 ? Math.min(1, (1 - G.minStretch) / worst) : 1;
+  }
+
   /* 折射位移图，按 liquid-dom 的流程：
      1. 斜率场：弯边内按 squircle 斜率沿法线倾斜（上限 tan 85°），往里放平；
         预乘覆盖率，模糊时形状外的空值才不会把边缘拉低。
      2. 斜率场整体模糊后再除以模糊过的覆盖率，得到平滑的曲面法线。
      3. 一条垂直向下的视线按 IOR 折射，偏移 = 折射方向的水平分量 / 垂直分量 ×（厚度 + 剖面高度）。
-        折射总是朝法线内侧弯，所以边上取的是往里的内容 —— 凸透镜边缘的拉伸；
-        厚玻璃在最边上取得足够远，还会出现一段压缩倒转的像，这正是实物玻璃边缘的样子。
+        折射总是朝法线内侧弯，所以边上取的是往里的内容 —— 凸透镜边缘的拉伸。
+        再乘以 foldGuard 的系数，最边上只拉伸、不倒转。
      4. 按实际最大偏移归一化编码（shuding 的做法）：R、G 存 x、y，127.5 为不动，
         feDisplacementMap 的 scale 取 2 × 最大偏移。 */
   function refractMap(w, h, r) {
@@ -286,7 +311,7 @@ function liquidLens(box, pick, cls) {
       boxBlur(vy, FW, FH, G.fieldBlur, tmp);
       boxBlur(fill, FW, FH, G.fieldBlur, tmp);
     }
-    var dx = new Float32Array(w * h), dy = new Float32Array(w * h), max = 0;
+    var dx = new Float32Array(w * h), dy = new Float32Array(w * h), max = 0, F = foldGuard(T);
     for (y = 0; y < h; y++) {
       for (x = 0; x < w; x++) {
         var k = (y + P) * FW + x + P, fb = fill[k];
@@ -296,7 +321,7 @@ function liquidLens(box, pick, cls) {
         var c = ETA * cosi - Math.sqrt(Math.max(1 - ETA * ETA * (1 - cosi * cosi), 0));
         var Tz = -ETA + c * cosi;                                  // 折射方向 = ETA·I + c·N
         var e = y * w + x, t = hgt[k] / Math.max(-Tz, 1e-4);
-        dx[e] = c * Nx * t; dy[e] = c * Ny * t;
+        dx[e] = c * Nx * t * F; dy[e] = c * Ny * t * F;
         max = Math.max(max, Math.abs(dx[e]), Math.abs(dy[e]));
       }
     }
