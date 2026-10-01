@@ -209,18 +209,20 @@ img { max-width: 100%; }
   opacity: 0; transition: opacity .35s ease;
 }
 .nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow { opacity: 1; }
-/* 悬停水滴：本身也是一小块玻璃，跟着指针在入口之间滑，换位时被拉长再弹回 */
-.nav-lens {
-  position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none;
+/* 悬停水滴（nav.js 的 liquidLens）：本身也是一小块玻璃，跟着指针在条目之间滑，
+   换位时被拉长再弹回。导航、联系方式、论文卡片共用这一份样式 */
+.liquid-lens {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
   border-radius: 999px; opacity: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .5));
   box-shadow:
     inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, .6),
     0 0 0 .5px rgba(35, 52, 70, .07), 0 3px 10px -3px rgba(35, 52, 70, .22);
   transition: transform .55s var(--lg-spring), width .55s var(--lg-spring),
-              height .4s var(--lg-spring), opacity .25s ease;
+              height .45s var(--lg-spring), opacity .25s ease;
 }
-.nav-lens.on { opacity: 1; }
+.liquid-lens.on { opacity: 1; }
+.nav-lens { z-index: -1; }   /* 在导航玻璃内部：排在光斑之下、文字之下 */
 .nav .wrap {
   display: flex; align-items: center; justify-content: flex-start; gap: 2px;
   min-width: 0; margin: 0;
@@ -338,7 +340,8 @@ img { max-width: 100%; }
   }
   /* 按钮排第一、靠右：收起时就是那个圆，展开后 × 留在卡片右上角 */
   .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
-  .nav .wrap > a { flex: 0 0 100%; justify-items: start; text-align: left; padding: 11px 18px; }
+  /* 入口行左右各缩进 8px：水滴与行同宽，贴满卡片会被圆角裁掉 */
+  .nav .wrap > a { flex: 0 0 calc(100% - 16px); margin: 0 8px; justify-items: start; text-align: left; padding: 11px 10px; }
   /* 收起时所有入口设为 visibility: hidden：仅靠 overflow 藏起来，
      Tab 键仍会聚焦到看不见的链接上。关闭时等收起动画走完再隐藏。 */
   .nav .wrap > a, .nav .wrap > .nav-divider {
@@ -405,6 +408,7 @@ img { max-width: 100%; }
 /* 联系方式行 */
 .links {
   display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px;
+  position: relative; isolation: isolate;   /* 水滴绝对定位在里面，垫在胶囊之下 */
 }
 .links a {
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
@@ -416,17 +420,13 @@ img { max-width: 100%; }
   border: 1px solid var(--rule);
   box-shadow: 0 2px 8px var(--glass-cast);
   color: var(--fg);
+  position: relative; z-index: 1;
+  transition: border-color .18s ease, color .18s ease;
 }
-.links a {
-  transition: transform .18s ease, box-shadow .18s ease,
-              border-color .18s ease, color .18s ease;
-}
-.links a:hover {
-  border-color: var(--accent); color: var(--accent);
-  text-decoration: none;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 14px rgba(35, 52, 70, .09);
-}
+/* 悬停不再上浮：交给 nav.js 的玻璃水滴从底下透上来（胶囊是半透明的）。
+   没有 JS 时退回描边与文字变色 */
+.links a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+.links.lens-live a:hover { border-color: var(--rule); color: var(--fg); }
 /* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
@@ -515,11 +515,20 @@ strong { font-weight: 700; }
 /* 页面与卡片同为纯白，静止时给一层极淡投影托一下，
    否则分界只剩那条 1px 边框 */
 .item, .pub { box-shadow: 0 1px 2px rgba(35, 52, 70, .05); }
-/* 悬停只动描边和投影，不做位移 —— 论文卡内部的缩略图已经有上浮动效，
-   两层一起动会显得晃 */
+/* 悬停只动描边和投影，不做位移 */
 .item:hover, .pub:hover {
   border-color: var(--rule);
   box-shadow: 0 6px 20px var(--glass-cast);
+}
+/* 论文 / 写作卡片：悬停改由 nav.js 的玻璃水滴表现 —— 水滴比卡片大出 6px、垫在下面，
+   在四周露出一圈玻璃光环，换卡片时带着拉伸滑过去。卡片本身保持静止 */
+#publications, #writing { position: relative; isolation: isolate; }
+.pub { position: relative; z-index: 1; }
+.lens-live > .pub:hover { border-color: var(--card-b); box-shadow: 0 1px 2px rgba(35, 52, 70, .05); }
+.pub-lens {
+  box-shadow:
+    inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, .6),
+    0 0 0 .5px rgba(35, 52, 70, .08), 0 10px 28px -8px rgba(35, 52, 70, .24);
 }
 
 /* ---------- 论文卡片 ---------- */
@@ -535,13 +544,6 @@ strong { font-weight: 700; }
   width: 100%; border-radius: 8px;
   border: 1px solid var(--card-b); background: var(--card);
   overflow: hidden;
-  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
-}
-/* 悬停整张卡片时缩略图上浮，标题同步点亮 —— 让整块成为一个视觉单元 */
-.pub:hover .thumb {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(35, 52, 70, .10);
-  border-color: var(--rule);
 }
 /* 文字栏：标题、作者、venue、链接之间的空隙统一。原先各行 margin
    （4 / 3 / 8px）和行高（1.38 / 1.55 / 1.68）都不一样，而视觉空隙 =
@@ -806,9 +808,6 @@ footer.wrap {
   *, *::before, *::after {
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
-  }
-  .links a:hover, .pub:hover .thumb, .tags a:hover {
-    transform: none;
   }
 }
 

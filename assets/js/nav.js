@@ -25,6 +25,65 @@
   if (wide && wide.addEventListener) wide.addEventListener('change', function () { set(false); });
 })();
 
+/* ---------- 悬停水滴（导航、联系方式、论文卡片共用） ----------
+   一颗玻璃水滴跟着指针在一组条目之间滑动：换位时沿移动方向先拉长、
+   横向压扁，再随 CSS 的回弹缓动落定，读起来像一滴液体被拖过去。
+   拉伸按像素算并封顶 10%：100px 的菜单项是 1.1 x 0.9，
+   一张 700px 宽的论文卡片只多出十几像素，不会夸张地放大一成。
+
+   box 须是定位元素（水滴绝对定位在里面），pick(target) 返回指针下的条目或 null；
+   opt.outset 让水滴比条目大出一圈（论文卡片不透明，水滴只能从四周露出来）。 */
+function liquidLens(box, pick, opt) {
+  opt = opt || {};
+  var o = opt.outset || 0;
+  var lens = document.createElement('span');
+  lens.className = 'liquid-lens' + (opt.cls ? ' ' + opt.cls : '');
+  lens.setAttribute('aria-hidden', 'true');
+  box.appendChild(lens);   // 放在最后，不打乱条目原有的顺序
+  var cur = null, lx = 0, ly = 0, lw = 0, lh = 0, settle = 0;
+  function place(sx, sy) {
+    lens.style.transform = 'translate(' + lx + 'px,' + ly + 'px) scale(' + sx + ',' + sy + ')';
+  }
+  function grow(px, size) { return Math.min(.1, px / size); }
+  function to(el) {
+    var first = !cur, x = el.offsetLeft - o, y = el.offsetTop - o;
+    var horiz = Math.abs(x - lx) >= Math.abs(y - ly);
+    lx = x; ly = y; lw = el.offsetWidth + 2 * o; lh = el.offsetHeight + 2 * o;
+    if (first) lens.style.transition = 'none';     // 首次出现原地浮起，不从角落飞过来
+    lens.style.width = lw + 'px';
+    lens.style.height = lh + 'px';
+    if (opt.radius) lens.style.borderRadius = opt.radius;
+    if (first) {
+      place(1 - grow(14, lw), 1 - grow(14, lh));
+      void lens.offsetWidth;                         // 先落定起始状态，再恢复过渡
+      lens.style.transition = '';
+      place(1, 1);
+    } else if (el !== cur) {
+      if (horiz) place(1 + grow(10, lw), 1 - grow(5, lh));
+      else place(1 - grow(5, lw), 1 + grow(10, lh));
+      clearTimeout(settle);
+      settle = setTimeout(function () { place(1, 1); }, 140);
+    }
+    cur = el;
+    lens.classList.add('on');
+  }
+  function off() { cur = null; lens.classList.remove('on'); }
+
+  box.addEventListener('pointerover', function (e) { var el = pick(e.target); if (el) to(el); });
+  box.addEventListener('pointerleave', off);
+  // 按下时鼓起一点
+  box.addEventListener('pointerdown', function (e) {
+    if (cur && pick(e.target) === cur) place(1 + grow(8, lw), 1 + grow(8, lh));
+  });
+  box.addEventListener('pointerup', function () { if (cur) place(1, 1); });
+  box.addEventListener('focusin', function (e) {
+    var el = pick(e.target);
+    if (el && e.target.matches(':focus-visible')) to(el);
+  });
+  box.addEventListener('focusout', off);
+  return { lens: lens, off: off };
+}
+
 /* ---------- 液态玻璃 ----------
    样式的分层说明见 style.css「顶部导航」。这里管三件事：
    光斑与悬停水滴（所有浏览器），以及只有 Chromium 才有的真折射。 */
@@ -98,46 +157,13 @@
     if (window.ResizeObserver) new ResizeObserver(relight).observe(pane);
   });
 
-  /* 1. 悬停水滴。绝对定位，不参与 flex 排布。
-     换位时先压成 1.1 x 0.9 再弹回，配合 CSS 的回弹缓动，读起来像一滴液体被拖过去。 */
-  var lens = layer(wrap, 'nav-lens');
-  var cur = null, lx = 0, ly = 0, settle = 0;
-  function place(sx, sy) {
-    lens.style.transform = 'translate(' + lx + 'px,' + ly + 'px) scale(' + sx + ',' + sy + ')';
-  }
-  function lensTo(a) {
-    var first = !cur;
-    lx = a.offsetLeft; ly = a.offsetTop;
-    if (first) lens.style.transition = 'none';     // 首次出现原地浮起，不从角落飞过来
-    lens.style.width = a.offsetWidth + 'px';
-    lens.style.height = a.offsetHeight + 'px';
-    if (first) {
-      place(.86, .86);
-      void lens.offsetWidth;                         // 先落定起始状态，再恢复过渡
-      lens.style.transition = '';
-      place(1, 1);
-    } else if (a !== cur) {
-      place(1.1, .9);
-      clearTimeout(settle);
-      settle = setTimeout(function () { place(1, 1); }, 140);
-    }
-    cur = a;
-    lens.classList.add('on');
-  }
-  function lensOff() { cur = null; lens.classList.remove('on'); }
-  function linkOf(t) { var a = t.closest && t.closest('a'); return a && a.parentNode === wrap ? a : null; }
-
-  wrap.addEventListener('pointerover', function (e) { var a = linkOf(e.target); if (a) lensTo(a); });
-  wrap.addEventListener('pointerleave', lensOff);
-  wrap.addEventListener('pointerdown', function (e) { if (cur && linkOf(e.target) === cur) place(1.12, 1.08); });
-  wrap.addEventListener('pointerup', function () { if (cur) place(1, 1); });
-  wrap.addEventListener('focusin', function (e) {
-    var a = linkOf(e.target);
-    if (a && a.matches(':focus-visible')) lensTo(a);
-  });
-  wrap.addEventListener('focusout', lensOff);
+  /* 1. 悬停水滴（见文件开头的 liquidLens）。在玻璃内部，排在光斑之下 */
+  var drop = liquidLens(wrap, function (t) {
+    var a = t.closest && t.closest('a');
+    return a && a.parentNode === wrap ? a : null;
+  }, { cls: 'nav-lens' });
   // 窄屏菜单收起时，水滴所在的那一行已经藏起来了
-  new MutationObserver(function () { if (!nav.classList.contains('open')) lensOff(); })
+  new MutationObserver(function () { if (!nav.classList.contains('open')) drop.off(); })
     .observe(nav, { attributes: true, attributeFilter: ['class'] });
 
   /* 2. 光斑：只写两个变量，渐变由 CSS 画。放在水滴之后，叠在它上面 */
@@ -296,5 +322,29 @@
     // 不必再用 rAF 节流；位移图只有几百像素见方，生成一次不到 1ms
     // 任一块玻璃变了尺寸，另一块的位置也可能跟着变（语言按钮排在胶囊右边），全部重新对齐
     new ResizeObserver(function () { fit(); alignAll(); }).observe(pane);
+  });
+})();
+
+/* ---------- 页面里的悬停水滴 ----------
+   联系方式那排小胶囊，以及论文 / 写作两组卡片，用和导航同一种水滴代替原来的上浮。
+   盒子加上 lens-live 后，条目自己的悬停描边与投影就撤掉，免得两种反馈叠在一起。 */
+(function () {
+  function direct(box, sel) {
+    return function (t) {
+      var el = t.closest && t.closest(sel);
+      return el && el.parentNode === box ? el : null;
+    };
+  }
+  var links = document.querySelector('.links');
+  if (links) {
+    liquidLens(links, direct(links, 'a'));
+    links.classList.add('lens-live');
+  }
+  ['publications', 'writing'].forEach(function (id) {
+    var sec = document.getElementById(id);
+    if (!sec || !sec.querySelector('.pub')) return;
+    // 卡片圆角 14px，水滴大出 6px，圆角相应放到 20px，四周的光环才是等宽的
+    liquidLens(sec, direct(sec, '.pub'), { cls: 'pub-lens', outset: 6, radius: '20px' });
+    sec.classList.add('lens-live');
   });
 })();
