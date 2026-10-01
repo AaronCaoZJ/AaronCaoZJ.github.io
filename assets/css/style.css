@@ -140,7 +140,7 @@ img { max-width: 100%; }
    liquid-glass（shuding）把 SVG 位移滤镜挂在 backdrop-filter 上的做法。自下而上：
    1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：弯边按 squircle 剖面倾斜，
       一条垂直视线按 IOR 1.5 折射、乘以玻璃厚度，得到逐像素的取样偏移；
-      取样的是轻度模糊（σ 1）的背景，保持通透。四周外扩到最大偏移之外，
+      取样的是轻度模糊（σ 1.5）的背景，保持通透。四周外扩到最大偏移之外，
       多出的部分被胶囊的 overflow 裁掉。
       backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
       改由胶囊自己的 backdrop-filter 模糊兜底。
@@ -162,8 +162,8 @@ img { max-width: 100%; }
   border: 0; border-radius: 999px; background: none;
   /* Safari / Firefox 的兜底；Chromium 下 nav.js 会把它清掉，交给折射层 ——
      胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   box-shadow: var(--lg-shadow);
 }
 .lg-refract {
@@ -321,14 +321,7 @@ img { max-width: 100%; }
     width: min(232px, calc(100% - 60px)); max-height: 340px; padding-bottom: 8px;
     transition: width .5s var(--lg-spring), max-height .5s var(--lg-spring);
   }
-  /* 卡片保持通透：底色只到一半，可读性交给更重的磨砂（nav.js 按玻璃大小加重；
-     Apple 的说法是玻璃越大，散射越柔）。这里是 Safari / Firefox 的兜底模糊 */
-  .nav.open .wrap::after { background: rgba(255, 255, 255, .5); }
-  .nav.open .wrap {
-    backdrop-filter: blur(8px) saturate(140%) brightness(1.04);
-    -webkit-backdrop-filter: blur(8px) saturate(140%) brightness(1.04);
-  }
-  /* 按钮排第一、靠右：收起时就是那个圆，展开后 × 留在卡片右上角 */
+  /* 展开的卡片与胶囊是同一块玻璃：底色、模糊、折射都不另设，通透感一致 */
   .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
   /* 入口行左右各缩进 8px：水滴与行同宽，贴满卡片会被圆角裁掉 */
   .nav .wrap > a { flex: 0 0 calc(100% - 16px); margin: 0 8px; justify-items: start; text-align: left; padding: 11px 10px; }

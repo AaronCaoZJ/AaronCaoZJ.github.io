@@ -108,8 +108,8 @@ function liquidLens(box, pick, cls) {
     bezel: 14,              // 弯边宽度
     thickness: 90,          // 玻璃厚度上限
     ior: 1.5,               // 折射率
-    frost: 1,               // 背景模糊 σ。liquid-dom 默认 blur = 8 太糊；shuding 只有 0.25px。
-                            // 取 1：背后内容清楚可见，导航文字靠白色描边仍压得住
+    frost: 1.5,             // 背景模糊 σ。liquid-dom 默认 blur = 8 太糊；shuding 只有 0.25px。
+                            // 取 1.5：背后内容仍清楚可见，带一点柔化，导航文字压得住
     minStretch: .2,         // 边缘取样位置的最小前进率：保证不倒转，最多放大 5 倍
     fieldBlur: 3,           // 位移场模糊：三遍 box 近似高斯（liquid-dom 的 displacementBlur = 6）
     light: -Math.PI / 4,    // 光照方向，0 朝上，−π/4 即左上
@@ -118,9 +118,6 @@ function liquidLens(box, pick, cls) {
   /* 小块玻璃按短边缩小厚度：90px 是给大面板的，放在 50px 高的胶囊上，
      边缘取样会越过对面的边。Apple 也说小块玻璃更通透、透镜更弱 */
   function thick(w, h) { return Math.min(G.thickness, Math.min(w, h)); }
-  /* 大块玻璃（窄屏展开的菜单卡片）模糊随之加到 3：入口文字整片压在正文上，
-     太透会互相打架 */
-  function frostOf(h) { return G.frost + 2 * Math.min(Math.max((h - 50) / 150, 0), 1); }
 
   function smooth(a, b, x) {
     var t = Math.min(Math.max((x - a) / (b - a), 0), 1);
@@ -361,7 +358,7 @@ function liquidLens(box, pick, cls) {
     var f = svgEl('filter', { id: id, x: 0, y: 0, filterUnits: 'userSpaceOnUse',
       primitiveUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' }, defs);
     // 和 liquid-dom 一样，折射取的是模糊过的背景
-    var blur = svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: G.frost, result: 'frost' }, f);
+    svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: G.frost, result: 'frost' }, f);
     var map = svgEl('feImage', { x: 0, y: 0, preserveAspectRatio: 'none', result: 'map' }, f);
     var disp = svgEl('feDisplacementMap', { 'in': 'frost', in2: 'map',
       xChannelSelector: 'R', yChannelSelector: 'G' }, f);
@@ -369,10 +366,8 @@ function liquidLens(box, pick, cls) {
     /* 尺寸变化中折射先换成普通模糊，稳定后再生成位移图挂回去 ——
        折射是"显现"出来的，Apple 描述玻璃出现时也是逐渐调制光的弯折 */
     var fit = settled(pane, function (w, h, final) {
-      var fr = frostOf(h);
-      if (!final) { lyr.style.backdropFilter = 'blur(' + fr + 'px)'; return; }
-      var m = refractMap(w, h, radiusOf(pane, w, h), fr);
-      blur.setAttribute('stdDeviation', fr.toFixed(2));
+      if (!final) { lyr.style.backdropFilter = 'blur(' + G.frost + 'px)'; return; }
+      var m = refractMap(w, h, radiusOf(pane, w, h), G.frost);
       lyr.style.inset = -m.margin + 'px';
       f.setAttribute('width', w + 2 * m.margin); f.setAttribute('height', h + 2 * m.margin);
       map.setAttribute('width', w + 2 * m.margin); map.setAttribute('height', h + 2 * m.margin);
