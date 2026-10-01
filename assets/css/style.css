@@ -324,7 +324,10 @@ img { max-width: 100%; }
     width: min(232px, calc(100% - 60px)); max-height: 340px; padding-bottom: 8px;
     transition: width .5s var(--lg-spring), max-height .5s var(--lg-spring);
   }
-  /* 展开的卡片与胶囊是同一块玻璃：底色、模糊、折射都不另设，通透感一致 */
+  /* 展开的卡片与胶囊是同一块玻璃：模糊、折射都一样，只把白底调实一些，
+     入口文字整片压在正文上时更稳。白底随展开淡入 */
+  .nav .wrap::after { transition: background-color .3s ease; }
+  .nav.open .wrap::after { background-color: rgba(255, 255, 255, .45); }
   .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
   /* 入口行左右各缩进 8px：水滴与行同宽，贴满卡片会被圆角裁掉 */
   .nav .wrap > a { flex: 0 0 calc(100% - 16px); margin: 0 8px; justify-items: start; text-align: left; padding: 11px 10px; }
