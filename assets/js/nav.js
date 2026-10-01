@@ -176,8 +176,10 @@ function liquidLens(box, pick, cls) {
     return c.toDataURL();
   }
   /* 尺寸连续变化时（窄屏菜单展开 / 收起、窗口缩放）不要逐帧重画：一张卡片的贴图要
-     二三十毫秒，手机上更慢，动画会卡。先凑合用旧的（高光图拉伸、折射换成普通模糊），
-     尺寸稳定 120ms 后再画一次。第一次直接画。 */
+     二三十毫秒，手机上更慢，动画会卡。变化期间高光层先隐藏、折射换成普通模糊，
+     尺寸稳定 120ms 后再画一次。第一次直接画。
+     高光层不能拿旧图拉伸着凑合：50px 圆片那圈亮边被拉大约 5 倍，
+     展开时卡片四周会出现一圈二十多像素宽的白光。 */
   function settled(pane, draw) {
     var w0 = 0, h0 = 0, timer = 0, ready = false;
     function run() {
@@ -197,7 +199,9 @@ function liquidLens(box, pick, cls) {
   panes.forEach(function (pane) {
     var lit = layer(pane, 'lg-light');
     var relight = settled(pane, function (w, h, final) {
-      if (final) lit.style.backgroundImage = 'url(' + specularMap(w, h, radiusOf(pane, w, h)) + ')';
+      if (!final) { lit.style.opacity = '0'; return; }
+      lit.style.backgroundImage = 'url(' + specularMap(w, h, radiusOf(pane, w, h)) + ')';
+      lit.style.opacity = '';
     });
     relight();
     if (window.ResizeObserver) new ResizeObserver(relight).observe(pane);

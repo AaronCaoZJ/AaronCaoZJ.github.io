@@ -191,6 +191,7 @@ img { max-width: 100%; }
 .lg-light {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
   border-radius: inherit; background: no-repeat 0 0 / 100% 100%;
+  transition: opacity .2s ease;   /* 尺寸变化时 nav.js 先隐藏，重画后淡入 */
 }
 /* 光标处局部点亮：--mx / --my 由 nav.js 跟随指针写在胶囊上 */
 .lg-glow {
