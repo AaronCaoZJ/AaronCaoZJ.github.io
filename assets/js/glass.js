@@ -196,7 +196,7 @@
        窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
             frost: 3.1, frostOpen: 6,
-            shade: .25, spec: .55 };   // 本站加的光照：纯色底上的立体感（明暗、上沿高光），不影响折射
+            shade: .1, spec: .22 };     // 本站加的光照：纯色底上的立体感（明暗、上沿高光），不影响折射
 
   function makeGL(canvas) {
     var gl = canvas.getContext('webgl', { premultipliedAlpha: false, antialias: false });
