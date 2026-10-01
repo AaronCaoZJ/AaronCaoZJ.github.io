@@ -83,15 +83,23 @@
      擅自反转配色（那种自动反转的效果通常很糟）。 */
   color-scheme: light;
 
-  /* 磨砂玻璃：靠模糊背景 + 半透明底色成形，
-     深色模式整组替换即可，构造不变 */
+  /* 半透明：导航以外的组件只用这一层底色，不模糊、不做高光 */
   --glass-fill: rgba(255, 255, 255, .20);
-  --glass-blur: 5px;
-  --glass-edge: rgba(255, 255, 255, .75);
   --glass-cast: rgba(35, 52, 70, .09);
-
+  /* 没有 JS（水滴不出现）时，导航入口退回这组悬停底色 */
+  --glass-edge: rgba(255, 255, 255, .75);
   --glass-hover: rgba(255, 255, 255, .55);
   --text-halo: rgba(255, 255, 255, .85);
+
+  /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节 */
+  --lg-tint-top:    rgba(255, 255, 255, .40);   /* 本体：上亮下透的一层薄白 */
+  --lg-tint-bottom: rgba(255, 255, 255, .16);
+  --lg-rim-in:      rgba(255, 255, 255, .90);   /* 上缘内侧亮线 */
+  --lg-inner:       rgba(35, 52, 70, .07);      /* 紧贴亮边内侧的一圈暗：厚度 */
+  --lg-depth:       rgba(35, 52, 70, .14);      /* 底部内侧压暗 */
+  --lg-hairline:    rgba(35, 52, 70, .10);      /* 浅底上的外轮廓 */
+  --lg-cast:        rgba(35, 52, 70, .20);      /* 投影 */
+  --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
 }
 
 * { box-sizing: border-box; }
@@ -129,24 +137,22 @@ img { max-width: 100%; }
 
 .wrap { max-width: var(--w); margin: 0 auto; padding: 0 22px; }
 
-/* ---------- 液态玻璃 ----------
-   厚度不是靠一条亮边，而是靠"外亮—内暗"这一对线：真实玻璃的
-   外缘反射天光而发亮，紧邻内侧因折射背景而压暗，两者之间的落差
-   才被读成"这块板有厚度"。只画一条亮线，看着就是贴纸。
-
-   饱和度与亮度几乎不动（saturate 108%、brightness 1.02）：
-   之前用 200% / 1.26 把背后的颜色整个拽偏，那正是廉价感的来源 ——
-   玻璃应该几乎不改变透过来的东西，只在边缘做文章。 */
-.glass {
-  background: var(--glass-fill);
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  border: 1px solid var(--glass-edge);
-  box-shadow: 0 8px 30px var(--glass-cast);
-}
-
 /* ---------- 顶部导航 ----------
-   悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。 */
+   悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。
+
+   液态玻璃按 Apple Liquid Glass 的构造分层（自下而上）：
+   1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：四周比胶囊各大出 24px，
+      这样滤镜才读得到胶囊**外面**的内容 —— 边缘一圈向外取样，把外面的东西
+      压缩着折进边上，正是 Apple 玻璃边缘的那种弯折；中间平坦处只轻微模糊。
+      多出的部分被胶囊自身的 overflow 裁掉，但浏览器仍按整层读取背景。
+      backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
+      改由胶囊自己的 backdrop-filter 模糊兜底。
+   2. 体积 ::after：上亮下透的薄白、上缘内侧亮线、紧贴亮边的一圈暗、底部压暗。
+   3. 交互：悬停水滴 .nav-lens 在入口间滑动（带回弹与拉伸），光斑 .lg-glow 随光标。
+   4. 镜面高光 ::before：一圈渐变亮边，左上、右下最亮，两侧几乎没有。
+   投影留在胶囊本身：它就画在玻璃底下，折射层读到后会被弯进下缘，
+   下缘因此比上缘暗一点，正好读成厚度。
+   饱和度只轻提（130%）：拉到 200% 会把背后的颜色整个拽偏，廉价感就来自那里。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
@@ -155,32 +161,79 @@ img { max-width: 100%; }
   margin: 14px auto 0;
 }
 .nav .wrap, .language-toggle {
-  border-radius: 999px;
-  background: var(--glass-fill);
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  border: 1px solid var(--card-b);
-  box-shadow: 0 8px 30px var(--glass-cast);
+  position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
+  overflow: hidden; overflow: clip;         /* 裁掉折射层多出的那圈；clip 不会变成滚动容器 */
+  border: 0; border-radius: 999px; background: none;
+  /* Safari / Firefox 的兜底；Chromium 下 nav.js 会把它清掉，交给折射层 ——
+     胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
+  backdrop-filter: blur(7px) saturate(130%) brightness(1.03);
+  -webkit-backdrop-filter: blur(7px) saturate(130%) brightness(1.03);
+  box-shadow:
+    0 0 0 .5px var(--lg-hairline),
+    0 2px 6px -1px rgba(35, 52, 70, .08),
+    0 12px 32px -8px var(--lg-cast);
 }
+.lg-refract {
+  position: absolute; inset: -24px; z-index: -3; pointer-events: none;
+}
+/* 体积：薄白本体与内侧的明暗 */
+.nav .wrap::after, .language-toggle::after {
+  content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--lg-tint-top), var(--lg-tint-bottom));
+  box-shadow:
+    inset 0 1px 0 var(--lg-rim-in),
+    inset 0 0 3px 1px var(--lg-inner),
+    inset 0 -7px 12px -9px var(--lg-depth);
+}
+/* 镜面高光：一圈 1.2px 的渐变亮边（遮罩挖空中间，只留边） */
+.nav .wrap::before, .language-toggle::before {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border-radius: inherit; padding: 1.2px;
+  background: linear-gradient(125deg,
+    rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .45) 16%, rgba(255, 255, 255, 0) 36%,
+    rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, .4) 84%, rgba(255, 255, 255, .9) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+/* 光标处局部点亮：--mx / --my 由 nav.js 跟随指针写在胶囊上 */
+.lg-glow {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(90px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 70%);
+  opacity: 0; transition: opacity .35s ease;
+}
+.nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow { opacity: 1; }
+/* 悬停水滴：本身也是一小块玻璃，跟着指针在入口之间滑，换位时被拉长再弹回 */
+.nav-lens {
+  position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none;
+  border-radius: 999px; opacity: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .5));
+  box-shadow:
+    inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, .6),
+    0 0 0 .5px rgba(35, 52, 70, .07), 0 3px 10px -3px rgba(35, 52, 70, .22);
+  transition: transform .55s var(--lg-spring), width .55s var(--lg-spring),
+              height .4s var(--lg-spring), opacity .25s ease;
+}
+.nav-lens.on { opacity: 1; }
 .nav .wrap {
   display: flex; align-items: center; justify-content: flex-start; gap: 2px;
   min-width: 0; margin: 0;
-  height: 50px; padding: 0 8px; overflow-x: auto; scrollbar-width: none;
+  height: 50px; padding: 0 8px;
 }
-.nav .wrap::-webkit-scrollbar { display: none; }
 .language-toggle {
   flex: 0 0 50px; width: 50px; height: 50px; padding: 0;
   display: grid; place-items: center;
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
   color: var(--fg); cursor: pointer;
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
-  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+  transition: transform .5s var(--lg-spring);
 }
-.language-toggle:hover {
-  background: var(--glass-hover);
-  box-shadow: 0 8px 30px var(--glass-cast), inset 0 0 0 1px var(--glass-edge);
-}
-.language-toggle:active { transform: scale(.95); }
+.language-toggle:hover { transform: scale(1.06); }
+.language-toggle:active { transform: scale(.95); transition-duration: .15s; }
 .language-toggle:focus-visible, .nav a:focus-visible {
   outline: 2px solid var(--accent); outline-offset: -3px;
 }
@@ -216,6 +269,13 @@ img { max-width: 100%; }
   background: var(--glass-hover);
   box-shadow: inset 0 0 0 1px var(--glass-edge);
   text-decoration: none;
+}
+.nav.lg-live .wrap a:hover { background: none; box-shadow: none; }
+
+/* 系统开了"降低透明度"：玻璃改成近乎实心，折射也不挂（nav.js 同样会跳过） */
+@media (prefers-reduced-transparency: reduce) {
+  .nav .wrap, .language-toggle { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .nav .wrap::after, .language-toggle::after { background: rgba(255, 255, 255, .95); }
 }
 
 /* ☰ 菜单按钮：只在窄屏横幅里出现。三条线由一个 span 和它的前后伪元素画成，
@@ -256,12 +316,13 @@ img { max-width: 100%; }
     position: absolute; top: 0; left: 0; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
     flex-wrap: wrap; align-content: flex-start;
     height: auto; max-height: 50px; padding: 0 3px 0 8px;
-    overflow: hidden; border-radius: 25px;              /* 25 = 半个高度：收起时仍是胶囊 */
+    overflow: hidden; overflow: clip; border-radius: 25px;   /* 25 = 半个高度：收起时仍是胶囊 */
     transition: max-height .32s cubic-bezier(.32,.72,0,1);
   }
   /* 展开后是一整张卡片压在正文上，20% 的玻璃底会透出头像等图片，
      字就不好认了：底色调到接近实心，模糊仍保留 */
-  .nav.open .wrap { max-height: 320px; padding-bottom: 8px; background: rgba(255, 255, 255, .92); }
+  .nav.open .wrap { max-height: 320px; padding-bottom: 8px; }
+  .nav.open .wrap::after { background: rgba(255, 255, 255, .92); }
   .nav-menu { display: grid; }
   .nav .wrap > a { flex: 0 0 100%; justify-items: start; text-align: left; padding: 12px 14px; }
   .nav .wrap > a:first-child { flex: 0 0 auto; padding: 7px 14px; }
@@ -336,11 +397,9 @@ img { max-width: 100%; }
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
-  background: var(--glass-fill);
-  backdrop-filter: blur(8px) saturate(135%);
-  -webkit-backdrop-filter: blur(8px) saturate(135%);
+  background: var(--glass-fill);   /* 只留半透明：液态玻璃仅用于导航 */
   /* 原本用 --glass-edge（近白）作高光边，在米白底上等于没有轮廓；
-     改用 --rule 让每个入口成为看得见的独立块，玻璃质感仍由填充与模糊承担 */
+     改用 --rule 让每个入口成为看得见的独立块 */
   border: 1px solid var(--rule);
   box-shadow: 0 2px 8px var(--glass-cast);
   color: var(--fg);
