@@ -218,7 +218,7 @@
 
   /* 视图：z 是放大倍数，(ux, uy) 是视窗中心在整张图上的相对位置（0–1）。
      z = 1 即全图。点阵和访客点都经 toX / toY 换算，两者永远对得上。 */
-  var ZOOM = 3, z = 1, ux = 0.5, uy = 0.5, w = 0, h = 0;
+  var ZOOM = 3, z = 1, ux = 0.5, uy = 0.5, w = 0, h = 0, sizedFor = 0;
   var zt = 1;   // 目标倍数。判断点击该放大还是缩回要看它，而不是动画中途的 z ——
                 // 否则在 0.38 秒的过渡里连点两下，会按一个半截的倍数做决定
   function toX(u) { return (u - ux) * w * z + w / 2; }
@@ -269,6 +269,18 @@
 
     /* 访客点跟同一个视图走，但本身大小不变 —— 放大后，
        原先挤成一团的点（东亚、美东）才会被拉开、各自看清。 */
+    /* 点的大小参照 chenyanzhe.page：半径 = 3 + min(4, 2.4·log10(n+1))，按 900 宽的坐标算，
+       访问量到 ~45 次封顶 —— 对数而非开方，一个热门城市不会大到压住周围。
+       换算比例随地图宽度：620px（对方地图的最大宽度）时直径 5–9.6px，更窄时等比缩小，
+       手机上的点才不会相对地图大出一倍、挤成一团。只在宽度变化时重设 */
+    if (w !== sizedFor) {
+      sizedFor = w;
+      var k = Math.min(w, 620) / 900;
+      [].forEach.call(pins.children, function (b) {
+        var r = 3 + Math.min(4, 2.4 * Math.log(b._n + 1) / Math.LN10);
+        b.style.setProperty('--s', Math.max(3, 2 * r * k).toFixed(1) + 'px');
+      });
+    }
     [].forEach.call(pins.children, function (b) {
       var x = toX(b._u), y = toY(b._v);
       b.style.left = x + 'px';
@@ -398,9 +410,6 @@
   }
 
   function build() {
-    var max = 0;
-    DATA.forEach(function (d) { if (d.n > max) max = d.n; });
-
     DATA.forEach(function (d) {
       var b = document.createElement('button');
       b.type = 'button';
@@ -408,8 +417,7 @@
       var pt = place(d.lat, d.lon);
       b._u = pt.x;                 // 在整张图上的相对位置；像素坐标由 draw() 按视图换算
       b._v = pt.y;
-      /* 面积正比于访问量 => 半径开方，否则大城市会大得离谱 */
-      b.style.setProperty('--s', (5 + 8 * Math.sqrt(d.n / max)).toFixed(1) + 'px');
+      b._n = d.n;                  // 点的大小随地图宽度变，由 draw() 设定
       b._visit = d;
       b.setAttribute('aria-label', visitLabel(d));
       // 旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
