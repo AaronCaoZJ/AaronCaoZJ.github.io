@@ -92,14 +92,15 @@
   --text-halo: rgba(255, 255, 255, .85);
 
   /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节 */
-  --lg-tint-top:    rgba(255, 255, 255, .40);   /* 本体：上亮下透的一层薄白 */
-  --lg-tint-bottom: rgba(255, 255, 255, .16);
-  --lg-rim-in:      rgba(255, 255, 255, .90);   /* 上缘内侧亮线 */
-  --lg-inner:       rgba(35, 52, 70, .07);      /* 紧贴亮边内侧的一圈暗：厚度 */
-  --lg-depth:       rgba(35, 52, 70, .14);      /* 底部内侧压暗 */
-  --lg-hairline:    rgba(35, 52, 70, .10);      /* 浅底上的外轮廓 */
-  --lg-cast:        rgba(35, 52, 70, .20);      /* 投影 */
+  /* 本体：均匀的一层薄白。原先上 40% 下 16% 的渐变，会让上缘折进来的内容被洗淡、
+     下缘却很清楚，读起来像上下折射率不一样 */
+  --lg-tint:        rgba(255, 255, 255, .26);
+  --lg-rim-in:      rgba(255, 255, 255, .80);   /* 上缘内侧亮线 */
+  --lg-hairline:    rgba(35, 52, 70, .06);      /* 浅底上的外轮廓，只求不糊成一片 */
+  --lg-cast:        rgba(35, 52, 70, .12);      /* 投影：浅色纯色底上本就该淡 */
   --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
+  --lg-shadow: 0 0 0 .5px var(--lg-hairline), 0 1px 4px -1px rgba(35, 52, 70, .06),
+               0 10px 28px -10px var(--lg-cast);
 }
 
 * { box-sizing: border-box; }
@@ -147,12 +148,14 @@ img { max-width: 100%; }
       多出的部分被胶囊自身的 overflow 裁掉，但浏览器仍按整层读取背景。
       backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
       改由胶囊自己的 backdrop-filter 模糊兜底。
-   2. 体积 ::after：上亮下透的薄白、上缘内侧亮线、紧贴亮边的一圈暗、底部压暗。
+   2. 体积 ::after：均匀的薄白与上缘内侧一道亮线。Apple 的说法是玻璃"没有固有颜色"，
+      实心填充会破坏质感；厚度交给边缘折射去表达，不再额外画内侧明暗。
    3. 交互：悬停水滴 .nav-lens 在入口间滑动（带回弹与拉伸），光斑 .lg-glow 随光标。
    4. 镜面高光 ::before：一圈渐变亮边，左上、右下最亮，两侧几乎没有。
-   投影留在胶囊本身：它就画在玻璃底下，折射层读到后会被弯进下缘，
-   下缘因此比上缘暗一点，正好读成厚度。
-   饱和度只轻提（130%）：拉到 200% 会把背后的颜色整个拽偏，廉价感就来自那里。 */
+   投影不能留在胶囊本身（会被折射层读进去，见 .lg-shadow）。
+   饱和度只轻提（130%）：拉到 200% 会把背后的颜色整个拽偏，廉价感就来自那里。
+   Apple 没有给出任何数值，也没有网页版实现；这里的取值按 HIG 与 WWDC25 的描述校准：
+   小块玻璃更通透、透镜更弱，默认无可见边框，浅色底上投影要淡。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
@@ -168,31 +171,35 @@ img { max-width: 100%; }
      胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
   backdrop-filter: blur(7px) saturate(130%) brightness(1.03);
   -webkit-backdrop-filter: blur(7px) saturate(130%) brightness(1.03);
-  box-shadow:
-    0 0 0 .5px var(--lg-hairline),
-    0 2px 6px -1px rgba(35, 52, 70, .08),
-    0 12px 32px -8px var(--lg-cast);
+  box-shadow: var(--lg-shadow);
 }
 .lg-refract {
   position: absolute; inset: -24px; z-index: -3; pointer-events: none;
 }
+/* 投影的替身（仅 Chromium，由 nav.js 生成并对齐到胶囊）。投影若画在胶囊自己身上，
+   折射层取样时会把这圈灰影也读进去、压缩着折进边缘，看上去像里面又套了一层胶囊。
+   外投影只画在盒子外面，所以挪到胶囊之后再画，样子完全一样，折射层却读不到它。 */
+.lg-shadow {
+  position: absolute; pointer-events: none;
+  border-radius: 999px; box-shadow: var(--lg-shadow);
+  transition: transform .5s var(--lg-spring);
+}
+.language-toggle:hover + .lg-shadow { transform: scale(1.06); }   /* 跟着按钮一起鼓起 */
+.language-toggle:active + .lg-shadow { transform: scale(.95); transition-duration: .15s; }
 /* 体积：薄白本体与内侧的明暗 */
 .nav .wrap::after, .language-toggle::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(180deg, var(--lg-tint-top), var(--lg-tint-bottom));
-  box-shadow:
-    inset 0 1px 0 var(--lg-rim-in),
-    inset 0 0 3px 1px var(--lg-inner),
-    inset 0 -7px 12px -9px var(--lg-depth);
+  background: var(--lg-tint);
+  box-shadow: inset 0 1px 0 var(--lg-rim-in);
 }
 /* 镜面高光：一圈 1.2px 的渐变亮边（遮罩挖空中间，只留边） */
 .nav .wrap::before, .language-toggle::before {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   border-radius: inherit; padding: 1.2px;
   background: linear-gradient(125deg,
-    rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .45) 16%, rgba(255, 255, 255, 0) 36%,
-    rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, .4) 84%, rgba(255, 255, 255, .9) 100%);
+    rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .35) 16%, rgba(255, 255, 255, 0) 36%,
+    rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, .3) 84%, rgba(255, 255, 255, .75) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);

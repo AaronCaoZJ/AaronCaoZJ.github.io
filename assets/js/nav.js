@@ -151,11 +151,16 @@
   defs.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
   document.body.appendChild(defs);
 
-  /* 色散：R、G、B 各自按略不同的强度位移再合成，边缘出现一丝真实玻璃的彩边。
+  /* 色散：R、G、B 各自按略不同的强度位移（±2.5%）再合成，边缘出现一丝真实玻璃的彩边；
+     再大就成了明显的蓝紫色描边。
      三个通道各取一路，用 arithmetic 相加（k2 = k3 = 1）拼回一张图。 */
-  var CH = [['R', .95, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'],
+  var CH = [['R', .975, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'],
             ['G', 1,   '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0'],
-            ['B', 1.05, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0']];
+            ['B', 1.025, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0']];
+
+  var aligners = [];
+  function alignAll() { aligners.forEach(function (f) { f(); }); }
+  window.addEventListener('resize', alignAll);
 
   panes.forEach(function (pane, n) {
     var id = 'lg-refract-' + n;
@@ -191,8 +196,10 @@
       if (!w || !h || (w === w0 && h === h0)) return;
       w0 = w; h0 = h;
       var r = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
-      var bezel = Math.min(20, h * .4);
-      var dmax = Math.min(M - 5, bezel * .9);       // 留 5px 给模糊，免得取到折射层边界之外
+      var bezel = Math.min(18, h * .36);   // 弯边向内延伸的深度；小块玻璃不宜太"鼓"
+      /* 最外缘取到边外 10px 为止：导航吸顶时离视口顶端只有 14px，再远就取到
+         屏幕外面（那里没有内容），上缘会比下缘弱；收在这里也免得边缘太抢眼 */
+      var dmax = Math.min(9, bezel * .5);
       f.setAttribute('width', w + 2 * M); f.setAttribute('height', h + 2 * M);
       map.setAttribute('width', w + 2 * M); map.setAttribute('height', h + 2 * M);
       map.setAttribute('href', refractMap(w, h, r, bezel));
@@ -206,9 +213,28 @@
     // 胶囊自己不能再带 backdrop-filter：那样它会成为"背景根"，折射层只读得到胶囊内部
     pane.style.backdropFilter = pane.style.webkitBackdropFilter = 'none';
     lyr.style.backdropFilter = 'url(#' + id + ')';
+
+    /* 投影替身：紧跟在胶囊后面插入，在胶囊画完之后才画，折射层就读不到它。
+       语言按钮的替身紧挨着按钮，CSS 用 + 选择器让它跟着按钮一起缩放 */
+    var shade = document.createElement('span');
+    shade.className = 'lg-shadow';
+    shade.setAttribute('aria-hidden', 'true');
+    pane.parentNode.insertBefore(shade, pane.nextSibling);
+    pane.style.boxShadow = 'none';
+    function align() {
+      shade.style.left = pane.offsetLeft + 'px';
+      shade.style.top = pane.offsetTop + 'px';
+      shade.style.width = pane.offsetWidth + 'px';
+      shade.style.height = pane.offsetHeight + 'px';
+      shade.style.borderRadius = getComputedStyle(pane).borderTopLeftRadius;
+      shade.hidden = !pane.offsetWidth;          // 语言按钮在 i18n 就绪前是隐藏的
+    }
+    aligners.push(align);
     fit();
+    align();
     // 窄屏菜单展开时 .wrap 逐帧变高。ResizeObserver 本来就在每帧渲染时最多回调一次，
     // 不必再用 rAF 节流；位移图只有几百像素见方，生成一次不到 1ms
-    new ResizeObserver(fit).observe(pane);
+    // 任一块玻璃变了尺寸，另一块的位置也可能跟着变（语言按钮排在胶囊右边），全部重新对齐
+    new ResizeObserver(function () { fit(); alignAll(); }).observe(pane);
   });
 })();
