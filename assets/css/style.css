@@ -140,7 +140,8 @@ img { max-width: 100%; }
    liquid-glass（shuding）把 SVG 位移滤镜挂在 backdrop-filter 上的做法。自下而上：
    1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：弯边按 squircle 剖面倾斜，
       一条垂直视线按 IOR 1.5 折射、乘以玻璃厚度，得到逐像素的取样偏移；
-      取样的是模糊过的背景。四周外扩到最大偏移之外，多出的部分被胶囊的 overflow 裁掉。
+      取样的是轻度模糊（σ 1）的背景，保持通透。四周外扩到最大偏移之外，
+      多出的部分被胶囊的 overflow 裁掉。
       backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
       改由胶囊自己的 backdrop-filter 模糊兜底。
    2. 本体 ::after：一层 15% 的白。
@@ -161,8 +162,8 @@ img { max-width: 100%; }
   border: 0; border-radius: 999px; background: none;
   /* Safari / Firefox 的兜底；Chromium 下 nav.js 会把它清掉，交给折射层 ——
      胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   box-shadow: var(--lg-shadow);
 }
 .lg-refract {
@@ -324,8 +325,8 @@ img { max-width: 100%; }
      Apple 的说法是玻璃越大，散射越柔）。这里是 Safari / Firefox 的兜底模糊 */
   .nav.open .wrap::after { background: rgba(255, 255, 255, .5); }
   .nav.open .wrap {
-    backdrop-filter: blur(18px) saturate(140%) brightness(1.04);
-    -webkit-backdrop-filter: blur(18px) saturate(140%) brightness(1.04);
+    backdrop-filter: blur(8px) saturate(140%) brightness(1.04);
+    -webkit-backdrop-filter: blur(8px) saturate(140%) brightness(1.04);
   }
   /* 按钮排第一、靠右：收起时就是那个圆，展开后 × 留在卡片右上角 */
   .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
