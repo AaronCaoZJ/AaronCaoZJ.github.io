@@ -178,10 +178,15 @@
     '}'
   ].join('\n');
 
-  /* 参数取原库默认值（它演示里的 Regular Glass：不模糊）。
-     窄屏展开的菜单卡片换成原库的磨砂模式：入口文字整片压在正文上，背景太清楚会互相打架，
-     所以先把背景高斯模糊（σ，CSS px）再折射 */
-  var G = { refraction: .69, zRadius: 40, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20, frostOpen: 6 };
+  /* 参数取原库默认值，两处按尺寸调整：
+     - 弯边深度：原库 40px 是给大面板的。放在 50px 高的胶囊上，比半高还深，上下两段圆弧
+       在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
+       小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
+     - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素）；
+       Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
+       窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
+  var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
+            frost: 3.1, frostOpen: 6 };
 
   function makeGL(canvas) {
     var gl = canvas.getContext('webgl', { premultipliedAlpha: false, antialias: false });
@@ -225,11 +230,14 @@
     cv.setAttribute('aria-hidden', 'true');
     var ctx = makeGL(cv);
     if (!ctx) return;                       // 没有 WebGL：保持 CSS 模糊玻璃
-    var crop = document.createElement('canvas');
-    views.push({ pane: panes[i], cv: cv, gl: ctx.gl, u: ctx.u, crop: crop, c2: crop.getContext('2d') });
+    var crop = document.createElement('canvas'), raw = document.createElement('canvas');
+    views.push({ pane: panes[i], cv: cv, gl: ctx.gl, u: ctx.u, crop: crop, c2: crop.getContext('2d'),
+                 raw: raw, r2: raw.getContext('2d') });
   }
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
+  var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
+  videos.forEach(function (vd) { vd.addEventListener('play', function () { schedule(); }); });
 
   function goLive() {
     if (live) return;
@@ -257,20 +265,31 @@
     var cx = rc.left + rc.width / 2 + window.scrollX, cy = rc.top + rc.height / 2 + window.scrollY;
     var pad = G.pad, cw = w + 2 * pad, ch = h + 2 * pad, x0 = cx - cw / 2, y0 = cy - ch / 2;
     var CW = Math.round(cw * d), CH = Math.round(ch * d), PW = Math.round(w * d), PH = Math.round(h * d);
-    // 裁切：页面这一块按屏幕分辨率画出来（SVG 是矢量，按需栅格化），超出页面的部分填底色
-    var crop = v.crop, c = v.c2;
-    if (crop.width !== CW || crop.height !== CH) { crop.width = CW; crop.height = CH; }
-    c.fillStyle = pageBg;
-    c.fillRect(0, 0, CW, CH);
+    // 裁切：页面这一块按屏幕分辨率画出来（SVG 是矢量，按需栅格化），超出页面的部分填底色。
+    // 先画到 raw（不模糊），视频的当前帧直接盖上去，再整体模糊进 crop —— 视频边缘和周围融在一起
+    var raw = v.raw, rc2 = v.r2, crop = v.crop, c = v.c2, k = CW / cw, moving = false;
+    [raw, crop].forEach(function (cv2) { if (cv2.width !== CW || cv2.height !== CH) { cv2.width = CW; cv2.height = CH; } });
+    rc2.fillStyle = pageBg;
+    rc2.fillRect(0, 0, CW, CH);
     var sx = Math.max(x0, 0), sy = Math.max(y0, 0);
     var ex = Math.min(x0 + cw, scene.W), ey = Math.min(y0 + ch, scene.H);
     if (ex > sx && ey > sy) {
-      var k = CW / cw;
-      var frost = pane === wrap && nav.classList.contains('open') ? G.frostOpen : 0;
-      if ('filter' in c) c.filter = frost ? 'blur(' + frost * k + 'px)' : 'none';
-      c.drawImage(scene.img, sx, sy, ex - sx, ey - sy, (sx - x0) * k, (sy - y0) * k, (ex - sx) * k, (ey - sy) * k);
-      if ('filter' in c) c.filter = 'none';
+      rc2.drawImage(scene.img, sx, sy, ex - sx, ey - sy, (sx - x0) * k, (sy - y0) * k, (ex - sx) * k, (ey - sy) * k);
     }
+    /* 视频按原库的做法当作动态内容：每帧把当前画面画上去，截图里只有一帧，放着不管会跟页面对不上 */
+    for (var vi = 0; vi < videos.length; vi++) {
+      var vid = videos[vi], vr = vid.getBoundingClientRect();
+      var vx = vr.left + window.scrollX, vy = vr.top + window.scrollY;
+      if (vid.readyState < 2 || vx > x0 + cw || vx + vr.width < x0 || vy > y0 + ch || vy + vr.height < y0) continue;
+      try { rc2.drawImage(vid, (vx - x0) * k, (vy - y0) * k, vr.width * k, vr.height * k); } catch (e) { continue; }
+      if (!vid.paused) moving = true;
+    }
+    // 模糊 σ：收起时按物理像素（同原库），展开的菜单卡片按 CSS 像素
+    var frost = pane === wrap && nav.classList.contains('open') ? G.frostOpen * k : G.frost;
+    c.clearRect(0, 0, CW, CH);
+    if ('filter' in c) c.filter = frost ? 'blur(' + frost + 'px)' : 'none';
+    c.drawImage(raw, 0, 0);
+    if ('filter' in c) c.filter = 'none';
     var cv = v.cv, gl = v.gl, u = v.u;
     if (cv.width !== PW || cv.height !== PH) { cv.width = PW; cv.height = PH; }
     gl.viewport(0, 0, PW, PH);
@@ -287,15 +306,22 @@
     gl.uniform1f(u.u_chroma, G.chroma);
     gl.uniform1f(u.u_edgeHL, G.edgeHL);
     gl.uniform1f(u.u_fresnel, G.fresnel);
-    gl.uniform1f(u.u_zRadius, G.zRadius * d);
+    gl.uniform1f(u.u_zRadius, Math.min(G.zRadius, G.zRatio * Math.min(w, h)) * d);
     gl.uniform1f(u.u_alpha, 1);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return moving;
   }
 
   var raf = 0;
-  function frame() { raf = 0; if (live) views.forEach(render); }
+  function frame() {
+    raf = 0;
+    if (!live) return;
+    var moving = false;
+    views.forEach(function (v) { if (render(v)) moving = true; });
+    if (moving) schedule();                 // 玻璃下面有正在播放的视频：下一帧接着画
+  }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
   window.addEventListener('scroll', schedule, { passive: true });
   // 菜单开合会切换磨砂，尺寸不一定变（收起的那一刻），也要重画
