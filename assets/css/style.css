@@ -136,11 +136,12 @@ img { max-width: 100%; }
 /* ---------- 顶部导航 ----------
    悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。
 
-   液态玻璃对照两个参考实现重做：liquid-dom（WebGPU 着色器）的物理模型与默认值，
+   液态玻璃对照两个参考实现重做：liquid-dom（WebGPU 着色器）的模糊、本体、高光、阴影参数，
    liquid-glass（shuding）把 SVG 位移滤镜挂在 backdrop-filter 上的做法。自下而上：
-   1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：弯边按 squircle 剖面倾斜，
-      一条垂直视线按 IOR 1.5 折射、乘以玻璃厚度，得到逐像素的取样偏移；
-      取样的是轻度模糊（σ 1.5）的背景，保持通透。四周外扩到最大偏移之外，
+   1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：沿边缘法线向内取样。
+      最外侧几像素内位移从 0 升到峰值（边界两侧连续，字弯进玻璃而不被切断），
+      再往里平滑降回 0（凸边把靠里的内容拉伸铺开）；峰值取刚好不倒转的最大值。
+      取样的是轻度模糊（σ 1.5）的背景，保持通透。四周外扩给模糊留余量，
       多出的部分被胶囊的 overflow 裁掉。
       backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
       改由胶囊自己的 backdrop-filter 模糊兜底。

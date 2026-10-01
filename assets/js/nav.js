@@ -103,24 +103,20 @@ function liquidLens(box, pick, cls) {
        折射进玻璃，公开页面用不了；这里把它的着色模型搬进 SVG 滤镜与 canvas 生成的贴图。
      - liquid-glass（github.com/shuding/liquid-glass）：把位移滤镜挂在 backdrop-filter 上，
        位移图按实际最大位移归一化后编码，8 位精度用满。
-     除"厚度"随玻璃尺寸缩小外（见 thick），取值都是 liquid-dom 的默认值。 */
+     背景模糊、本体、高光、阴影按 liquid-dom；折射的位移剖面另行设计（见 profile）。 */
   var G = {
     bezel: 14,              // 弯边宽度上限
-    bezelK: .16,            // 小块玻璃的弯边按短边的这个比例收窄（50px 的胶囊 / 圆约 8px）
-    edgeRamp: 2.5,          // 最外侧这几像素里位移从 0 渐增：边界两侧内容连续，不会被"切断"
-    thickness: 90,          // 玻璃厚度上限
-    ior: 1.5,               // 折射率
+    bezelK: .3,             // 更小的玻璃按短边的这个比例收窄弯边，圆片中间才留得出平坦区
+                            // （50px 的胶囊 / 圆正好用满 14px）
+    edgeRamp: 2.5,          // 最外侧这几像素里位移从 0 升到峰值：边界两侧内容连续，不会被"切断"
     frost: 1.5,             // 背景模糊 σ。liquid-dom 默认 blur = 8 太糊；shuding 只有 0.25px。
                             // 取 1.5：背后内容仍清楚可见，带一点柔化，导航文字压得住
-    minStretch: .2,         // 边缘取样位置的最小前进率：保证不倒转，最多放大 5 倍
-    fieldBlur: 1,           // 位移场模糊：三遍 box 近似高斯。liquid-dom 的 displacementBlur = 6
-                            // 对 50px 的小圆太大，会把斜率抹到圆心，整片变成锥形
+    minStretch: .12,        // 取样位置每往里 1px 至少前进这么多：保证不倒转（最多约放大 8 倍）
     light: -Math.PI / 4,    // 光照方向，0 朝上，−π/4 即左上
     spec: { width: 1, feather: 1, strength: 1, falloff: 1, opposite: 1, sharp: 2, opacity: .45 }
   };
   /* 小块玻璃按短边缩小厚度：90px 是给大面板的，放在 50px 高的胶囊上，
      边缘取样会越过对面的边。Apple 也说小块玻璃更通透、透镜更弱 */
-  function thick(w, h) { return Math.min(G.thickness, Math.min(w, h)); }
   /* 弯边宽度：圆片要中间平、只有边缘一圈弯，才读得出是一片有厚度的玻璃；
      弯边占满半径就成了锥 */
   function bezelOf(w, h) { return Math.min(G.bezel, G.bezelK * Math.min(w, h)); }
@@ -236,120 +232,50 @@ function liquidLens(box, pick, cls) {
     return n;
   }
 
-  /* liquid-dom 的凸 squircle 剖面：x 为弯边进度（0 在轮廓上，1 在弯边内侧），
-     返回 [高度, 斜率]。比圆弧顶部更平、边上更陡 */
-  function squircle(x) {
-    var u = 1 - Math.min(Math.max(x, 0), 1), inside = Math.max(1 - u * u * u * u, 1e-4), s = Math.sqrt(inside);
-    return [s, 2 * u * u * u / s];
-  }
-  var TAN85 = Math.tan(85 * Math.PI / 180), ETA = 1 / G.ior;
+  /* 折射的位移剖面：沿边缘法线、从轮廓往里量 x 像素，取样点往里挪 D(x)。
+       单位剖面 u(x) = smooth(0, edgeRamp, x) × (1 − smooth(0.6·edgeRamp, bezel, x))
+     最外侧 edgeRamp 内从 0 升到峰值 —— 边界两侧的内容是连续的，字弯进玻璃，不会被切断；
+     再往里平滑降回 0 —— 凸边那一圈把靠里的内容拉伸铺开。
+     峰值取"刚好不倒转"的最大值：取样位置每往里 1px 至少前进 minStretch。
 
-  /* 可分离的 box 模糊，原地进行；连做三遍近似高斯 */
-  function boxBlur(a, w, h, r, tmp) {
-    var n = 2 * r + 1, x, y, acc, row;
-    for (y = 0; y < h; y++) {
-      row = y * w; acc = 0;
-      for (x = -r; x <= r; x++) acc += a[row + Math.min(Math.max(x, 0), w - 1)];
-      for (x = 0; x < w; x++) {
-        tmp[row + x] = acc / n;
-        acc += a[row + Math.min(x + r + 1, w - 1)] - a[row + Math.max(x - r, 0)];
-      }
+     为什么不用 liquid-dom 的物理剖面（squircle 曲面 + Snell 折射）：它在最边上一两个
+     像素里陡得厉害，厚一点就倒转（边上出现上下颠倒的像，滚动时逆向移动）；
+     加上不倒转的约束后，整体位移只剩 3–4px，几乎看不出折射。
+     设计过的剖面在同样的弯边宽度下，能把位移推到接近上限。 */
+  function profile(x, bz) {
+    return smooth(0, G.edgeRamp, x) * (1 - smooth(G.edgeRamp * .6, bz, x));
+  }
+  function peakOf(bz) {
+    var step = .25, worst = 0, prev = profile(0, bz);
+    for (var x = step; x <= bz; x += step) {
+      var cur = profile(x, bz);
+      worst = Math.max(worst, (prev - cur) / step);    // 每往里 1px，单位位移减少多少
+      prev = cur;
     }
-    for (x = 0; x < w; x++) {
-      acc = 0;
-      for (y = -r; y <= r; y++) acc += tmp[Math.min(Math.max(y, 0), h - 1) * w + x];
-      for (y = 0; y < h; y++) {
-        a[y * w + x] = acc / n;
-        acc += tmp[Math.min(y + r + 1, h - 1) * w + x] - tmp[Math.max(y - r, 0) * w + x];
-      }
-    }
+    return worst > 0 ? (1 - G.minStretch) / worst : 0;
   }
 
-  /* 防倒转系数。厚玻璃在最外缘取样取得太远，取样位置会折返：边上显示一段压缩、
-     上下颠倒的像，静止时是一圈暗带，滚动时这圈内容会逆着滚动方向走，非常别扭。
-     沿边缘法线按同样的流程（斜率 → 模糊 → 折射）算一遍一维剖面，找出取样位置
-     前进最慢的一点，把整张位移场等比缩小到那里仍以 minStretch 的速率前进 ——
-     相当于 liquid-dom 的 displacementFactor，只是按"刚好不倒转"自动定。 */
-  function foldGuard(T, bz) {
-    var P = G.fieldBlur * 3 + 2, L = P + bz + 40, i;
-    var sl = new Float32Array(L), fl = new Float32Array(L), ht = new Float32Array(L), tmp = new Float32Array(L);
-    for (i = P; i < L; i++) {                       // 下标 P 处是轮廓，往后是玻璃内部
-      var inward = i - P + .5, sq = squircle(inward / bz);
-      sl[i] = inward > bz ? 0 : Math.min(sq[1], TAN85);
-      fl[i] = 1; ht[i] = T + (inward > bz ? 1 : sq[0]) * bz;
-    }
-    for (var pass = 0; pass < 3; pass++) { boxBlur(sl, L, 1, G.fieldBlur, tmp); boxBlur(fl, L, 1, G.fieldBlur, tmp); }
-    var D = new Float32Array(L), worst = 0;
-    for (i = P; i < L; i++) {
-      var sx = fl[i] > 1e-4 ? sl[i] / fl[i] : 0, inv = 1 / Math.sqrt(sx * sx + 1), cosi = inv;
-      var c = ETA * cosi - Math.sqrt(Math.max(1 - ETA * ETA * (1 - cosi * cosi), 0));
-      D[i] = -c * sx * inv * ht[i] / Math.max(ETA - c * cosi, 1e-4);   // 向内的偏移量
-      if (i > P) worst = Math.max(worst, D[i - 1] - D[i]);             // 每往里 1px，偏移减少多少
-    }
-    return worst > 0 ? Math.min(1, (1 - G.minStretch) / worst) : 1;
-  }
-
-  /* 折射位移图，按 liquid-dom 的流程：
-     1. 斜率场：弯边内按 squircle 斜率沿法线倾斜（上限 tan 85°），往里放平；
-        预乘覆盖率，模糊时形状外的空值才不会把边缘拉低。
-     2. 斜率场整体模糊后再除以模糊过的覆盖率，得到平滑的曲面法线。
-     3. 一条垂直向下的视线按 IOR 折射，偏移 = 折射方向的水平分量 / 垂直分量 ×（厚度 + 剖面高度）。
-        折射总是朝法线内侧弯，所以边上取的是往里的内容 —— 凸透镜边缘的拉伸。
-        再乘以 foldGuard 的系数，最边上只拉伸、不倒转。
-     4. 按实际最大偏移归一化编码（shuding 的做法）：R、G 存 x、y，127.5 为不动，
-        feDisplacementMap 的 scale 取 2 × 最大偏移。 */
+  /* 位移图：R、G 存 x、y，127.5 为不动；按峰值归一化编码（shuding 的做法），
+     feDisplacementMap 的 scale 取 2 × 峰值。只向内取样，外扩只需给模糊留余量 */
   function refractMap(w, h, r, frost) {
-    var P = G.fieldBlur * 3 + 2, FW = w + 2 * P, FH = h + 2 * P, N = FW * FH;
-    var vx = new Float32Array(N), vy = new Float32Array(N), fill = new Float32Array(N);
-    var hgt = new Float32Array(N), tmp = new Float32Array(N), o = {}, T = thick(w, h), bz = bezelOf(w, h);
-    var ramp = new Float32Array(w * h);
-    for (var y = 0; y < FH; y++) {
-      for (var x = 0; x < FW; x++) {
-        rrect(x + .5 - P - w / 2, y + .5 - P - h / 2, w / 2, h / 2, r, o);
-        var f = 1 - smooth(0, 1.4, o.d);
-        if (f <= 0) continue;
-        var inward = Math.max(-o.d, 0), sq = squircle(inward / bz), j = y * FW + x;
-        var slope = inward > bz ? 0 : Math.min(sq[1], TAN85);
-        vx[j] = o.nx * slope * f; vy[j] = o.ny * slope * f; fill[j] = f;
-        hgt[j] = T + (inward > bz ? 1 : sq[0]) * bz;
-        var px = x - P, py = y - P;
-        if (px >= 0 && py >= 0 && px < w && py < h) ramp[py * w + px] = G.edgeRamp ? smooth(0, G.edgeRamp, inward) : 1;
-      }
-    }
-    for (var pass = 0; pass < 3; pass++) {
-      boxBlur(vx, FW, FH, G.fieldBlur, tmp);
-      boxBlur(vy, FW, FH, G.fieldBlur, tmp);
-      boxBlur(fill, FW, FH, G.fieldBlur, tmp);
-    }
-    var dx = new Float32Array(w * h), dy = new Float32Array(w * h), max = 0, F = foldGuard(T, bz);
-    for (y = 0; y < h; y++) {
-      for (x = 0; x < w; x++) {
-        var k = (y + P) * FW + x + P, fb = fill[k];
-        if (fb < 1e-4 || !hgt[k]) continue;
-        var sx = vx[k] / fb, sy = vy[k] / fb, inv = 1 / Math.sqrt(sx * sx + sy * sy + 1);
-        var Nx = sx * inv, Ny = sy * inv, cosi = inv;              // N·(−I)，I 为垂直向下的视线
-        var c = ETA * cosi - Math.sqrt(Math.max(1 - ETA * ETA * (1 - cosi * cosi), 0));
-        var Tz = -ETA + c * cosi;                                  // 折射方向 = ETA·I + c·N
-        var e = y * w + x, t = hgt[k] / Math.max(-Tz, 1e-4);
-        dx[e] = c * Nx * t * F * ramp[e]; dy[e] = c * Ny * t * F * ramp[e];
-        max = Math.max(max, Math.abs(dx[e]), Math.abs(dy[e]));
-      }
-    }
-    max = Math.max(max, .5);
-    var M = Math.ceil(max + frost * 3 + 2), W = w + 2 * M, H = h + 2 * M;
+    var bz = bezelOf(w, h), pk = peakOf(bz), o = {};
+    var M = Math.ceil(frost * 3 + 2), W = w + 2 * M, H = h + 2 * M;
     var cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     var g = cv.getContext('2d'), img = g.createImageData(W, H), d = img.data;
     for (var i = 0; i < d.length; i += 4) { d[i] = d[i + 1] = 128; d[i + 3] = 255; }
-    for (y = 0; y < h; y++) {
-      for (x = 0; x < w; x++) {
-        var q = ((y + M) * W + x + M) * 4, e2 = y * w + x;
-        d[q]     = Math.round(127.5 + dx[e2] / max * 127.5);
-        d[q + 1] = Math.round(127.5 + dy[e2] / max * 127.5);
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        rrect(x + .5 - w / 2, y + .5 - h / 2, w / 2, h / 2, r, o);
+        var inward = -o.d;
+        if (inward <= 0 || inward >= bz) continue;
+        var u = profile(inward, bz), q = ((y + M) * W + x + M) * 4;
+        d[q]     = Math.round(127.5 - o.nx * u * 127.5);   // 法线朝外，取样朝内
+        d[q + 1] = Math.round(127.5 - o.ny * u * 127.5);
       }
     }
     g.putImageData(img, 0, 0);
-    return { url: cv.toDataURL(), margin: M, scale: 2 * max };
+    return { url: cv.toDataURL(), margin: M, scale: 2 * pk };
   }
 
   var defs = svgEl('svg', { 'aria-hidden': 'true', width: 0, height: 0 });
