@@ -43,6 +43,70 @@
     return n;
   }
 
+  /* 弯边向内延伸的深度（px）：光照与折射共用，两者必须落在同一圈上。
+     小块玻璃不宜太"鼓" */
+  function bevelOf(h) { return Math.min(18, h * .36); }
+
+  /* 0. 光照：立体感的主要来源（所有浏览器都有，只是一张图片）。
+     把弯边当成四分之一圆弧的曲面 —— 边上近乎竖直，往里逐渐放平 ——
+     按圆角距离场求出每点的三维法线，光从左上方来：朝光的一侧亮起一片柔和高光，
+     背光一侧压一点暗，对侧再有一抹玻璃内部反射回来的弱光。
+     明暗只落在弯边这一圈，和折射的范围一致，读起来就是同一块有厚度的玻璃。 */
+  var L1 = norm3(-.42, -.78, .62), L2 = norm3(.45, .8, .55), V = [0, 0, 1];
+  function norm3(x, y, z) { var l = Math.sqrt(x * x + y * y + z * z); return [x / l, y / l, z / l]; }
+  function half(a) { return norm3(a[0] + V[0], a[1] + V[1], a[2] + V[2]); }
+  var H1 = half(L1), H2 = half(L2);
+  // 主高光、对侧内反射、朝光面漫射、背光压暗、高光锐度（指数越小越宽）
+  var LIT = { key: 1.1, back: .35, diffuse: .24, shade: .14, sharp: 10 };
+  /* 平面（法线正对屏幕）本身的反光作基线扣掉：否则弯边内侧放平处仍有一层亮，
+     到弯边边界突然归零，会描出一圈内胶囊 —— 正是之前"两层"的观感 */
+  var B1 = Math.pow(H1[2], LIT.sharp), B2 = Math.pow(H2[2], LIT.sharp);
+  function above(v, b) { return Math.max(0, v - b) / (1 - b); }
+  function lightMap(w, h, r, bezel) {
+    var k = Math.min(window.devicePixelRatio || 1, 2), W = Math.round(w * k), Hh = Math.round(h * k);
+    var c = document.createElement('canvas');
+    c.width = W; c.height = Hh;
+    var g = c.getContext('2d'), img = g.createImageData(W, Hh), d = img.data;
+    var hx = w / 2, hy = h / 2, ix = hx - r, iy = hy - r;
+    for (var y = 0; y < Hh; y++) {
+      for (var x = 0; x < W; x++) {
+        var px = (x + .5) / k - hx, py = (y + .5) / k - hy;
+        var qx = Math.abs(px) - ix, qy = Math.abs(py) - iy, nx = 0, ny = 0, dist;
+        if (qx > 0 && qy > 0) { var Lq = Math.sqrt(qx * qx + qy * qy) || 1; dist = r - Lq; nx = qx / Lq; ny = qy / Lq; }
+        else if (qx > qy) { dist = r - qx; nx = 1; }
+        else { dist = r - qy; ny = 1; }
+        if (dist < 0 || dist >= bezel) continue;            // 弯边以外透明
+        if (px < 0) nx = -nx;
+        if (py < 0) ny = -ny;
+        var t = dist / bezel, u = 1 - t;                      // u：1 在边上，0 在弯边内侧
+        var slope = Math.min(u / Math.sqrt(Math.max(1 - u * u, 1e-4)), 8);   // 圆弧的斜率
+        var N = norm3(nx * slope, ny * slope, 1);
+        var nl = N[0] * L1[0] + N[1] * L1[1] + N[2] * L1[2];
+        var s1 = above(Math.pow(Math.max(0, N[0] * H1[0] + N[1] * H1[1] + N[2] * H1[2]), LIT.sharp), B1);
+        var s2 = above(Math.pow(Math.max(0, N[0] * H2[0] + N[1] * H2[1] + N[2] * H2[2]), LIT.sharp), B2);
+        var lift = LIT.key * s1 + LIT.back * s2 + LIT.diffuse * u * u * Math.max(0, nl);
+        var shade = LIT.shade * u * Math.max(0, -nl);
+        var i = (y * W + x) * 4;
+        if (lift >= shade) { d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = Math.min(lift, .7) * 255; }
+        else { d[i] = 35; d[i + 1] = 52; d[i + 2] = 70; d[i + 3] = shade * 255; }
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return c.toDataURL();
+  }
+  panes.forEach(function (pane) {
+    var lit = layer(pane, 'lg-light'), w0 = 0, h0 = 0;
+    function relight() {
+      var w = pane.offsetWidth, h = pane.offsetHeight;
+      if (!w || !h || (w === w0 && h === h0)) return;
+      w0 = w; h0 = h;
+      var r = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
+      lit.style.backgroundImage = 'url(' + lightMap(w, h, r, bevelOf(h)) + ')';
+    }
+    relight();
+    if (window.ResizeObserver) new ResizeObserver(relight).observe(pane);
+  });
+
   /* 1. 悬停水滴。绝对定位，不参与 flex 排布。
      换位时先压成 1.1 x 0.9 再弹回，配合 CSS 的回弹缓动，读起来像一滴液体被拖过去。 */
   var lens = layer(wrap, 'nav-lens');
@@ -197,7 +261,7 @@
       if (!w || !h || (w === w0 && h === h0)) return;
       w0 = w; h0 = h;
       var r = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
-      var bezel = Math.min(18, h * .36);   // 弯边向内延伸的深度；小块玻璃不宜太"鼓"
+      var bezel = bevelOf(h);
       var dmax = bezel * .42;              // 见 refractMap 的说明：再大就折返
       f.setAttribute('width', w + 2 * M); f.setAttribute('height', h + 2 * M);
       map.setAttribute('width', w + 2 * M); map.setAttribute('height', h + 2 * M);

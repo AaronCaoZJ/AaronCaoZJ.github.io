@@ -149,8 +149,10 @@ img { max-width: 100%; }
       改由胶囊自己的 backdrop-filter 模糊兜底。
    2. 体积 ::after：均匀的薄白与上缘内侧一道亮线。Apple 的说法是玻璃"没有固有颜色"，
       实心填充会破坏质感；厚度交给边缘折射去表达，不再额外画内侧明暗。
-   3. 交互：悬停水滴 .nav-lens 在入口间滑动（带回弹与拉伸），光斑 .lg-glow 随光标。
-   4. 镜面高光 ::before：一圈渐变亮边，左上、右下最亮，两侧几乎没有。
+   3. 光照 .lg-light（nav.js 按弯边几何算出的明暗图，所有浏览器都有）：
+      朝光一侧的柔和高光、背光一侧的轻微压暗、对侧的一抹内反射 —— 立体感主要靠它。
+   4. 交互：悬停水滴 .nav-lens 在入口间滑动（带回弹与拉伸），光斑 .lg-glow 随光标。
+   5. 镜面高光 ::before：一圈渐变亮边，左上、右下最亮，两侧几乎没有。
    投影不能留在胶囊本身（会被折射层读进去，见 .lg-shadow）。
    饱和度只轻提（130%）：拉到 200% 会把背后的颜色整个拽偏，廉价感就来自那里。
    Apple 没有给出任何数值，也没有网页版实现；这里的取值按 HIG 与 WWDC25 的描述校准：
@@ -203,6 +205,11 @@ img { max-width: 100%; }
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
+}
+/* 弯边光照：nav.js 按几何算好的一张明暗图，铺满胶囊 */
+.lg-light {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: inherit; background: no-repeat 0 0 / 100% 100%;
 }
 /* 光标处局部点亮：--mx / --my 由 nav.js 跟随指针写在胶囊上 */
 .lg-glow {
