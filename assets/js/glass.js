@@ -127,7 +127,7 @@
     'uniform sampler2D u_tex;',
     'uniform vec2 u_size;', 'uniform vec2 u_crop;', 'uniform float u_pad;', 'uniform float u_radius;',
     'uniform float u_refract;', 'uniform float u_chroma;', 'uniform float u_edgeHL;', 'uniform float u_fresnel;',
-    'uniform float u_zRadius;', 'uniform float u_alpha;', 'uniform float u_shade;', 'uniform float u_spec;',
+    'uniform float u_zRadius;', 'uniform float u_alpha;', 'uniform float u_shade;', 'uniform float u_rimTop;', 'uniform float u_rimBot;', 'uniform float u_px;',
     'float rrSDF(vec2 p, vec2 b, float r) {',
     '  vec2 q = abs(p) - b + vec2(r);',
     '  return min(max(q.x, q.y), 0.0) + length(max(q, vec2(0.0))) - r;',
@@ -172,8 +172,12 @@
     // 明暗：法线朝光处亮、背光处暗 —— 平坦区 N·L 正好等于 L.z，乘数为 1，不变
     '  vec3 Ld = normalize(vec3(0.0, -0.75, 1.0));',
     '  col *= 1.0 + u_shade * (dot(N, Ld) - Ld.z);',
-    // 镜面高光：上沿一道柔和的亮光
-    '  float specTop = pow(max(dot(N, normalize(Ld + vec3(0.0, 0.0, 1.0))), 0.0), 40.0) * (1.0 - depth);',
+    // 轮廓高光：只在最外缘约 1.5px 的一条细线上，按这段轮廓朝向光的程度定亮度 ——
+    // 上沿最亮、沿两侧渐暗、下沿一道较弱的反光。内部不加白：加在面上，深色底上就成了一层白雾
+    '  vec2 outN = length(N.xy) > 1e-4 ? normalize(N.xy) : vec2(0.0);',
+    '  float facing = dot(outN, vec2(0.0, -1.0));',
+    '  float band = 1.0 - smoothstep(0.8 * u_px, 2.0 * u_px, inside);',   // 轮廓往里 0.8px 内全亮，到 2px 归零
+    '  float rimHL = band * (u_rimTop * pow(max(facing, 0.0), 1.5) + u_rimBot * pow(max(-facing, 0.0), 1.5));',
     '  float fres = pow(1.0 - abs(N.z), 4.0) * u_fresnel;',
     '  float bw = 1.5;',
     '  float stroke = smoothstep(-bw - 1.0, -bw, sdf) * (1.0 - smoothstep(-1.0, 0.0, sdf));',
@@ -181,8 +185,10 @@
     '  float rim = edge * u_edgeHL * 0.22;',
     '  float innerGlow = smoothstep(5.0, 0.0, -sdf) * u_edgeHL * 0.15;',
     '  float envRefl = (N.y * 0.5 + 0.5) * fres * 0.08;',
-    '  vec3 fin = col + vec3(rim + innerGlow + stroke * u_edgeHL * 0.55 + envRefl + specTop * u_spec);',
+    '  vec3 fin = col + vec3(rim + innerGlow + stroke * u_edgeHL * 0.55 + envRefl);',
     '  fin = mix(fin, vec3(1.0), fres * 0.2);',
+    // 滤色叠加：暗处提亮明显、亮处几乎不变 —— 像光打在表面上，而不是贴一层白
+    '  fin = fin + (1.0 - fin) * rimHL;',
     '  gl_FragColor = vec4(fin, mask * u_alpha);',
     '}'
   ].join('\n');
@@ -196,7 +202,7 @@
        窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
             frost: 3.1, frostOpen: 6,
-            shade: .1, spec: .22 };     // 本站加的光照：纯色底上的立体感（明暗、上沿高光），不影响折射
+            shade: .1, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
   function makeGL(canvas) {
     var gl = canvas.getContext('webgl', { premultipliedAlpha: false, antialias: false });
@@ -226,7 +232,7 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     var u = {};
     ['u_tex', 'u_size', 'u_crop', 'u_pad', 'u_radius', 'u_refract', 'u_chroma', 'u_edgeHL', 'u_fresnel', 'u_zRadius', 'u_alpha',
-     'u_shade', 'u_spec']
+     'u_shade', 'u_rimTop', 'u_rimBot', 'u_px']
       .forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
     return { gl: gl, u: u };
   }
@@ -320,7 +326,9 @@
     gl.uniform1f(u.u_zRadius, Math.min(G.zRadius, G.zRatio * Math.min(w, h)) * d);
     gl.uniform1f(u.u_alpha, 1);
     gl.uniform1f(u.u_shade, G.shade);
-    gl.uniform1f(u.u_spec, G.spec);
+    gl.uniform1f(u.u_rimTop, G.rimTop);
+    gl.uniform1f(u.u_rimBot, G.rimBot);
+    gl.uniform1f(u.u_px, d);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
