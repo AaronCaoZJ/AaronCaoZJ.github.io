@@ -144,7 +144,8 @@ img { max-width: 100%; }
    液态玻璃按 Apple Liquid Glass 的构造分层（自下而上）：
    1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：边缘一圈像凸透镜，
       向内取样，把靠里的内容拉伸着铺到边上；中间平坦处只做磨砂。
-      四周比胶囊各大出 12px，给磨砂留取样余量，多出的部分被胶囊的 overflow 裁掉。
+      四周比胶囊各大出一圈（磨砂模糊半径的 3 倍），给磨砂留取样余量，
+      多出的部分被胶囊的 overflow 裁掉。
       backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
       改由胶囊自己的 backdrop-filter 模糊兜底。
    2. 体积 ::after：均匀的薄白与上缘内侧一道亮线。Apple 的说法是玻璃"没有固有颜色"，
@@ -175,7 +176,7 @@ img { max-width: 100%; }
   box-shadow: var(--lg-shadow);
 }
 .lg-refract {
-  position: absolute; inset: -12px; z-index: -3; pointer-events: none;
+  position: absolute; inset: -15px; z-index: -3; pointer-events: none;   /* 实际值由 nav.js 按磨砂强度设定 */
 }
 /* 投影的替身（仅 Chromium，由 nav.js 生成并对齐到胶囊）。投影若画在胶囊自己身上，
    折射层的磨砂会把边外这圈灰影也读进来、晕进边缘，看上去像里面又套了一层胶囊。
@@ -301,43 +302,54 @@ img { max-width: 100%; }
 .nav.open .nav-menu span::before { transform: translateY(6px) rotate(45deg); }
 .nav.open .nav-menu span::after  { transform: translateY(-6px) rotate(-45deg); }
 
-/* 窄屏横幅：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
-   见 i18n.js 的 language-pair）。再窄就改成横贯屏幕的一条：左首页、右 ☰，
-   其余入口收进下方，点 ☰ 时整条向下长成卡片。
+/* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
+   见 i18n.js 的 language-pair）。再窄就把菜单收成右上角一个玻璃圆，排在语言按钮
+   左边（与宽屏的先后顺序一致）；点开时这个圆以右边缘为锚向左下长成一张卡片，
+   竖排列出全部入口。
    页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。
 
    .wrap 绝对定位、.nav 固定 50px 高：展开的卡片浮在正文上面，
-   不会把下面的内容往下推。 */
+   不会把下面的内容往下推。圆角始终 25px —— 50x50 时正好是圆，
+   长开后就是圆角卡片，形状是连续变过去的。 */
 @media (max-width: 660px) {
   .nav {
     width: auto; max-width: none; height: 50px; margin: 14px 14px 0;
     justify-content: flex-end;
   }
   .nav .wrap {
-    position: absolute; top: 0; left: 0; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
-    flex-wrap: wrap; align-content: flex-start;
-    height: auto; max-height: 50px; padding: 0 3px 0 8px;
-    overflow: hidden; overflow: clip; border-radius: 25px;   /* 25 = 半个高度：收起时仍是胶囊 */
-    transition: max-height .32s cubic-bezier(.32,.72,0,1);
+    position: absolute; top: 0; left: auto; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
+    width: 50px; height: auto; max-height: 50px; padding: 0;
+    flex-wrap: wrap; align-content: flex-start; gap: 0;
+    overflow: hidden; overflow: clip; border-radius: 25px;
+    /* 收起用普通缓动：回弹会让卡片短暂缩得比圆还小 */
+    transition: width .3s cubic-bezier(.32,.72,0,1), max-height .3s cubic-bezier(.32,.72,0,1);
   }
-  /* 展开后是一整张卡片压在正文上，20% 的玻璃底会透出头像等图片，
-     字就不好认了：底色调到接近实心，模糊仍保留 */
-  .nav.open .wrap { max-height: 320px; padding-bottom: 8px; }
-  .nav.open .wrap::after { background: rgba(255, 255, 255, .92); }
-  .nav-menu { display: grid; }
-  .nav .wrap > a { flex: 0 0 100%; justify-items: start; text-align: left; padding: 12px 14px; }
-  .nav .wrap > a:first-child { flex: 0 0 auto; padding: 7px 14px; }
-  /* 收起时把下面几行设为 visibility: hidden：仅靠 overflow 藏起来，
+  /* 展开带回弹，像一滴液体被拉开 */
+  .nav.open .wrap {
+    width: min(232px, calc(100% - 60px)); max-height: 340px; padding-bottom: 8px;
+    transition: width .5s var(--lg-spring), max-height .5s var(--lg-spring);
+  }
+  /* 卡片保持通透：底色只到一半，可读性交给更重的磨砂（nav.js 按玻璃大小加重；
+     Apple 的说法是玻璃越大，散射越柔）。这里是 Safari / Firefox 的兜底模糊 */
+  .nav.open .wrap::after { background: rgba(255, 255, 255, .5); }
+  .nav.open .wrap {
+    backdrop-filter: blur(18px) saturate(140%) brightness(1.04);
+    -webkit-backdrop-filter: blur(18px) saturate(140%) brightness(1.04);
+  }
+  /* 按钮排第一、靠右：收起时就是那个圆，展开后 × 留在卡片右上角 */
+  .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
+  .nav .wrap > a { flex: 0 0 100%; justify-items: start; text-align: left; padding: 11px 18px; }
+  /* 收起时所有入口设为 visibility: hidden：仅靠 overflow 藏起来，
      Tab 键仍会聚焦到看不见的链接上。关闭时等收起动画走完再隐藏。 */
-  .nav .wrap > a:not(:first-child), .nav .wrap > .nav-divider {
+  .nav .wrap > a, .nav .wrap > .nav-divider {
     visibility: hidden;
-    transition: background .2s ease, box-shadow .2s ease, visibility 0s linear .32s;
+    transition: background .2s ease, box-shadow .2s ease, visibility 0s linear .3s;
   }
-  .nav.open .wrap > a:not(:first-child), .nav.open .wrap > .nav-divider {
+  .nav.open .wrap > a, .nav.open .wrap > .nav-divider {
     visibility: visible; transition-delay: 0s;
   }
   .nav-divider {
-    flex: 0 0 calc(100% - 28px); height: 0; margin: 4px 14px;
+    flex: 0 0 calc(100% - 36px); height: 0; margin: 4px 18px;
     border-left: 0; border-top: 1px solid var(--rule);
   }
 }

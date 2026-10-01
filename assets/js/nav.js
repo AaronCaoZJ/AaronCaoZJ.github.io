@@ -39,7 +39,7 @@
     var n = document.createElement('span');
     n.className = cls;
     n.setAttribute('aria-hidden', 'true');
-    pane.appendChild(n);   // 放在最后：窄屏样式用 a:first-child 认首页，插在前面会带歪
+    pane.appendChild(n);   // 放在最后，不打乱入口与按钮原有的顺序
     return n;
   }
 
@@ -158,7 +158,6 @@
   var lowT = window.matchMedia && window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
   if (!chromium || lowT || !window.ResizeObserver) return;
 
-  var M = 12;          // 折射层四周外扩，给磨砂留取样余量；须与 style.css 里 .lg-refract 的 inset 一致
   var NS = 'http://www.w3.org/2000/svg';
   function svgEl(tag, attrs, parent) {
     var n = document.createElementNS(NS, tag);
@@ -173,10 +172,10 @@
      位移按 (1 − t)² 衰减、最外缘为 0.42 个 bezel：此时取样位置对坐标的导数
      在边上是 1 − 2 × 0.42 = 0.16（约放大 6 倍），且处处为正 —— 超过 0.5
      导数就会变负，取样点在边缘折返，背景被镜像成一道道条纹。
-     图的尺寸是整个折射层（胶囊 + 四周 M），胶囊以外的部分最终被裁掉，填 128。
+     图的尺寸是整个折射层（胶囊 + 四周外扩 M），胶囊以外的部分最终被裁掉，填 128。
      B 通道空着没用，拿来存"边缘区"遮罩：边上为 1，进到 bezel 处降到 0 ——
      滤镜据此把清晰的折射边和磨砂的中间区拼起来。 */
-  function refractMap(w, h, r, bezel) {
+  function refractMap(w, h, r, bezel, M) {   // M：折射层四周外扩的像素
     var W = w + 2 * M, H = h + 2 * M;
     var c = document.createElement('canvas');
     c.width = W; c.height = H;
@@ -227,7 +226,7 @@
     /* 两区：边缘只轻微模糊，让折进来的外部内容看得清；中间磨砂得更重，
        背后是正文时导航文字才压得住。两区都按同一张图位移，过渡处不会错位。 */
     svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: 1.2, result: 'sharp' }, f);
-    svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: 5, result: 'frost' }, f);
+    var frost = svgEl('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: 5, result: 'frost' }, f);
     var map = svgEl('feImage', { x: 0, y: 0, preserveAspectRatio: 'none', result: 'map' }, f);
     var disps = CH.map(function (c) {
       var dm = svgEl('feDisplacementMap', { 'in': 'sharp', in2: 'map',
@@ -253,10 +252,17 @@
       w0 = w; h0 = h;
       var r = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
       var bezel = bevelOf(h);
+      /* 磨砂随玻璃变大而加重：小胶囊 5px，窄屏菜单长成卡片后到 10px
+         （Apple："玻璃越大，散射越柔"）。连续过渡，展开途中不会跳一下。
+         折射层外扩取模糊半径的 3 倍，模糊才读得到足够的背景，卡片边缘不发虚 */
+      var sigma = 5 + 5 * Math.min(Math.max((h - 50) / 150, 0), 1);
+      var M = Math.ceil(sigma * 3);
+      frost.setAttribute('stdDeviation', sigma.toFixed(2));
+      lyr.style.inset = -M + 'px';
       var dmax = bezel * .42;              // 见 refractMap 的说明：再大就折返
       f.setAttribute('width', w + 2 * M); f.setAttribute('height', h + 2 * M);
       map.setAttribute('width', w + 2 * M); map.setAttribute('height', h + 2 * M);
-      map.setAttribute('href', refractMap(w, h, r, bezel));
+      map.setAttribute('href', refractMap(w, h, r, bezel, M));
       // 位移 = scale × (通道值 − 0.5)，通道值最大偏离约 0.498
       disps.forEach(function (dm, i) {   // 前三个是 R/G/B 色散，最后一个是磨砂区
         dm.setAttribute('scale', (dmax / .498 * (CH[i] ? CH[i][1] : 1)).toFixed(2));
