@@ -265,7 +265,7 @@ function liquidLens(box, pick, cls) {
     var k = Math.min(window.devicePixelRatio || 1, 2), hx = w / 2, hy = h / 2, o = {};
     var Wd = Math.round(w * k), Hd = Math.round(h * k), N = Wd * Hd;
     var f = { rx: new Float32Array(N), ry: new Float32Array(N), cx: new Float32Array(N),
-              cy: new Float32Array(N), m: new Float32Array(N) }, max = .5;
+              cy: new Float32Array(N), m: new Float32Array(N) }, max = .5, over = 0;
     for (var y = 0; y < Hd; y++) {
       for (var x = 0; x < Wd; x++) {
         glassAt((x + .5) / k - hx, (y + .5) / k - hy, hx, hy, r, o);
@@ -273,9 +273,16 @@ function liquidLens(box, pick, cls) {
         var j = y * Wd + x;
         f.rx[j] = o.rx; f.ry[j] = o.ry; f.cx[j] = o.cx; f.cy[j] = o.cy; f.m[j] = o.mask;
         max = Math.max(max, Math.abs(o.rx) + Math.abs(o.cx), Math.abs(o.ry) + Math.abs(o.cy));
+        // 取样点越出玻璃外框多少（折射总是朝里取，越出去的只有色散那一两个像素）
+        var sx = (x + .5) / k - hx + o.rx, sy = (y + .5) / k - hy + o.ry;
+        over = Math.max(over, Math.abs(sx) + Math.abs(o.cx) - hx, Math.abs(sy) + Math.abs(o.cy) - hy);
       }
     }
-    var M = Math.ceil(max + frostCss() * 3 + 2), CW = Wd + Math.round(2 * M * k), CH = Hd + Math.round(2 * M * k);
+    /* 折射层只外扩到取样实际越出的范围再加模糊余量 —— 几个像素，而不是按最大偏移外扩。
+       外扩太多时，离窗口顶端只有 14px 的导航，折射层上沿就伸出了视口；GPU 合成时
+       伸出去的部分可能被裁掉、图层原点随之移动，位移图与玻璃上下错位，
+       两端折射看起来就会上下不对称（交界向一侧倾斜）、中段也会错开 */
+    var M = Math.ceil(Math.max(over, 0) + frostCss() * 3 + 2), CW = Wd + Math.round(2 * M * k), CH = Hd + Math.round(2 * M * k);
     var mk = Math.round(M * k), urls = [];
     [1, 0, -1].forEach(function (sign) {         // 红、绿、蓝
       var cv = document.createElement('canvas');
