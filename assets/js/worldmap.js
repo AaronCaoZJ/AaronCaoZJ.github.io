@@ -353,7 +353,7 @@
     if (e.key === 'Escape' && zt > 1) zoomTo(1, 0.5, 0.5);
   });
 
-  /* 按"多久前访问"着色：本周内红，一个月白，半年及以上蓝。
+  /* 按"多久前访问"着色：本周内是页面的主蓝，一个月淡成浅蓝，此后渐隐，半年及以上完全透明。
      三个锚点把刻度分成两臂，每臂内部按对数插值 —— 一周到一个月、
      一个月到半年，跨度差了好几倍，线性的话前一臂几乎看不出过渡。 */
   var WEEK = 168, MONTH = 720, HALF_YEAR = 4320;   // 小时
@@ -364,15 +364,14 @@
       ? 0.5 * Math.log(ago / WEEK) / Math.log(MONTH / WEEK)
       : 0.5 + 0.5 * Math.log(ago / MONTH) / Math.log(HALF_YEAR / MONTH);
   }
-  /* 两段 color-mix：0–0.5 是红→白，0.5–1 是白→蓝。
-     颜色本身留在 CSS 变量里，JS 只算比例 —— 切换明暗主题时不用重算，
-     点的颜色会跟着变量自动换。浏览器不支持 color-mix 时这条内联样式
-     整条作废，退回样式表里的单色 --vmap-pin。 */
+  /* 前一臂（0–0.5）用 color-mix 从主蓝过渡到浅蓝；颜色本身留在 CSS 变量里，JS 只算比例。
+     浏览器不支持 color-mix 时这条内联样式整条作废，退回样式表里的单色 --vmap-pin。
+     后一臂（0.5–1）不再变色，而是整体淡出（fadeOf → --fade）：
+     若把颜色混向 transparent，点是透明了，外面那圈描边却还在，会剩一个空心圆。 */
   function heatColor(t) {
-    return t <= 0.5
-      ? 'color-mix(in oklab, var(--vmap-mid) ' + (t * 200).toFixed(1) + '%, var(--vmap-hot))'
-      : 'color-mix(in oklab, var(--vmap-cold) ' + ((t - 0.5) * 200).toFixed(1) + '%, var(--vmap-mid))';
+    return 'color-mix(in oklab, var(--vmap-mid) ' + (Math.min(t, 0.5) * 200).toFixed(1) + '%, var(--vmap-hot))';
   }
+  function fadeOf(t) { return t <= 0.5 ? 1 : Math.max(0, 1 - (t - 0.5) * 2); }
   function agoText(h) {
     if (document.documentElement.lang === 'zh-CN') {
       if (h < 1) return '一小时内';
@@ -421,7 +420,13 @@
       b._visit = d;
       b.setAttribute('aria-label', visitLabel(d));
       // 旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
-      if (typeof d.ago === 'number') b.style.color = heatColor(heat(d.ago));  // 圆点取 currentColor
+      if (typeof d.ago === 'number') {
+        var t = heat(d.ago), fade = fadeOf(t);
+        b.style.color = heatColor(t);               // 圆点取 currentColor
+        b.style.setProperty('--fade', fade.toFixed(3));
+        // 淡到看不见的点不能还是一个摸得到的按钮：不响应指针，也不进 Tab 顺序
+        if (fade < 0.03) { b.style.pointerEvents = 'none'; b.tabIndex = -1; b.setAttribute('aria-hidden', 'true'); }
+      }
       b.addEventListener('mouseenter', function () { showTip(b, d); });
       b.addEventListener('focus',      function () { showTip(b, d); });
       b.addEventListener('mouseleave', function () { tip.hidden = true; });

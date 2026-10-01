@@ -690,16 +690,12 @@ strong { font-weight: 700; }
   position: relative;
   width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
   --vmap-dot: #d3dbe3;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
-  --vmap-pin: var(--sl-red);    /* 接口没给 ago 时的单色兜底 */
+  --vmap-pin: var(--accent);    /* 接口没给 ago 时的单色兜底 */
 
-  /* 按"多久前访问"着色的三个锚点：红（本周）→ 白（一个月）→ 蓝（半年+）。
-     两极直接用 Show Lab 的红和蓝，与页面其他处的品牌色同源。 */
-  --vmap-hot:  var(--sl-red);
-  --vmap-mid:  #ffffff;
-  --vmap-cold: var(--sl-blue);
-  /* 浅色底上白点对页面只有 1.02:1 —— 等于隐形，中间那段时间的访客会从
-     地图上消失。一圈暗色细描边让它读成"空心圆"，而不必改掉白色本身。 */
-  --vmap-ring: rgba(35, 52, 70, .4);
+  /* 按"多久前访问"着色：页面主蓝（本周）→ 浅蓝（一个月）→ 渐隐到透明（半年+）。
+     越新的访问越醒目，久远的慢慢从地图上退去 */
+  --vmap-hot:  var(--accent);
+  --vmap-mid:  color-mix(in oklab, var(--accent) 50%, #fff);
 }
 .vmap-land { display: block; width: 100%; }
 /* 裁切窗口：放大后超出范围的点阵与访客点藏在里面。
@@ -732,10 +728,10 @@ strong { font-weight: 700; }
   padding: 0; border: 0; border-radius: 50%;
   color: var(--vmap-pin);          /* JS 按时间色阶覆盖；下面全部取 currentColor */
   background: currentColor;
-  /* 半透明 + 一圈细描边：点挨在一起时能透出彼此，不会一个压死一个；
-     描边让白色（约一个月前）的点也看得见。 */
-  box-shadow: 0 0 0 1px var(--vmap-ring);
-  opacity: .72; cursor: pointer;
+  /* 半透明 + 一圈白细边（同 chenyanzhe.page）：浅底上看不见，两个点叠在一起时
+     却能把它们隔开。--fade 由 JS 按访问时间给出，描边随点一起淡出 */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .9);
+  opacity: calc(.8 * var(--fade, 1)); cursor: pointer;
   transition: transform .2s ease, opacity .2s ease;
 }
 .vmap-pin:hover, .vmap-pin:focus-visible {
