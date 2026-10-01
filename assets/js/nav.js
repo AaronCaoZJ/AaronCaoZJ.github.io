@@ -108,12 +108,15 @@ function liquidLens(box, pick, cls) {
     bezel: 14,              // 弯边宽度上限
     bezelK: .3,             // 更小的玻璃按短边的这个比例收窄弯边，圆片中间才留得出平坦区
                             // （50px 的胶囊 / 圆正好用满 14px）
-    edgeRamp: 2.5,          // 最外侧这几像素里位移从 0 升到峰值：边界两侧内容连续，不会被"切断"
+    edgeRamp: 4,            // 最外侧这几像素里位移从 0 升到峰值：边界两侧内容连续，不会被"切断"；
+                            // 这一圈里内容被压缩，正好读成玻璃边缘的厚度
     frost: 1.5,             // 背景模糊 σ。liquid-dom 默认 blur = 8 太糊；shuding 只有 0.25px。
                             // 取 1.5：背后内容仍清楚可见，带一点柔化，导航文字压得住
     minStretch: .12,        // 取样位置每往里 1px 至少前进这么多：保证不倒转（最多约放大 8 倍）
     light: -Math.PI / 4,    // 光照方向，0 朝上，−π/4 即左上
-    spec: { width: 1, feather: 1, strength: 1, falloff: 1, opposite: 1, sharp: 2, opacity: .45 }
+    // 高光带比 liquid-dom 默认的 1px 宽：50px 的小圆上 1px 太细，读不出边缘的厚度
+    spec: { width: 2.5, feather: 1, strength: 1, falloff: .7, opposite: 1, sharp: 2, opacity: .45 },
+    rim: { width: 3, alpha: .18 }   // 四周统一的一圈淡白边：玻璃边缘的厚度在反光
   };
   /* 小块玻璃按短边缩小厚度：90px 是给大面板的，放在 50px 高的胶囊上，
      边缘取样会越过对面的边。Apple 也说小块玻璃更通透、透镜更弱 */
@@ -150,7 +153,7 @@ function liquidLens(box, pick, cls) {
     var S = G.spec, o = {}, c = document.createElement('canvas');
     c.width = W; c.height = H;
     var g = c.getContext('2d'), img = g.createImageData(W, H), d = img.data;
-    var reach = S.width + S.feather, unit = Math.max(S.width, S.feather);
+    var reach = Math.max(S.width + S.feather, G.rim.width), unit = Math.max(S.width, S.feather);
     for (var y = 0; y < H; y++) {
       for (var x = 0; x < W; x++) {
         rrect((x + .5) / k - w / 2, (y + .5) / k - h / 2, w / 2, h / 2, r, o);
@@ -161,9 +164,10 @@ function liquidLens(box, pick, cls) {
         var facing = o.nx * LX + o.ny * LY;
         var p = Math.min(Math.max(Math.pow(Math.max(facing, 0), S.sharp) * (S.strength - fall), 0), 1);
         var q = Math.min(Math.max(Math.pow(Math.max(-facing, 0), S.sharp) * (S.opposite - fall), 0), 1);
+        var rim = G.rim.width ? G.rim.alpha * (1 - smooth(0, G.rim.width, inward)) * (1 - smooth(0, S.feather, o.d)) : 0;
         var i = (y * W + x) * 4;
         d[i] = d[i + 1] = d[i + 2] = 255;
-        d[i + 3] = Math.min((p + q) * band, 1) * S.opacity * 255;
+        d[i + 3] = Math.min(Math.min((p + q) * band, 1) * S.opacity + rim, 1) * 255;
       }
     }
     g.putImageData(img, 0, 0);
