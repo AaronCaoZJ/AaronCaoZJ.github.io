@@ -138,20 +138,14 @@ img { max-width: 100%; }
 /* ---------- 顶部导航 ----------
    悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。
 
-   液态玻璃的光学模型移植自 ybouane/liquidglass 的片元着色器（参数取其默认值），
-   由 nav.js 逐像素算成贴图。自下而上：
-   1. 折射层 .lg-refract（仅 Chromium）：弯边为四分之一圆的双凸玻璃（弯边深 12px，中间平），
-      与原库一样按物理像素计算（Retina 屏上偏移只有 CSS 像素算法的一半），
-      光线进出各折一次（IOR 1.5），边缘取样能伸到对面，映出另一侧的内容；
-      红、蓝两色沿法线各偏一点（色散），最外 1.5px 渐回未折射的背景（抗锯齿），
-      取样的背景几乎不模糊（σ 1 物理像素，接近原库的 Regular Glass），交界保持清晰。四周外扩到最大偏移以外，多出的部分被裁掉。
-      backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
-      改由胶囊自己的 backdrop-filter 模糊兜底。
+   液态玻璃移植自 ybouane/liquidglass：glass.js 把玻璃背后的页面截成图，在 WebGL 里用它的
+   片元着色器渲染（参数取其默认值，即演示里的 Regular Glass）。自下而上：
+   1. 折射层 .lg-refract（WebGL 画布）：双凸玻璃的折射、色散、菲涅耳反射、内描边与边缘光
+      都在着色器里；纹理按双线性插值取样，放大、压缩处平滑。
+      截不到图或没有 WebGL 时不出现，胶囊保持自己的 backdrop-filter 模糊。
    2. 本体 ::after：不叠白（清玻璃）；窄屏展开的菜单卡片另有 45% 白底。
-   3. 高光 .lg-light（所有浏览器都有）：菲涅耳反射、上沿更亮的 1.5px 内描边、
-      边缘光与底部的环境反射，系数同原着色器。
-   4. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
-   投影同原库默认，不能留在胶囊本身（会被折射层读进去，见 .lg-shadow）。 */
+   3. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
+   投影同原库默认（不透明度 0.3、扩散 10px、下移 1px）。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
@@ -161,38 +155,21 @@ img { max-width: 100%; }
 }
 .nav .wrap, .language-toggle {
   position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
-  overflow: hidden; overflow: clip;         /* 裁掉折射层多出的那圈；clip 不会变成滚动容器 */
+  overflow: hidden; overflow: clip;         /* 圆角之外的画布裁掉；clip 不会变成滚动容器 */
   border: 0; border-radius: 999px; background: none;
-  /* Safari / Firefox 的兜底；Chromium 下 nav.js 会把它清掉，交给折射层 ——
-     胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
+  /* WebGL 画布就绪前、以及截不到图时的兜底；画布接手后 glass.js 把它清掉 */
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   box-shadow: var(--lg-shadow);
 }
 .lg-refract {
-  position: absolute; inset: -15px; z-index: -3; pointer-events: none;   /* 实际值由 nav.js 按磨砂强度设定 */
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;
 }
-/* 投影的替身（仅 Chromium，由 nav.js 生成并对齐到胶囊）。投影若画在胶囊自己身上，
-   折射层的磨砂会把边外这圈灰影也读进来、晕进边缘，看上去像里面又套了一层胶囊。
-   外投影只画在盒子外面，所以挪到胶囊之后再画，样子完全一样，折射层却读不到它。 */
-.lg-shadow {
-  position: absolute; pointer-events: none;
-  border-radius: 999px; box-shadow: var(--lg-shadow);
-  transition: transform .5s var(--lg-spring);
-}
-.language-toggle:hover + .lg-shadow { transform: scale(1.06); }   /* 跟着按钮一起鼓起 */
-.language-toggle:active + .lg-shadow { transform: scale(.95); transition-duration: .15s; }
-/* 体积：薄白本体与内侧的明暗 */
+/* 本体：一层底色（默认不叠白） */
 .nav .wrap::after, .language-toggle::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
   border-radius: inherit;
   background: var(--lg-tint);
-}
-/* 边缘光：nav.js 按弯边几何算好的一张亮边图，铺满胶囊 */
-.lg-light {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  border-radius: inherit; background: no-repeat 0 0 / 100% 100%;
-  transition: opacity .2s ease;   /* 尺寸变化时 nav.js 先隐藏，重画后淡入 */
 }
 /* 光标处局部点亮：--mx / --my 由 nav.js 跟随指针写在胶囊上 */
 .lg-glow {
