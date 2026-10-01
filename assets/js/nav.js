@@ -141,7 +141,11 @@ function liquidLens(box, pick, cls) {
   function glassAt(px, py, hx, hy, r, o) {
     var D = window.devicePixelRatio || 1;
     px *= D; py *= D; hx *= D; hy *= D; r *= D;
-    var sdf = rrSDF(px, py, hx, hy, r), zR = G.zRadius * D;
+    /* 弯边深度不超过短边的一半：原库默认 40，比 50px 胶囊的半高 25 还深，上下两段圆弧
+       在中线处以一个夹角相接，斜率在中线两侧突然反向 —— 上半往下取、下半往上取，
+       中线上出现一道几像素宽的接缝，看起来上下是分段的。原库演示的面板都比 80px 高，
+       弯边在中线前就放平了，所以碰不到。封顶到半高后中线处斜率正好为 0，截面是光滑的半圆 */
+    var sdf = rrSDF(px, py, hx, hy, r), zR = Math.min(G.zRadius * D, Math.min(hx, hy));
     o.sdf = sdf;
     var inside = -sdf, maxD = Math.min(hx, hy);
     var edge = smooth(maxD * .35, 0, inside);
