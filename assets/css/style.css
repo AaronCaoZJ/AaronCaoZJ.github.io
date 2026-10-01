@@ -83,15 +83,19 @@
      擅自反转配色（那种自动反转的效果通常很糟）。 */
   color-scheme: light;
 
-  /* 磨砂玻璃：靠模糊背景 + 半透明底色成形，
-     深色模式整组替换即可，构造不变 */
+  /* 半透明：导航以外的组件只用这一层底色，不模糊、不做高光 */
   --glass-fill: rgba(255, 255, 255, .20);
-  --glass-blur: 5px;
-  --glass-edge: rgba(255, 255, 255, .75);
   --glass-cast: rgba(35, 52, 70, .09);
-
+  /* 没有 JS（水滴不出现）时，导航入口退回这组悬停底色 */
+  --glass-edge: rgba(255, 255, 255, .75);
   --glass-hover: rgba(255, 255, 255, .55);
   --text-halo: rgba(255, 255, 255, .85);
+
+  /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节。
+     取值对照 liquid-dom（github.com/AndrewPrifer/liquid-dom）的默认值 */
+  --lg-tint:        rgba(255, 255, 255, .15);   /* 叠在折射结果上的一层白 */
+  --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
+  --lg-shadow: 0 10px 24px rgba(0, 0, 0, .12);
 }
 
 * { box-sizing: border-box; }
@@ -129,24 +133,24 @@ img { max-width: 100%; }
 
 .wrap { max-width: var(--w); margin: 0 auto; padding: 0 22px; }
 
-/* ---------- 液态玻璃 ----------
-   厚度不是靠一条亮边，而是靠"外亮—内暗"这一对线：真实玻璃的
-   外缘反射天光而发亮，紧邻内侧因折射背景而压暗，两者之间的落差
-   才被读成"这块板有厚度"。只画一条亮线，看着就是贴纸。
-
-   饱和度与亮度几乎不动（saturate 108%、brightness 1.02）：
-   之前用 200% / 1.26 把背后的颜色整个拽偏，那正是廉价感的来源 ——
-   玻璃应该几乎不改变透过来的东西，只在边缘做文章。 */
-.glass {
-  background: var(--glass-fill);
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  border: 1px solid var(--glass-edge);
-  box-shadow: 0 8px 30px var(--glass-cast);
-}
-
 /* ---------- 顶部导航 ----------
-   悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。 */
+   悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。
+
+   液态玻璃对照两个参考实现重做：liquid-dom（WebGPU 着色器）的模糊、本体、高光、阴影参数，
+   liquid-glass（shuding）把 SVG 位移滤镜挂在 backdrop-filter 上的做法。自下而上：
+   1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：沿边缘法线向内取样。
+      最外侧几像素内位移从 0 升到峰值（边界两侧连续，字弯进玻璃而不被切断），
+      再往里平滑降回 0（凸边把靠里的内容拉伸铺开）；峰值取刚好不倒转的最大值。
+      取样的是轻度模糊（σ 1.5）的背景，保持通透。四周外扩给模糊留余量，
+      多出的部分被胶囊的 overflow 裁掉。
+      backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
+      改由胶囊自己的 backdrop-filter 模糊兜底。
+   2. 本体 ::after：一层 15% 的白。
+   3. 高光 .lg-light（所有浏览器都有）：轮廓往里 2.5px 的一条带，朝左上方光源最亮，
+      对侧一道镜像高光，整体不透明度 0.45；外加四周统一的一圈 4px 淡白边。
+      这两样加上折射最外侧那圈被压缩的内容，读出来就是玻璃边缘的厚度。
+   4. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
+   投影 0 10px 24px（12% 黑）不能留在胶囊本身（会被折射层读进去，见 .lg-shadow）。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
@@ -155,32 +159,78 @@ img { max-width: 100%; }
   margin: 14px auto 0;
 }
 .nav .wrap, .language-toggle {
-  border-radius: 999px;
-  background: var(--glass-fill);
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  border: 1px solid var(--card-b);
-  box-shadow: 0 8px 30px var(--glass-cast);
+  position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
+  overflow: hidden; overflow: clip;         /* 裁掉折射层多出的那圈；clip 不会变成滚动容器 */
+  border: 0; border-radius: 999px; background: none;
+  /* Safari / Firefox 的兜底；Chromium 下 nav.js 会把它清掉，交给折射层 ——
+     胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: var(--lg-shadow);
 }
+.lg-refract {
+  position: absolute; inset: -15px; z-index: -3; pointer-events: none;   /* 实际值由 nav.js 按磨砂强度设定 */
+}
+/* 投影的替身（仅 Chromium，由 nav.js 生成并对齐到胶囊）。投影若画在胶囊自己身上，
+   折射层的磨砂会把边外这圈灰影也读进来、晕进边缘，看上去像里面又套了一层胶囊。
+   外投影只画在盒子外面，所以挪到胶囊之后再画，样子完全一样，折射层却读不到它。 */
+.lg-shadow {
+  position: absolute; pointer-events: none;
+  border-radius: 999px; box-shadow: var(--lg-shadow);
+  transition: transform .5s var(--lg-spring);
+}
+.language-toggle:hover + .lg-shadow { transform: scale(1.06); }   /* 跟着按钮一起鼓起 */
+.language-toggle:active + .lg-shadow { transform: scale(.95); transition-duration: .15s; }
+/* 体积：薄白本体与内侧的明暗 */
+.nav .wrap::after, .language-toggle::after {
+  content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  border-radius: inherit;
+  background: var(--lg-tint);
+}
+/* 边缘光：nav.js 按弯边几何算好的一张亮边图，铺满胶囊 */
+.lg-light {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: inherit; background: no-repeat 0 0 / 100% 100%;
+  transition: opacity .2s ease;   /* 尺寸变化时 nav.js 先隐藏，重画后淡入 */
+}
+/* 光标处局部点亮：--mx / --my 由 nav.js 跟随指针写在胶囊上 */
+.lg-glow {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(90px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 70%);
+  opacity: 0; transition: opacity .35s ease;
+}
+.nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow { opacity: 1; }
+/* 悬停水滴（nav.js 的 liquidLens）：本身也是一小块玻璃，跟着指针在入口之间滑，
+   换位时被拉长再弹回 */
+.liquid-lens {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  border-radius: 999px; opacity: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .5));
+  box-shadow:
+    inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, .6),
+    0 0 0 .5px rgba(35, 52, 70, .07), 0 3px 10px -3px rgba(35, 52, 70, .22);
+  transition: transform .55s var(--lg-spring), width .55s var(--lg-spring),
+              height .45s var(--lg-spring), opacity .25s ease;
+}
+.liquid-lens.on { opacity: 1; }
+.nav-lens { z-index: -1; }   /* 在导航玻璃内部：排在光斑之下、文字之下 */
 .nav .wrap {
   display: flex; align-items: center; justify-content: flex-start; gap: 2px;
   min-width: 0; margin: 0;
-  height: 50px; padding: 0 8px; overflow-x: auto; scrollbar-width: none;
+  height: 50px; padding: 0 8px;
 }
-.nav .wrap::-webkit-scrollbar { display: none; }
 .language-toggle {
   flex: 0 0 50px; width: 50px; height: 50px; padding: 0;
   display: grid; place-items: center;
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
   color: var(--fg); cursor: pointer;
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
-  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+  transition: transform .5s var(--lg-spring);
 }
-.language-toggle:hover {
-  background: var(--glass-hover);
-  box-shadow: 0 8px 30px var(--glass-cast), inset 0 0 0 1px var(--glass-edge);
-}
-.language-toggle:active { transform: scale(.95); }
+.language-toggle:hover { transform: scale(1.06); }
+.language-toggle:active { transform: scale(.95); transition-duration: .15s; }
 .language-toggle:focus-visible, .nav a:focus-visible {
   outline: 2px solid var(--accent); outline-offset: -3px;
 }
@@ -216,6 +266,84 @@ img { max-width: 100%; }
   background: var(--glass-hover);
   box-shadow: inset 0 0 0 1px var(--glass-edge);
   text-decoration: none;
+}
+.nav.lg-live .wrap a:hover { background: none; box-shadow: none; }
+
+/* 系统开了"降低透明度"：玻璃改成近乎实心，折射也不挂（nav.js 同样会跳过） */
+@media (prefers-reduced-transparency: reduce) {
+  .nav .wrap, .language-toggle { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .nav .wrap::after, .language-toggle::after { background: rgba(255, 255, 255, .95); }
+}
+
+/* ☰ 菜单按钮：只在窄屏横幅里出现。三条线由一个 span 和它的前后伪元素画成，
+   展开时中间那条淡出、上下两条转成 ×。 */
+.nav-menu {
+  display: none; place-items: center;
+  flex: 0 0 44px; width: 44px; height: 50px; margin-left: auto; padding: 0;
+  border: 0; border-radius: 999px; background: none;
+  color: var(--fg); cursor: pointer;
+}
+.nav-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.nav-menu span, .nav-menu span::before, .nav-menu span::after {
+  display: block; width: 18px; height: 2px; border-radius: 1px;
+  background: currentColor;
+  transition: transform .25s ease, background-color .2s ease;
+}
+.nav-menu span { position: relative; }
+.nav-menu span::before, .nav-menu span::after { content: ''; position: absolute; left: 0; }
+.nav-menu span::before { top: -6px; }
+.nav-menu span::after  { top: 6px; }
+.nav.open .nav-menu span { background-color: transparent; }
+.nav.open .nav-menu span::before { transform: translateY(6px) rotate(45deg); }
+.nav.open .nav-menu span::after  { transform: translateY(-6px) rotate(-45deg); }
+
+/* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
+   见 i18n.js 的 language-pair）。再窄就把菜单收成右上角一个玻璃圆，排在语言按钮
+   左边（与宽屏的先后顺序一致）；点开时这个圆以右边缘为锚向左下长成一张卡片，
+   竖排列出全部入口。
+   页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。
+
+   .wrap 绝对定位、.nav 固定 50px 高：展开的卡片浮在正文上面，
+   不会把下面的内容往下推。圆角始终 25px —— 50x50 时正好是圆，
+   长开后就是圆角卡片，形状是连续变过去的。 */
+@media (max-width: 660px) {
+  .nav {
+    width: auto; max-width: none; height: 50px; margin: 14px 14px 0;
+    justify-content: flex-end;
+  }
+  .nav .wrap {
+    position: absolute; top: 0; left: auto; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
+    width: 50px; height: auto; max-height: 50px; padding: 0;
+    flex-wrap: wrap; align-content: flex-start; gap: 0;
+    overflow: hidden; overflow: clip; border-radius: 25px;
+    /* 收起用普通缓动：回弹会让卡片短暂缩得比圆还小 */
+    transition: width .3s cubic-bezier(.32,.72,0,1), max-height .3s cubic-bezier(.32,.72,0,1);
+  }
+  /* 展开带回弹，像一滴液体被拉开 */
+  .nav.open .wrap {
+    width: min(232px, calc(100% - 60px)); max-height: 340px; padding-bottom: 8px;
+    transition: width .5s var(--lg-spring), max-height .5s var(--lg-spring);
+  }
+  /* 展开的卡片与胶囊是同一块玻璃：模糊、折射都一样，只把白底调实一些，
+     入口文字整片压在正文上时更稳。白底随展开淡入 */
+  .nav .wrap::after { transition: background-color .3s ease; }
+  .nav.open .wrap::after { background-color: rgba(255, 255, 255, .45); }
+  .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
+  /* 入口行左右各缩进 8px：水滴与行同宽，贴满卡片会被圆角裁掉 */
+  .nav .wrap > a { flex: 0 0 calc(100% - 16px); margin: 0 8px; justify-items: start; text-align: left; padding: 11px 10px; }
+  /* 收起时所有入口设为 visibility: hidden：仅靠 overflow 藏起来，
+     Tab 键仍会聚焦到看不见的链接上。关闭时等收起动画走完再隐藏。 */
+  .nav .wrap > a, .nav .wrap > .nav-divider {
+    visibility: hidden;
+    transition: background .2s ease, box-shadow .2s ease, visibility 0s linear .3s;
+  }
+  .nav.open .wrap > a, .nav.open .wrap > .nav-divider {
+    visibility: visible; transition-delay: 0s;
+  }
+  .nav-divider {
+    flex: 0 0 calc(100% - 36px); height: 0; margin: 4px 18px;
+    border-left: 0; border-top: 1px solid var(--rule);
+  }
 }
 
 /* ---------- 头部名片 ---------- */
@@ -274,25 +402,16 @@ img { max-width: 100%; }
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
-  background: var(--glass-fill);
-  backdrop-filter: blur(8px) saturate(135%);
-  -webkit-backdrop-filter: blur(8px) saturate(135%);
+  background: var(--glass-fill);   /* 只留半透明：液态玻璃仅用于导航 */
   /* 原本用 --glass-edge（近白）作高光边，在米白底上等于没有轮廓；
-     改用 --rule 让每个入口成为看得见的独立块，玻璃质感仍由填充与模糊承担 */
+     改用 --rule 让每个入口成为看得见的独立块 */
   border: 1px solid var(--rule);
   box-shadow: 0 2px 8px var(--glass-cast);
   color: var(--fg);
+  transition: border-color .18s ease, color .18s ease;
 }
-.links a {
-  transition: transform .18s ease, box-shadow .18s ease,
-              border-color .18s ease, color .18s ease;
-}
-.links a:hover {
-  border-color: var(--accent); color: var(--accent);
-  text-decoration: none;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 14px rgba(35, 52, 70, .09);
-}
+/* 悬停只点亮描边和文字，不上浮 */
+.links a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
 /* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
@@ -381,8 +500,7 @@ strong { font-weight: 700; }
 /* 页面与卡片同为纯白，静止时给一层极淡投影托一下，
    否则分界只剩那条 1px 边框 */
 .item, .pub { box-shadow: 0 1px 2px rgba(35, 52, 70, .05); }
-/* 悬停只动描边和投影，不做位移 —— 论文卡内部的缩略图已经有上浮动效，
-   两层一起动会显得晃 */
+/* 悬停只动描边和投影，不做位移 */
 .item:hover, .pub:hover {
   border-color: var(--rule);
   box-shadow: 0 6px 20px var(--glass-cast);
@@ -401,14 +519,10 @@ strong { font-weight: 700; }
   width: 100%; border-radius: 8px;
   border: 1px solid var(--card-b); background: var(--card);
   overflow: hidden;
-  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  transition: border-color .28s ease;
 }
-/* 悬停整张卡片时缩略图上浮，标题同步点亮 —— 让整块成为一个视觉单元 */
-.pub:hover .thumb {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(35, 52, 70, .10);
-  border-color: var(--rule);
-}
+/* 悬停整张卡片时缩略图描边一起点亮，不上浮 */
+.pub:hover .thumb { border-color: var(--rule); }
 /* 文字栏：标题、作者、venue、链接之间的空隙统一。原先各行 margin
    （4 / 3 / 8px）和行高（1.38 / 1.55 / 1.68）都不一样，而视觉空隙 =
    margin + 上下两行各自的半行距，四段间隔于是各不相等。现在行高统一、
@@ -576,16 +690,12 @@ strong { font-weight: 700; }
   position: relative;
   width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
   --vmap-dot: #d3dbe3;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
-  --vmap-pin: var(--sl-red);    /* 接口没给 ago 时的单色兜底 */
+  --vmap-pin: var(--accent);    /* 接口没给 ago 时的单色兜底 */
 
-  /* 按"多久前访问"着色的三个锚点：红（本周）→ 白（一个月）→ 蓝（半年+）。
-     两极直接用 Show Lab 的红和蓝，与页面其他处的品牌色同源。 */
-  --vmap-hot:  var(--sl-red);
-  --vmap-mid:  #ffffff;
-  --vmap-cold: var(--sl-blue);
-  /* 浅色底上白点对页面只有 1.02:1 —— 等于隐形，中间那段时间的访客会从
-     地图上消失。一圈暗色细描边让它读成"空心圆"，而不必改掉白色本身。 */
-  --vmap-ring: rgba(35, 52, 70, .4);
+  /* 按"多久前访问"着色：页面主蓝（本周）→ 浅蓝（一个月）→ 渐隐到透明（半年+）。
+     越新的访问越醒目，久远的慢慢从地图上退去 */
+  --vmap-hot:  var(--accent);
+  --vmap-mid:  color-mix(in oklab, var(--accent) 50%, #fff);
 }
 .vmap-land { display: block; width: 100%; }
 /* 裁切窗口：放大后超出范围的点阵与访客点藏在里面。
@@ -618,10 +728,10 @@ strong { font-weight: 700; }
   padding: 0; border: 0; border-radius: 50%;
   color: var(--vmap-pin);          /* JS 按时间色阶覆盖；下面全部取 currentColor */
   background: currentColor;
-  /* 半透明 + 一圈细描边：点挨在一起时能透出彼此，不会一个压死一个；
-     描边让白色（约一个月前）的点也看得见。 */
-  box-shadow: 0 0 0 1px var(--vmap-ring);
-  opacity: .72; cursor: pointer;
+  /* 半透明 + 一圈白细边（同 chenyanzhe.page）：浅底上看不见，两个点叠在一起时
+     却能把它们隔开。--fade 由 JS 按访问时间给出，描边随点一起淡出 */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .9);
+  opacity: calc(.8 * var(--fade, 1)); cursor: pointer;
   transition: transform .2s ease, opacity .2s ease;
 }
 .vmap-pin:hover, .vmap-pin:focus-visible {
@@ -661,6 +771,9 @@ footer.wrap {
   .item { padding: 14px; gap: 14px; }
   /* 窄屏日期单独占一行；连 ul 一起退回块级，否则 subgrid 还在生效 */
   .news, .news li { display: block; }
+  /* 两段任期连写的那条太长，窄屏下放它折行；段内用的是不换行空格，
+     所以只会在「·」处折开，不会把「2026.06 –」和「present」拆到两行 */
+  .item .d { white-space: normal; flex-shrink: 1; }   /* 原本 flex: 0 0 auto 不许收缩，光放开换行没用 */
   .info-block { margin-top: 34px; padding: 20px 18px; }
 }
 
@@ -669,9 +782,6 @@ footer.wrap {
   *, *::before, *::after {
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
-  }
-  .links a:hover, .pub:hover .thumb, .tags a:hover {
-    transform: none;
   }
 }
 

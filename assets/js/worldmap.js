@@ -218,7 +218,7 @@
 
   /* 视图：z 是放大倍数，(ux, uy) 是视窗中心在整张图上的相对位置（0–1）。
      z = 1 即全图。点阵和访客点都经 toX / toY 换算，两者永远对得上。 */
-  var ZOOM = 3, z = 1, ux = 0.5, uy = 0.5, w = 0, h = 0;
+  var ZOOM = 3, z = 1, ux = 0.5, uy = 0.5, w = 0, h = 0, sizedFor = 0;
   var zt = 1;   // 目标倍数。判断点击该放大还是缩回要看它，而不是动画中途的 z ——
                 // 否则在 0.38 秒的过渡里连点两下，会按一个半截的倍数做决定
   function toX(u) { return (u - ux) * w * z + w / 2; }
@@ -269,6 +269,18 @@
 
     /* 访客点跟同一个视图走，但本身大小不变 —— 放大后，
        原先挤成一团的点（东亚、美东）才会被拉开、各自看清。 */
+    /* 点的大小参照 chenyanzhe.page：半径 = 3 + min(4, 2.4·log10(n+1))，按 900 宽的坐标算，
+       访问量到 ~45 次封顶 —— 对数而非开方，一个热门城市不会大到压住周围。
+       换算比例随地图宽度：620px（对方地图的最大宽度）时直径 5–9.6px，更窄时等比缩小，
+       手机上的点才不会相对地图大出一倍、挤成一团。只在宽度变化时重设 */
+    if (w !== sizedFor) {
+      sizedFor = w;
+      var k = Math.min(w, 620) / 900;
+      [].forEach.call(pins.children, function (b) {
+        var r = 3 + Math.min(4, 2.4 * Math.log(b._n + 1) / Math.LN10);
+        b.style.setProperty('--s', Math.max(3, 2 * r * k).toFixed(1) + 'px');
+      });
+    }
     [].forEach.call(pins.children, function (b) {
       var x = toX(b._u), y = toY(b._v);
       b.style.left = x + 'px';
@@ -341,7 +353,7 @@
     if (e.key === 'Escape' && zt > 1) zoomTo(1, 0.5, 0.5);
   });
 
-  /* 按"多久前访问"着色：本周内红，一个月白，半年及以上蓝。
+  /* 按"多久前访问"着色：本周内是页面的主蓝，一个月淡成浅蓝，此后渐隐，半年及以上完全透明。
      三个锚点把刻度分成两臂，每臂内部按对数插值 —— 一周到一个月、
      一个月到半年，跨度差了好几倍，线性的话前一臂几乎看不出过渡。 */
   var WEEK = 168, MONTH = 720, HALF_YEAR = 4320;   // 小时
@@ -352,15 +364,14 @@
       ? 0.5 * Math.log(ago / WEEK) / Math.log(MONTH / WEEK)
       : 0.5 + 0.5 * Math.log(ago / MONTH) / Math.log(HALF_YEAR / MONTH);
   }
-  /* 两段 color-mix：0–0.5 是红→白，0.5–1 是白→蓝。
-     颜色本身留在 CSS 变量里，JS 只算比例 —— 切换明暗主题时不用重算，
-     点的颜色会跟着变量自动换。浏览器不支持 color-mix 时这条内联样式
-     整条作废，退回样式表里的单色 --vmap-pin。 */
+  /* 前一臂（0–0.5）用 color-mix 从主蓝过渡到浅蓝；颜色本身留在 CSS 变量里，JS 只算比例。
+     浏览器不支持 color-mix 时这条内联样式整条作废，退回样式表里的单色 --vmap-pin。
+     后一臂（0.5–1）不再变色，而是整体淡出（fadeOf → --fade）：
+     若把颜色混向 transparent，点是透明了，外面那圈描边却还在，会剩一个空心圆。 */
   function heatColor(t) {
-    return t <= 0.5
-      ? 'color-mix(in oklab, var(--vmap-mid) ' + (t * 200).toFixed(1) + '%, var(--vmap-hot))'
-      : 'color-mix(in oklab, var(--vmap-cold) ' + ((t - 0.5) * 200).toFixed(1) + '%, var(--vmap-mid))';
+    return 'color-mix(in oklab, var(--vmap-mid) ' + (Math.min(t, 0.5) * 200).toFixed(1) + '%, var(--vmap-hot))';
   }
+  function fadeOf(t) { return t <= 0.5 ? 1 : Math.max(0, 1 - (t - 0.5) * 2); }
   function agoText(h) {
     if (document.documentElement.lang === 'zh-CN') {
       if (h < 1) return '一小时内';
@@ -398,9 +409,6 @@
   }
 
   function build() {
-    var max = 0;
-    DATA.forEach(function (d) { if (d.n > max) max = d.n; });
-
     DATA.forEach(function (d) {
       var b = document.createElement('button');
       b.type = 'button';
@@ -408,12 +416,17 @@
       var pt = place(d.lat, d.lon);
       b._u = pt.x;                 // 在整张图上的相对位置；像素坐标由 draw() 按视图换算
       b._v = pt.y;
-      /* 面积正比于访问量 => 半径开方，否则大城市会大得离谱 */
-      b.style.setProperty('--s', (5 + 8 * Math.sqrt(d.n / max)).toFixed(1) + 'px');
+      b._n = d.n;                  // 点的大小随地图宽度变，由 draw() 设定
       b._visit = d;
       b.setAttribute('aria-label', visitLabel(d));
       // 旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
-      if (typeof d.ago === 'number') b.style.color = heatColor(heat(d.ago));  // 圆点取 currentColor
+      if (typeof d.ago === 'number') {
+        var t = heat(d.ago), fade = fadeOf(t);
+        b.style.color = heatColor(t);               // 圆点取 currentColor
+        b.style.setProperty('--fade', fade.toFixed(3));
+        // 淡到看不见的点不能还是一个摸得到的按钮：不响应指针，也不进 Tab 顺序
+        if (fade < 0.03) { b.style.pointerEvents = 'none'; b.tabIndex = -1; b.setAttribute('aria-hidden', 'true'); }
+      }
       b.addEventListener('mouseenter', function () { showTip(b, d); });
       b.addEventListener('focus',      function () { showTip(b, d); });
       b.addEventListener('mouseleave', function () { tip.hidden = true; });

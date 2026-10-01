@@ -65,7 +65,7 @@
   "section.internship": "实习经历",
   "internship.mikomiko": "Mikomiko Pte. Ltd · 新加坡",
   "internship.innomotion": "InnoMotion Co. Ltd · 上海 · 研发部",
-  "internship.dates": "2025.08 – 2026.02 · 2026.06 – 至今",
+  "internship.dates": "2025.08\u00a0–\u00a02026.02 · 2026.06\u00a0–\u00a0至今",
   "internship.ai": "AI 工程师实习生",
   "internship.ml": "机器学习工程师实习生",
   "internship.lab": "<a href=\"https://kokorolab.net/en/home\"><strong>Kokoro Lab</strong></a> — 原生图像生成与编辑模型",
@@ -92,7 +92,8 @@
   "gallery.lake": "一枕湖山",
   "gallery.lakeWhere": "摄于中国杭州",
   "gallery.more": "在路上",
-  "nav.label": "主导航"
+  "nav.label": "主导航",
+  "nav.menu": "菜单"
 };
   var root = document.documentElement;
   var toggle = document.querySelector('.language-toggle');
