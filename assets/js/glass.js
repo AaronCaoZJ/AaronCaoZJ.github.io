@@ -205,7 +205,7 @@
        Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
        窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
-            frost: 3.1, frostOpen: 6,
+            frost: 3.1, frostOpen: 6, loupeMag: 2, loupeZ: 24,
             shade: .015, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
   function makeGL(canvas) {
@@ -243,17 +243,27 @@
 
   /* ---------- 每块玻璃 ---------- */
 
-  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean);
+  /* opt.mag：放大倍数（取样范围缩小为玻璃的 1/mag，再按原图分辨率画满 —— 放大的内容是清楚的）；
+     opt.frost(k)：返回这一帧的背景模糊 σ（裁切画布的像素）；opt.active()：false 时不画 */
   var views = [];
-  for (var i = 0; i < panes.length; i++) {
+  function addView(pane, opt) {
     var cv = document.createElement('canvas');
     cv.className = 'lg-refract';
     cv.setAttribute('aria-hidden', 'true');
     var ctx = makeGL(cv);
-    if (!ctx) return;                       // 没有 WebGL：保持 CSS 模糊玻璃
+    if (!ctx) return null;
     var crop = document.createElement('canvas'), raw = document.createElement('canvas');
-    views.push({ pane: panes[i], cv: cv, gl: ctx.gl, u: ctx.u, crop: crop, c2: crop.getContext('2d'),
-                 raw: raw, r2: raw.getContext('2d') });
+    var v = { pane: pane, cv: cv, gl: ctx.gl, u: ctx.u, crop: crop, c2: crop.getContext('2d'),
+              raw: raw, r2: raw.getContext('2d'), mag: (opt && opt.mag) || 1, zRadius: opt && opt.zRadius,
+              frost: opt && opt.frost, active: opt && opt.active };
+    views.push(v);
+    return v;
+  }
+  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean);
+  for (var i = 0; i < panes.length; i++) {
+    if (!addView(panes[i], { frost: function (k) {
+      return this.pane === wrap && nav.classList.contains('open') ? G.frostOpen * k : G.frost;
+    } })) return;                           // 没有 WebGL：保持 CSS 模糊玻璃
   }
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
@@ -292,6 +302,7 @@
       v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = 'none';
     });
     nav.classList.add('lg-webgl');
+    if (loupe) loupe.ready();
   }
   function giveUp() {                       // 截图不可用（如画布被污染）：退回 CSS 模糊
     live = false; scene = null;
@@ -304,12 +315,13 @@
 
   function render(v) {
     var pane = v.pane, w = pane.offsetWidth, h = pane.offsetHeight;
-    if (!scene || !w || !h) return;
+    if (!scene || !w || !h || (v.active && !v.active())) return false;
     var d = window.devicePixelRatio || 1, rc = pane.getBoundingClientRect();
     // 布局尺寸取 offset*（不含悬停缩放），位置取包围盒中心（缩放以中心为原点，中心不变）
     var cx = rc.left + rc.width / 2 + window.scrollX, cy = rc.top + rc.height / 2 + window.scrollY;
-    var pad = G.pad, cw = w + 2 * pad, ch = h + 2 * pad, x0 = cx - cw / 2, y0 = cy - ch / 2;
-    var CW = Math.round(cw * d), CH = Math.round(ch * d), PW = Math.round(w * d), PH = Math.round(h * d);
+    // 取样范围：玻璃（含四周余量）的 1/mag，画满整张裁切画布
+    var pad = G.pad, cw = (w + 2 * pad) / v.mag, ch = (h + 2 * pad) / v.mag, x0 = cx - cw / 2, y0 = cy - ch / 2;
+    var CW = Math.round((w + 2 * pad) * d), CH = Math.round((h + 2 * pad) * d), PW = Math.round(w * d), PH = Math.round(h * d);
     // 裁切：页面这一块按屏幕分辨率画出来（SVG 是矢量，按需栅格化），超出页面的部分填底色。
     // 先画到 raw（不模糊），视频的当前帧直接盖上去，再整体模糊进 crop —— 视频边缘和周围融在一起
     var raw = v.raw, rc2 = v.r2, crop = v.crop, c = v.c2, k = CW / cw, moving = false;
@@ -336,8 +348,8 @@
       drawLive(rc2, le, x0, y0, k);
       moving = true;                        // 跑马灯一直在走：玻璃压在上面时逐帧重画
     }
-    // 模糊 σ：收起时按物理像素（同原库），展开的菜单卡片按 CSS 像素
-    var frost = pane === wrap && nav.classList.contains('open') ? G.frostOpen * k : G.frost;
+    // 模糊 σ：收起时按物理像素（同原库），展开的菜单卡片按 CSS 像素；放大镜不模糊
+    var frost = v.frost ? v.frost(k) : 0;
     c.clearRect(0, 0, CW, CH);
     if ('filter' in c) c.filter = frost ? 'blur(' + frost + 'px)' : 'none';
     c.drawImage(raw, 0, 0);
@@ -347,7 +359,7 @@
     gl.viewport(0, 0, PW, PH);
     try {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, crop);
-    } catch (e) { giveUp(); return; }
+    } catch (e) { giveUp(); return false; }
     var r = parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0;
     gl.uniform1i(u.u_tex, 0);
     gl.uniform2f(u.u_size, PW, PH);
@@ -358,7 +370,7 @@
     gl.uniform1f(u.u_chroma, G.chroma);
     gl.uniform1f(u.u_edgeHL, G.edgeHL);
     gl.uniform1f(u.u_fresnel, G.fresnel);
-    gl.uniform1f(u.u_zRadius, Math.min(G.zRadius, G.zRatio * Math.min(w, h)) * d);
+    gl.uniform1f(u.u_zRadius, (v.zRadius || Math.min(G.zRadius, G.zRatio * Math.min(w, h))) * d);
     gl.uniform1f(u.u_alpha, 1);
     gl.uniform1f(u.u_shade, G.shade);
     gl.uniform1f(u.u_rimTop, G.rimTop);
@@ -374,7 +386,7 @@
   function frame() {
     raf = 0;
     if (!live) return;
-    var moving = false;
+    var moving = loupe ? loupe.step() : false;
     views.forEach(function (v) { if (render(v)) moving = true; });
     if (moving) schedule();                 // 玻璃下面有正在播放的视频：下一帧接着画
   }
@@ -384,7 +396,90 @@
   new MutationObserver(schedule).observe(nav, { attributes: true, attributeFilter: ['class'] });
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(schedule);
-    panes.forEach(function (p) { ro.observe(p); });
+    views.forEach(function (v) { ro.observe(v.pane); });
+  }
+
+  /* ---------- 放大镜（相册页） ----------
+     仿 macOS 预览的放大镜：一块圆形液态玻璃，里面是 2 倍放大的画面（按照片原图与页面矢量重新
+     画，不是把纹理拉大，所以是清楚的）。由标题旁的开关（data-lg-loupe-toggle）打开，打开后常驻：
+     鼠标 / 触控板下跟着光标走（带一点滞后，pointer-events: none 不挡点击）；
+     触屏上没有光标，改为用手指拖动。开关状态记在本机，默认关闭。 */
+  var loupe = null;
+  var loupeBtn = document.querySelector('[data-lg-loupe-toggle]');
+  if (loupeBtn) loupe = makeLoupe(loupeBtn);
+  function makeLoupe(btn) {
+    var el = document.createElement('div');
+    el.className = 'lg-loupe';
+    el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('data-lg-skip', '');           // 不进截图
+    document.body.appendChild(el);
+    var v = addView(el, { mag: G.loupeMag, zRadius: G.loupeZ, active: function () { return el.classList.contains('on'); } });
+    if (!v) { el.parentNode.removeChild(el); return null; }
+
+    var mouse = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var enabled = false, tx = innerWidth / 2, ty = innerHeight / 2, x = tx, y = ty, last = 0, drag = null;
+    if (!mouse) el.classList.add('drag');
+    try { enabled = localStorage.getItem('lg:loupe') === '1'; } catch (e) {}
+
+    function clamp() {                              // 别让它跑到窗口外面找不回来
+      var r = el.offsetWidth / 2;
+      tx = Math.min(Math.max(tx, r), innerWidth - r);
+      ty = Math.min(Math.max(ty, r), innerHeight - r);
+    }
+    function place() {
+      el.style.transform = 'translate3d(' + (x - el.offsetWidth / 2) + 'px,' + (y - el.offsetHeight / 2) + 'px,0)';
+    }
+    function sync() {
+      var on = enabled && live;                     // 截图就绪前不出现，免得浮着一块空玻璃
+      btn.setAttribute('aria-pressed', String(enabled));
+      if (on && !el.classList.contains('on')) { clamp(); x = tx; y = ty; last = 0; place(); }   // 出现时直接落位
+      el.classList.toggle('on', on);
+      schedule();
+    }
+    btn.addEventListener('click', function () {
+      enabled = !enabled;
+      try { localStorage.setItem('lg:loupe', enabled ? '1' : '0'); } catch (e) {}
+      sync();
+    });
+
+    if (mouse) {
+      document.addEventListener('pointermove', function (e) {
+        if (e.pointerType && e.pointerType !== 'mouse') return;
+        tx = e.clientX; ty = e.clientY;
+        if (enabled) schedule();
+      }, { passive: true });
+    } else {
+      el.addEventListener('pointerdown', function (e) {
+        drag = { id: e.pointerId, dx: e.clientX - tx, dy: e.clientY - ty };
+        try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      });
+      el.addEventListener('pointermove', function (e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        tx = e.clientX - drag.dx; ty = e.clientY - drag.dy; clamp();
+        schedule();
+      });
+      var end = function () { drag = null; };
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+    }
+    window.addEventListener('scroll', function () { if (enabled) schedule(); }, { passive: true });
+    window.addEventListener('resize', function () { clamp(); if (enabled) schedule(); });
+
+    return {
+      ready: function () { btn.hidden = false; sync(); },   // 玻璃就绪：露出开关
+      // 每帧调用：朝目标位置靠近（时间常数 70ms 的指数跟随），还没跟上就返回 true 要下一帧
+      step: function () {
+        if (!el.classList.contains('on')) return false;
+        var now = performance.now(), dt = last ? Math.min(now - last, 50) : 16;
+        last = now;
+        var a = still || drag ? 1 : 1 - Math.exp(-dt / 70);   // 拖动时贴着手指，不滞后
+        x += (tx - x) * a; y += (ty - y) * a;
+        place();
+        if (Math.abs(tx - x) < .3 && Math.abs(ty - y) < .3) { last = 0; return false; }
+        return true;
+      }
+    };
   }
 
   /* ---------- 什么时候重截 ---------- */

@@ -167,6 +167,33 @@ img { max-width: 100%; }
 .lg-refract {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;
 }
+/* 相册页的放大镜（glass.js 生成）：圆形，开关打开后常驻。鼠标下跟随光标、不挡点击；
+   触屏上没有光标，改为用手指拖动（脚本给它打开 pointer-events）。
+   位置由脚本每帧写 transform，出现 / 消失用 opacity 与 scale */
+.lg-loupe {
+  position: fixed; left: 0; top: 0; z-index: 45; pointer-events: none;
+  width: 170px; height: 170px; border-radius: 999px;
+  overflow: hidden; overflow: clip; isolation: isolate;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .16), 0 2px 6px rgba(0, 0, 0, .08);
+  opacity: 0; scale: .82;
+  transition: opacity .2s ease, scale .45s var(--lg-spring);
+  will-change: transform; touch-action: none;
+}
+.lg-loupe.on { opacity: 1; scale: 1; }
+.lg-loupe.drag { pointer-events: auto; cursor: grab; }
+@media (prefers-reduced-motion: reduce) { .lg-loupe { transition: opacity .15s ease; scale: 1; } }
+/* 标题旁的开关，样式同首页联系方式那排小胶囊；打开时描边与文字用主题蓝 */
+.gallery-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.loupe-toggle {
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
+  padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  background: var(--glass-fill); color: var(--fg);
+  border: 1px solid var(--rule); box-shadow: 0 2px 8px var(--glass-cast);
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.loupe-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.loupe-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: rgba(77, 110, 138, .08); }
+.loupe-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* 本体：一层底色（默认不叠白） */
 .nav .wrap::after, .language-toggle::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;

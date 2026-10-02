@@ -85,6 +85,7 @@
   "gallery.title": "相册 · 曹植竣 Aaron",
   "gallery.description": "曹植竣 Aaron 的摄影记录：浙江大学校园、西湖与旅途中的风景。",
   "gallery.heading": "🖼️ 相册",
+  "gallery.loupe": "🔍 放大镜",
   "gallery.welcome": "<strong>欢迎来到我的相册！</strong>",
   "gallery.intro": "摄影是我观察世界的方式之一。这里记录了一些令我难忘的地方、人物与瞬间，希望你也能从中找到喜欢的画面。",
   "gallery.campus": "求是园",
