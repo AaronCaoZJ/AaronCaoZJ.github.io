@@ -210,10 +210,9 @@
        在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
        小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
      - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素）；
-       Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
-       窄屏展开的菜单卡片入口整片压在正文上，再重一些（σ 6 CSS px）。 */
+       Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
-            frost: 3.1, frostOpen: 6, loupeMag: 2, loupeZ: 24,
+            frost: 3.1, loupeMag: 2, loupeZ: 24,
             shade: .015, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
   function makeGL(canvas) {
@@ -269,9 +268,7 @@
   }
   var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean);
   for (var i = 0; i < panes.length; i++) {
-    if (!addView(panes[i], { frost: function (k) {
-      return this.pane === wrap && nav.classList.contains('open') ? G.frostOpen * k : G.frost;
-    } })) return;                           // 没有 WebGL：保持 CSS 模糊玻璃
+    if (!addView(panes[i], { frost: function () { return G.frost; } })) return;   // 没有 WebGL：保持 CSS 模糊玻璃
   }
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
@@ -488,8 +485,6 @@
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
   window.addEventListener('scroll', schedule, { passive: true });
-  // 菜单开合会切换磨砂，尺寸不一定变（收起的那一刻），也要重画
-  new MutationObserver(schedule).observe(nav, { attributes: true, attributeFilter: ['class'] });
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(schedule);
     views.forEach(function (v) { ro.observe(v.pane); });

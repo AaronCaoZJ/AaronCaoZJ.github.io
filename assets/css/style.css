@@ -145,7 +145,7 @@ img { max-width: 100%; }
       弯边轻微的上亮下暗，以及只在轮廓最外缘的一道细高光（上沿最亮、下沿较弱的反光）。
       内部不加白 —— 加在面上，深色底上就成了一层白雾。
       截不到图或没有 WebGL 时不出现，胶囊保持自己的 backdrop-filter 模糊。
-   2. 本体 ::after：不叠白（清玻璃）；窄屏展开的菜单卡片另有 45% 白底。
+   2. 本体 ::after：不叠白（清玻璃）。
    3. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
    投影同原库默认（不透明度 0.3、扩散 10px、下移 1px）。 */
 .nav {
@@ -282,75 +282,14 @@ img { max-width: 100%; }
   .nav .wrap::after, .language-toggle::after { background: rgba(255, 255, 255, .95); }
 }
 
-/* ☰ 菜单按钮：只在窄屏横幅里出现。三条线由一个 span 和它的前后伪元素画成，
-   展开时中间那条淡出、上下两条转成 ×。 */
-.nav-menu {
-  display: none; place-items: center;
-  flex: 0 0 44px; width: 44px; height: 50px; margin-left: auto; padding: 0;
-  border: 0; border-radius: 999px; background: none;
-  color: var(--fg); cursor: pointer;
-}
-.nav-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
-.nav-menu span, .nav-menu span::before, .nav-menu span::after {
-  display: block; width: 18px; height: 2px; border-radius: 1px;
-  background: currentColor;
-  transition: transform .25s ease, background-color .2s ease;
-}
-.nav-menu span { position: relative; }
-.nav-menu span::before, .nav-menu span::after { content: ''; position: absolute; left: 0; }
-.nav-menu span::before { top: -6px; }
-.nav-menu span::after  { top: 6px; }
-.nav.open .nav-menu span { background-color: transparent; }
-.nav.open .nav-menu span::before { transform: translateY(6px) rotate(45deg); }
-.nav.open .nav-menu span::after  { transform: translateY(-6px) rotate(-45deg); }
-
 /* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
-   见 i18n.js 的 language-pair）。再窄就把菜单收成右上角一个玻璃圆，排在语言按钮
-   左边（与宽屏的先后顺序一致）；点开时这个圆以右边缘为锚向左下长成一张卡片，
-   竖排列出全部入口。
-   页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。
-
-   .wrap 绝对定位、.nav 固定 50px 高：展开的卡片浮在正文上面，
-   不会把下面的内容往下推。圆角始终 25px —— 50x50 时正好是圆，
-   长开后就是圆角卡片，形状是连续变过去的。 */
+   见 i18n.js 的 language-pair）。再窄就只留首页与相册两个入口（中间仍是分隔线），
+   整组靠到右上角，语言按钮在最右；正文的几个锚点在窄屏上往下滚就到。
+   最窄的 320px 手机：胶囊 232 + 间距 10 + 语言按钮 50 = 292，正好放进两侧各留 14px 的宽度。
+   页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。 */
 @media (max-width: 660px) {
-  .nav {
-    width: auto; max-width: none; height: 50px; margin: 14px 14px 0;
-    justify-content: flex-end;
-  }
-  .nav .wrap {
-    position: absolute; top: 0; left: auto; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
-    width: 50px; height: auto; max-height: 50px; padding: 0;
-    flex-wrap: wrap; align-content: flex-start; gap: 0;
-    overflow: hidden; overflow: clip; border-radius: 25px;
-    /* 收起用普通缓动：回弹会让卡片短暂缩得比圆还小 */
-    transition: width .3s cubic-bezier(.32,.72,0,1), max-height .3s cubic-bezier(.32,.72,0,1);
-  }
-  /* 展开带回弹，像一滴液体被拉开 */
-  .nav.open .wrap {
-    width: min(232px, calc(100% - 60px)); max-height: 340px; padding-bottom: 8px;
-    transition: width .5s var(--lg-spring), max-height .5s var(--lg-spring);
-  }
-  /* 展开的卡片与胶囊是同一块玻璃：模糊、折射都一样，只把白底调实一些，
-     入口文字整片压在正文上时更稳。白底随展开淡入 */
-  .nav .wrap::after { transition: background-color .3s ease; }
-  .nav.open .wrap::after { background-color: rgba(255, 255, 255, .45); }
-  .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
-  /* 入口行左右各缩进 8px：水滴与行同宽，贴满卡片会被圆角裁掉 */
-  .nav .wrap > a { flex: 0 0 calc(100% - 16px); margin: 0 8px; justify-items: start; text-align: left; padding: 11px 10px; }
-  /* 收起时所有入口设为 visibility: hidden：仅靠 overflow 藏起来，
-     Tab 键仍会聚焦到看不见的链接上。关闭时等收起动画走完再隐藏。 */
-  .nav .wrap > a, .nav .wrap > .nav-divider {
-    visibility: hidden;
-    transition: background .2s ease, box-shadow .2s ease, visibility 0s linear .3s;
-  }
-  .nav.open .wrap > a, .nav.open .wrap > .nav-divider {
-    visibility: visible; transition-delay: 0s;
-  }
-  .nav-divider {
-    flex: 0 0 calc(100% - 36px); height: 0; margin: 4px 18px;
-    border-left: 0; border-top: 1px solid var(--rule);
-  }
+  .nav { margin: 14px 14px 0 auto; }
+  .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { display: none; }
 }
 
 /* ---------- 头部名片 ---------- */

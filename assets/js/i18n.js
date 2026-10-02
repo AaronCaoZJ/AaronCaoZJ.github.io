@@ -93,8 +93,7 @@
   "gallery.lake": "一枕湖山",
   "gallery.lakeWhere": "摄于中国杭州",
   "gallery.more": "在路上",
-  "nav.label": "主导航",
-  "nav.menu": "菜单"
+  "nav.label": "主导航"
 };
   var root = document.documentElement;
   var toggle = document.querySelector('.language-toggle');

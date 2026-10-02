@@ -1,30 +1,3 @@
-/* 窄屏横幅的 ☰ 菜单。什么时候是横幅由 style.css 的断点决定，这里只管开合；
-   宽屏下按钮不显示，.open 也不影响任何样式。
-
-   收起的时机：点了某个入口（页内锚点不会刷新页面，得手动收）、
-   点到横幅以外（包括手指按下准备滚动页面）、按 Esc、窗口变宽切回胶囊。 */
-(function () {
-  var nav = document.querySelector('.nav');
-  var btn = nav && nav.querySelector('.nav-menu');
-  if (!btn) return;
-
-  function set(open) {
-    nav.classList.toggle('open', open);
-    btn.setAttribute('aria-expanded', String(open));
-  }
-
-  btn.addEventListener('click', function () { set(!nav.classList.contains('open')); });
-  nav.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
-  document.addEventListener('pointerdown', function (e) {
-    if (nav.classList.contains('open') && !nav.contains(e.target)) set(false);
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && nav.classList.contains('open')) { set(false); btn.focus(); }
-  });
-  var wide = window.matchMedia && window.matchMedia('(min-width: 661px)');
-  if (wide && wide.addEventListener) wide.addEventListener('change', function () { set(false); });
-})();
-
 /* ---------- 悬停水滴 ----------
    一颗玻璃水滴跟着指针在一组条目之间滑动：换位时沿移动方向先拉长、
    横向压扁，再随 CSS 的回弹缓动落定，读起来像一滴液体被拖过去。
@@ -98,13 +71,10 @@ function liquidLens(box, pick, cls) {
   }
 
   /* 1. 悬停水滴（见文件开头的 liquidLens）。在玻璃内部，排在光斑之下 */
-  var drop = liquidLens(wrap, function (t) {
+  liquidLens(wrap, function (t) {
     var a = t.closest && t.closest('a');
     return a && a.parentNode === wrap ? a : null;
   }, 'nav-lens');
-  // 窄屏菜单收起时，水滴所在的那一行已经藏起来了
-  new MutationObserver(function () { if (!nav.classList.contains('open')) drop.off(); })
-    .observe(nav, { attributes: true, attributeFilter: ['class'] });
 
   /* 2. 光斑：只写两个变量，渐变由 CSS 画。放在水滴之后，叠在它上面 */
   panes.forEach(function (pane) {
