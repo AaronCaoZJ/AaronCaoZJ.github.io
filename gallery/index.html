@@ -18,7 +18,7 @@
 <style>
   /* ============ 轮播 ============
      两份相同的图片首尾相接，轨道匀速平移到 -50% 时正好回到起点，
-     于是循环处没有接缝。悬停时暂停整条轨道。 */
+     于是循环处没有接缝。终点与步数由页尾脚本按物理像素取整（见「整像素」）。 */
   .marquee {
     position: relative;
     overflow: hidden;
@@ -35,7 +35,7 @@
   }
   .track.rev { animation-direction: reverse; }
   @keyframes slide { from { transform: translate3d(0,0,0); }
-                      to   { transform: translate3d(-50%,0,0); } }
+                      to   { transform: translate3d(var(--shift, -50%),0,0); } }
 
   .track figure {
     flex: 0 0 auto; margin: 0;
@@ -153,22 +153,22 @@
   <section class="gsec" id="campus">
     <div class="wrap">
       <h2 class="rise" data-i18n="gallery.campus">The Campus <span class="zh">求是园</span></h2>
-      <p class="where rise" data-i18n="gallery.campusWhere">Photos taken @ Zhejiang University</p>
+      <p class="where rise" data-i18n="gallery.campusWhere">Photos taken at Zhejiang University</p>
     </div>
     <div class="marquee bleed rise" style="--dur:64s">
       <div class="track" data-lg-live>
-        <figure><img src="/assets/img/gallery/560/campus-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-01.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-02.webp?v=20261002png" data-lg-hi="/assets/img/gallery/1120/campus-02.webp?v=20261002png" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-03.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-04.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-05.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-06.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-07.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-08.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-09.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-10.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-11.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/campus-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-12.webp?v=20261002order" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-01.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-02.webp?v=20261002png" data-lg-hi="/assets/img/gallery/1120/campus-02.webp?v=20261002png" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-03.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-04.webp?v=20261002order" width="839" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-05.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-06.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-07.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-08.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-09.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-10.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-11.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-12.webp?v=20261002order" width="996" height="560" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -180,22 +180,22 @@
     </div>
     <div class="marquee bleed rise" style="--dur:108s">
       <div class="track rev" data-lg-live>
-        <figure><img src="/assets/img/gallery/560/lake-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-01.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-02.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-02.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-03.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-04.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-05.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-06.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-07.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-08.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-09.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-10.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-11.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-12.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-13.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-13.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-14.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-14.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-15.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-15.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/lake-16.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-16.webp?v=20261002order" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-01.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-02.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-02.webp?v=20261002order" width="373" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-03.webp?v=20261002order" width="747" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-04.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-05.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-06.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-07.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-08.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-09.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-10.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-11.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-12.webp?v=20261002order" width="839" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-13.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-13.webp?v=20261002order" width="996" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-14.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-14.webp?v=20261002order" width="433" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-15.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-15.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-16.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-16.webp?v=20261002order" width="374" height="560" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -206,19 +206,19 @@
     </div>
     <div class="marquee bleed rise" style="--dur:84s">
       <div class="track" data-lg-live>
-        <figure><img src="/assets/img/gallery/560/more-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-01.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-02.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-02.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-03.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-04.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-05.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-06.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-07.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-08.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-09.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-10.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-11.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-12.webp?v=20261002order" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/560/more-13.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-13.webp?v=20261002order" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-01.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-02.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-02.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-03.webp?v=20261002order" width="839" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-04.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-05.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-06.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-07.webp?v=20261002order" width="374" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-08.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-09.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-10.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-11.webp?v=20261002order" width="996" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-12.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-13.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-13.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -255,6 +255,32 @@
       tr.appendChild(n);
     }
   });
+})();
+
+
+/* ---------- 整像素：跑马灯每一步正好走 1 个物理像素 ----------
+   平移量落在小数像素上时，浏览器只能在相邻像素之间插值，照片清晰度会掉一半
+   （实测 2 倍屏上停在半像素处只剩整像素时的一半）。改用 steps()：总步数是半条轨道的
+   物理像素数，终点取整到这个步数，与 -50% 相差不到 1 个物理像素，循环处看不出来。
+   图片带宽高属性，加载前轨道宽度就是准的；窗口尺寸或像素密度变了再算一次。 */
+(function () {
+  var tracks = document.querySelectorAll('.track');
+  function snap() {
+    var d = window.devicePixelRatio || 1;
+    [].forEach.call(tracks, function (tr) {
+      var n = Math.round(tr.getBoundingClientRect().width / 2 * d);
+      if (!n) return;
+      tr.style.setProperty('--shift', -n / d + 'px');
+      tr.style.animationTimingFunction = 'steps(' + n + ')';
+    });
+  }
+  snap();
+  window.addEventListener('resize', snap);
+  // 窗口拖到另一块屏幕时像素密度会变，未必触发 resize
+  (function watch() {
+    var mq = window.matchMedia && window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+    if (mq && mq.addEventListener) mq.addEventListener('change', function () { snap(); watch(); }, { once: true });
+  })();
 })();
 
 
