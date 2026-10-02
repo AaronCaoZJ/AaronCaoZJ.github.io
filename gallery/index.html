@@ -30,6 +30,7 @@
   .track {
     display: flex; align-items: flex-start;
     gap: 16px; width: max-content;
+    padding-right: 16px;           /* 末尾补一个间距，两份内容才各占一半，-50% 正好落在副本开头 */
     animation: slide var(--dur, 66s) linear infinite;
   }
   .track.rev { animation-direction: reverse; }
@@ -45,17 +46,19 @@
   }
   .track img { display: block; height: 100%; width: auto; }
 
-  /* 错落：高度与垂直位置轮换，避免一条笔直的带子 */
-  .track figure:nth-child(4n+1) { height: 212px; transform: translateY(26px); }
-  .track figure:nth-child(4n+2) { height: 262px; }
-  .track figure:nth-child(4n+3) { height: 226px; transform: translateY(14px); }
-  .track figure:nth-child(4n)   { height: 246px; transform: translateY(34px); }
+  /* 错落：高度与垂直位置四张一轮换，避免一条笔直的带子。
+     h1–h4 由页尾脚本按照片在「每一份」里的序号标上，不用 nth-child：照片数不是 4 的倍数时，
+     nth-child 会接着数进复制出的那一份，两份的错落对不上，循环处就会跳一下 */
+  .track figure.h1 { height: 212px; transform: translateY(26px); }
+  .track figure.h2 { height: 262px; }
+  .track figure.h3 { height: 226px; transform: translateY(14px); }
+  .track figure.h4 { height: 246px; transform: translateY(34px); }
 
   /* 悬浮：在各自错落的基线上再抬起一点 */
-  .track figure:nth-child(4n+1):hover { transform: translateY(16px) scale(1.045); }
-  .track figure:nth-child(4n+2):hover { transform: translateY(-10px) scale(1.045); }
-  .track figure:nth-child(4n+3):hover { transform: translateY(4px)  scale(1.045); }
-  .track figure:nth-child(4n):hover   { transform: translateY(24px) scale(1.045); }
+  .track figure.h1:hover { transform: translateY(16px) scale(1.045); }
+  .track figure.h2:hover { transform: translateY(-10px) scale(1.045); }
+  .track figure.h3:hover { transform: translateY(4px)  scale(1.045); }
+  .track figure.h4:hover { transform: translateY(24px) scale(1.045); }
   .track figure:hover { box-shadow: 0 16px 38px rgba(45,42,41,.22); z-index: 3; }
 
 
@@ -82,8 +85,8 @@
 
   @media (max-width: 700px) {
     .track figure { height: 180px !important; }
-    .track figure:nth-child(2n) { transform: translateY(18px); }
-    .track figure:nth-child(2n+1) { transform: none; }
+    .track figure.h2, .track figure.h4 { transform: translateY(18px); }
+    .track figure.h1, .track figure.h3 { transform: none; }
   }
   /* ============ 彩蛋 ============
      点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
@@ -115,7 +118,7 @@
 </style>
 <script src="/assets/js/i18n.js?v=20261002loupe" defer></script>
 <script src="/assets/js/nav.js?v=20261002webgl" defer></script>
-<script src="/assets/js/glass.js?v=20261003loupe-pos" defer></script>
+<script src="/assets/js/glass.js?v=20261003gallery-hi" defer></script>
 </head>
 <body>
 
@@ -152,21 +155,20 @@
       <h2 class="rise" data-i18n="gallery.campus">The Campus <span class="zh">求是园</span></h2>
       <p class="where rise" data-i18n="gallery.campusWhere">Photos taken @ Zhejiang University</p>
     </div>
-    <div class="marquee bleed rise" style="--dur:72s">
+    <div class="marquee bleed rise" style="--dur:64s">
       <div class="track" data-lg-live>
-        <figure><img src="/assets/img/gallery/campus-01.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-02.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-03.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-04.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-05.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-06.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-07.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-08.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-09.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-10.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-11.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-12.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-13.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-01.webp" data-lg-hi="/assets/img/gallery/1120/campus-01.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-02.webp" data-lg-hi="/assets/img/gallery/1120/campus-02.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-03.webp" data-lg-hi="/assets/img/gallery/1120/campus-03.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-04.webp" data-lg-hi="/assets/img/gallery/1120/campus-04.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-05.webp" data-lg-hi="/assets/img/gallery/1120/campus-05.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-06.webp" data-lg-hi="/assets/img/gallery/1120/campus-06.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-07.webp" data-lg-hi="/assets/img/gallery/1120/campus-07.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-08.webp" data-lg-hi="/assets/img/gallery/1120/campus-08.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-09.webp" data-lg-hi="/assets/img/gallery/1120/campus-09.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-10.webp" data-lg-hi="/assets/img/gallery/1120/campus-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-11.webp" data-lg-hi="/assets/img/gallery/1120/campus-11.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-12.webp" data-lg-hi="/assets/img/gallery/1120/campus-12.webp" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -176,21 +178,24 @@
       <h2 class="rise" data-i18n="gallery.lake">Pillowed by the West Lake <span class="zh">一枕湖山</span></h2>
       <p class="where rise" data-i18n="gallery.lakeWhere">Photos taken in Hangzhou, China</p>
     </div>
-    <div class="marquee bleed rise" style="--dur:84s">
+    <div class="marquee bleed rise" style="--dur:110s">
       <div class="track rev" data-lg-live>
-        <figure><img src="/assets/img/gallery/lake-01.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-02.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-03.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-04.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-05.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-06.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-07.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-08.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-09.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-10.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-11.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-12.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-13.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-01.webp" data-lg-hi="/assets/img/gallery/1120/lake-01.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-02.webp" data-lg-hi="/assets/img/gallery/1120/lake-02.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-03.webp" data-lg-hi="/assets/img/gallery/1120/lake-03.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-04.webp" data-lg-hi="/assets/img/gallery/1120/lake-04.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-05.webp" data-lg-hi="/assets/img/gallery/1120/lake-05.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-06.webp" data-lg-hi="/assets/img/gallery/1120/lake-06.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-07.webp" data-lg-hi="/assets/img/gallery/1120/lake-07.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-08.webp" data-lg-hi="/assets/img/gallery/1120/lake-08.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-09.webp" data-lg-hi="/assets/img/gallery/1120/lake-09.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-10.webp" data-lg-hi="/assets/img/gallery/1120/lake-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-11.webp" data-lg-hi="/assets/img/gallery/1120/lake-11.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-12.webp" data-lg-hi="/assets/img/gallery/1120/lake-12.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-13.webp" data-lg-hi="/assets/img/gallery/1120/lake-13.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-14.webp" data-lg-hi="/assets/img/gallery/1120/lake-14.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-15.webp" data-lg-hi="/assets/img/gallery/1120/lake-15.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-16.webp" data-lg-hi="/assets/img/gallery/1120/lake-16.webp" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -199,18 +204,21 @@
     <div class="wrap">
       <h2 class="rise" data-i18n="gallery.more">More <span class="zh">在路上</span></h2>
     </div>
-    <div class="marquee bleed rise" style="--dur:64s">
+    <div class="marquee bleed rise" style="--dur:84s">
       <div class="track" data-lg-live>
-        <figure><img src="/assets/img/gallery/more-01.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-02.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-03.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-04.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-05.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-06.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-07.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-08.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-09.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-01.webp" data-lg-hi="/assets/img/gallery/1120/more-01.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-02.webp" data-lg-hi="/assets/img/gallery/1120/more-02.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-03.webp" data-lg-hi="/assets/img/gallery/1120/more-03.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-04.webp" data-lg-hi="/assets/img/gallery/1120/more-04.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-05.webp" data-lg-hi="/assets/img/gallery/1120/more-05.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-06.webp" data-lg-hi="/assets/img/gallery/1120/more-06.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-07.webp" data-lg-hi="/assets/img/gallery/1120/more-07.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-08.webp" data-lg-hi="/assets/img/gallery/1120/more-08.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-09.webp" data-lg-hi="/assets/img/gallery/1120/more-09.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-10.webp" data-lg-hi="/assets/img/gallery/1120/more-10.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-11.webp" data-lg-hi="/assets/img/gallery/1120/more-11.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-12.webp" data-lg-hi="/assets/img/gallery/1120/more-12.webp" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-13.webp" data-lg-hi="/assets/img/gallery/1120/more-13.webp" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -237,6 +245,8 @@
    那一刻的画面才与起点重合，循环处才看不出接缝。 */
 (function () {
   [].forEach.call(document.querySelectorAll('.track'), function (tr) {
+    // 错落按每份里的序号标（见样式「错落」），副本复制过去的也就是同一套
+    [].forEach.call(tr.children, function (n, i) { n.classList.add('h' + (i % 4 + 1)); });
     var copy = tr.cloneNode(true);
     while (copy.firstElementChild) {
       var n = copy.firstElementChild;
@@ -251,7 +261,7 @@
 /* ---------- 彩蛋：点中特定照片蹦出 emoji ----------
    按文件名匹配而不是按 DOM 位置，所以上面复制出的那一份副本同样生效。 */
 (function () {
-  var EGGS = { 'campus-07': '\uD83C\uDF93', 'lake-04': '\uD83D\uDC30', 'more-07': '\uD83D\uDC18' };
+  var EGGS = { 'campus-08': '\uD83C\uDF93', 'lake-04': '\uD83D\uDC30', 'more-09': '\uD83D\uDC18' };
   var layer = null;
 
   function burst(rect, emoji) {

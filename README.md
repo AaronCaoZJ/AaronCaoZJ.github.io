@@ -20,7 +20,8 @@
     │   ├── pub/            论文配图，宽 900px
     │   ├── write/          Writing & Media 配图，宽 900px（bgtree 用原图）
     │   ├── icon/           联系方式图标，64×64 透明 PNG
-    │   ├── gallery/        相册图片目录（当前为空）
+    │   ├── gallery/        相册：560/ 跑马灯用（高 560px），1120/ 放大镜用（高 1120px），
+    │   │                   src/ 原图（按页面上的名字命名，本地保留、不进 git）
     │   └── src/            未压缩源素材，本地保留、不进 git
     └── pdf/
         ├── CV_ZhijunCao.pdf            英文简历，原件（288 KB）
@@ -102,15 +103,34 @@ cmp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf   # 无输出即一致
 `assets/img/write/write-bgtree.jpg` 同理，用原图，不缩不压。
 替换后照常更新 `?v=` 版本串，避免浏览器和 Cloudflare 继续给旧文件。
 
-### 添加相册图片
+### 相册图片
 
-图片放进 `assets/img/gallery/`，压到长边 1600px 以内：
+每张照片导出两档 WebP，原图放 `assets/img/gallery/src/`，文件名就是页面上的名字（如 `lake-06.jpg`）：
+
+- `560/`：跑马灯显示用，高 560px（最高的照片框 262px，悬停放大后在 2 倍屏上约 548px）
+- `1120/`：放大镜用，高 1120px，只在打开放大镜、且扫到这张照片时才下载
 
 ```bash
-magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
+cd assets/img/gallery/src
+for f in *.jpg; do n=${f%.jpg}
+  magick "$f" -auto-orient -colorspace sRGB -depth 8 -strip -write mpr:o +delete \
+    \( mpr:o -resize 'x1120>' -quality 86 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../1120/$n.webp +delete \) \
+    \( mpr:o -resize 'x560>'  -quality 85 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../560/$n.webp  +delete \) null:
+done
 ```
 
-然后在 `gallery/index.html` 里删掉 `.empty` 占位块、取消 `.grid` 的注释，逐条加 `<figure>`。
+- 不要加 `-define jpeg:size=…` 提速：ImageMagick 7 会按这个提示把小于它的图**放大**解码。
+- `-strip` 会去掉 EXIF（含 GPS 定位）；在它之前先 `-auto-orient`，否则竖拍的照片会躺倒。
+
+然后在 `gallery/index.html` 对应的轨道里加一条 `<figure>`，`data-lg-hi` 指向大图：
+
+```html
+<figure><img src="/assets/img/gallery/560/lake-17.webp" data-lg-hi="/assets/img/gallery/1120/lake-17.webp" alt="" loading="lazy"></figure>
+```
+
+错落的高度由脚本按序号自动标，照片数不必凑 4 的倍数。增减照片后按比例调整该栏的 `--dur`，保持滚动速度不变。
+目前 `lake-13`（夜池灯影）与 `more-13`（椰林日落）还没有原图，`src/` 里放的是旧 Google Sites 存档图（约 1280px），
+找到原图后按同名替换、重新导出即可。
 
 ## 搜索引擎收录
 

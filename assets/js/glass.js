@@ -74,9 +74,17 @@
     for (var i = 0; i < oList.length; i++) (function (o, c) {
       if (nav.contains(o) || o.hasAttribute('data-lg-skip')) return;   // 纯装饰的动画画布（如头像的去噪动效）不截
       if (o.tagName === 'IMG') {
+        c.removeAttribute('srcset'); c.removeAttribute('loading');
+        // 跑马灯里的照片在截图里本来就是隐藏的（render() 每帧按实时位置画），不必内联成
+        // data URL —— 否则每次截图都要把整个相册读一遍、编码进 SVG，懒加载也形同虚设。
+        // 只去掉地址、钉住宽度，照片框的尺寸不变
+        if (o.closest('[data-lg-live]')) {
+          c.removeAttribute('src');
+          c.style.width = o.offsetWidth + 'px';
+          return;
+        }
         var src = o.currentSrc || o.src;
         if (!src) return;
-        c.removeAttribute('srcset'); c.removeAttribute('loading');
         jobs.push(dataURL(src).then(function (d) { if (d) c.setAttribute('src', d); }));
         return;
       }
@@ -270,7 +278,29 @@
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
   /* 一直在动的内容：标了 data-lg-live 的容器（相册的跑马灯轨道），其子元素每帧按实时位置画。
      原库对这类内容（data-dynamic）是每帧重新栅格化；这里只画图片和圆角底色，便宜得多 */
-  function drawLive(ctx2, el, x0, y0, k) {
+  /* 放大镜下的照片：<img data-lg-hi="大图地址"> 被放大时改画大图，否则 2 倍放大就是把原图拉伸 2 倍。
+     大图只在第一次被放大镜扫到时才下载，解码好之前先画原图，好了再让各块玻璃重画一次。
+     只留最近用过的 6 张：放大镜一次最多压着两三张照片，跑马灯却会把整个相册送过来，
+     全留着的话解码后的位图（一张约 7MB）会把手机的内存吃满 */
+  var hiImgs = {}, hiOrder = [];
+  function sharper(im) {
+    var url = im.getAttribute('data-lg-hi');
+    if (!url) return im;
+    var h = hiImgs[url], at = hiOrder.indexOf(url);
+    if (at >= 0) hiOrder.splice(at, 1);
+    hiOrder.push(url);
+    if (!h) {
+      h = hiImgs[url] = new Image();
+      h.src = url;
+      var ok = function () { if (hiImgs[url] === h) { h._ok = true; views.forEach(function (v) { v.rescan = true; }); schedule(); } };
+      if (h.decode) h.decode().then(ok, function () { if (h.naturalWidth) ok(); });
+      else h.onload = ok;
+      if (hiOrder.length > 6) delete hiImgs[hiOrder.shift()];
+    }
+    return h._ok ? h : im;
+  }
+
+  function drawLive(ctx2, el, x0, y0, k, hi) {
     var r = el.getBoundingClientRect();
     if (!el._lg) {
       var cs = getComputedStyle(el);
@@ -287,7 +317,7 @@
     var im = el._lg.img;
     if (im && im.complete && im.naturalWidth) {
       var ir = im.getBoundingClientRect();
-      ctx2.drawImage(im, (ir.left + window.scrollX - x0) * k, (ir.top + window.scrollY - y0) * k, ir.width * k, ir.height * k);
+      ctx2.drawImage(hi ? sharper(im) : im, (ir.left + window.scrollX - x0) * k, (ir.top + window.scrollY - y0) * k, ir.width * k, ir.height * k);
     }
     ctx2.restore();
   }
@@ -406,7 +436,7 @@
       if (el.tagName === 'VIDEO') {
         var vr = el.getBoundingClientRect();
         try { rc2.drawImage(el, (vr.left + window.scrollX - x0) * k, (vr.top + window.scrollY - y0) * k, vr.width * k, vr.height * k); } catch (e) {}
-      } else drawLive(rc2, el, x0, y0, k);
+      } else drawLive(rc2, el, x0, y0, k, v.mag > 1);
     }
     src = raw;
     if (frost) {
