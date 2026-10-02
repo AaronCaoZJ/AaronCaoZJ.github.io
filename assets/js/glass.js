@@ -469,7 +469,7 @@
      仿 macOS 预览的放大镜：一块圆形液态玻璃，里面是 2 倍放大的画面（按照片原图与页面矢量重新
      画，不是把纹理拉大，所以是清楚的）。由标题旁的开关（data-lg-loupe-toggle）打开，打开后常驻：
      鼠标 / 触控板下跟着光标走（带一点滞后，pointer-events: none 不挡点击）；
-     触屏上没有光标，改为用手指拖动。开关状态记在本机，默认关闭。 */
+     触屏上没有光标，改为用手指拖动。每次打开页面都是关闭的，不记住上次的状态。 */
   var loupe = null;
   var loupeBtn = document.querySelector('[data-lg-loupe-toggle]');
   if (loupeBtn) loupe = makeLoupe(loupeBtn);
@@ -486,7 +486,7 @@
     var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var enabled = false, tx = innerWidth / 2, ty = innerHeight / 2, x = tx, y = ty, last = 0, drag = null;
     if (!mouse) el.classList.add('drag');
-    try { enabled = localStorage.getItem('lg:loupe') === '1'; } catch (e) {}
+    try { localStorage.removeItem('lg:loupe'); } catch (e) {}   // 清掉旧版本记下的状态
 
     function clamp() {                              // 别让它跑到窗口外面找不回来
       var r = el.offsetWidth / 2;
@@ -505,7 +505,6 @@
     }
     btn.addEventListener('click', function () {
       enabled = !enabled;
-      try { localStorage.setItem('lg:loupe', enabled ? '1' : '0'); } catch (e) {}
       sync();
     });
 
