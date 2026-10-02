@@ -270,7 +270,6 @@
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
   /* 一直在动的内容：标了 data-lg-live 的容器（相册的跑马灯轨道），其子元素每帧按实时位置画。
      原库对这类内容（data-dynamic）是每帧重新栅格化；这里只画图片和圆角底色，便宜得多 */
-  var liveEls = [].slice.call(document.querySelectorAll('[data-lg-live] > *'));
   function drawLive(ctx2, el, x0, y0, k) {
     var r = el.getBoundingClientRect();
     if (!el._lg) {
@@ -292,7 +291,13 @@
     }
     ctx2.restore();
   }
-  videos.forEach(function (vd) { vd.addEventListener('play', function () { schedule(); }); });
+  videos.forEach(function (vd) {
+    vd.addEventListener('play', function () { views.forEach(function (v) { v.rescan = true; }); schedule(); });
+  });
+  // 窗口尺寸变了，照片在条内的偏移也会变，下次重新量
+  window.addEventListener('resize', function () {
+    liveTracks.forEach(function (t) { [].forEach.call(t.children, function (k) { k._ow = null; }); });
+  });
 
   function goLive() {
     if (live) return;
@@ -313,7 +318,20 @@
     nav.classList.remove('lg-webgl');
   }
 
-  function render(v) {
+  /* 渲染。性能上的几件事：
+     - 每块玻璃各自判断要不要画：位置、截图版本、磨砂都没变、下面也没有动的内容，这一帧就跳过。
+       以前只要有一块玻璃下面在动，所有玻璃都跟着每帧重画。
+     - 静态底图缓存：页面截图（SVG）按需栅格化，代价最大的就是这一步。缓存时四周多留一圈
+       （导航 120px、放大镜 60px），小幅滚动或移动只从缓存里拷一块，出了这一圈才重新栅格化。
+     - 只有内容在动（视频、跑马灯）而玻璃没动时，按 30fps 更新：跑马灯一帧才走 1.4px，
+       视频本身多是 30fps，60fps 重画是浪费；滚动、拖动放大镜仍然逐帧跟上。
+     - 没有动的内容就直接用缓存，不再拷一遍；不磨砂（放大镜）就不做模糊那一趟。 */
+  var sceneVer = 0, liveTracks = [].slice.call(document.querySelectorAll('[data-lg-live]'));
+  function overlaps(r, x0, y0, cw, ch) {
+    var x = r.left + window.scrollX, y = r.top + window.scrollY;
+    return r.width && !(x > x0 + cw || x + r.width < x0 || y > y0 + ch || y + r.height < y0);
+  }
+  function render(v, now) {
     var pane = v.pane, w = pane.offsetWidth, h = pane.offsetHeight;
     if (!scene || !w || !h || (v.active && !v.active())) return false;
     var d = window.devicePixelRatio || 1, rc = pane.getBoundingClientRect();
@@ -322,50 +340,98 @@
     // 取样范围：玻璃（含四周余量）的 1/mag，画满整张裁切画布
     var pad = G.pad, cw = (w + 2 * pad) / v.mag, ch = (h + 2 * pad) / v.mag, x0 = cx - cw / 2, y0 = cy - ch / 2;
     var CW = Math.round((w + 2 * pad) * d), CH = Math.round((h + 2 * pad) * d), PW = Math.round(w * d), PH = Math.round(h * d);
-    // 裁切：页面这一块按屏幕分辨率画出来（SVG 是矢量，按需栅格化），超出页面的部分填底色。
-    // 先画到 raw（不模糊），视频的当前帧直接盖上去，再整体模糊进 crop —— 视频边缘和周围融在一起
-    var raw = v.raw, rc2 = v.r2, crop = v.crop, c = v.c2, k = CW / cw, moving = false;
-    [raw, crop].forEach(function (cv2) { if (cv2.width !== CW || cv2.height !== CH) { cv2.width = CW; cv2.height = CH; } });
-    rc2.fillStyle = pageBg;
-    rc2.fillRect(0, 0, CW, CH);
-    var sx = Math.max(x0, 0), sy = Math.max(y0, 0);
-    var ex = Math.min(x0 + cw, scene.W), ey = Math.min(y0 + ch, scene.H);
-    if (ex > sx && ey > sy) {
-      rc2.drawImage(scene.img, sx, sy, ex - sx, ey - sy, (sx - x0) * k, (sy - y0) * k, (ex - sx) * k, (ey - sy) * k);
+    var k = CW / cw, frost = v.frost ? v.frost(k) : 0;
+
+    // 先决定要不要画，再去找下面动的内容 —— 找的那一步要逐张读照片位置，比画本身还贵。
+    // 玻璃没动时：上一帧下面没东西在动，这一帧也不会有（跑马灯条的高度是固定的；视频开始播放
+    // 时 play 事件会让各块玻璃重新找一次）；有东西在动就按 30fps 看
+    var key = [x0, y0, CW, CH, PW, PH, sceneVer, frost].join(), moved = v.at !== key;
+    if (!moved && !v.rescan) {
+      if (!v.anim) return false;
+      if (now - v.t < 33) return true;
     }
-    /* 视频按原库的做法当作动态内容：每帧把当前画面画上去，截图里只有一帧，放着不管会跟页面对不上 */
+    v.rescan = false;
+
+    // 这一帧压在下面、正在动的内容
+    var under = [];
     for (var vi = 0; vi < videos.length; vi++) {
-      var vid = videos[vi], vr = vid.getBoundingClientRect();
-      var vx = vr.left + window.scrollX, vy = vr.top + window.scrollY;
-      if (vid.readyState < 2 || vx > x0 + cw || vx + vr.width < x0 || vy > y0 + ch || vy + vr.height < y0) continue;
-      try { rc2.drawImage(vid, (vx - x0) * k, (vy - y0) * k, vr.width * k, vr.height * k); } catch (e) { continue; }
-      if (!vid.paused) moving = true;
+      var vid = videos[vi];
+      if (vid.readyState >= 2 && overlaps(vid.getBoundingClientRect(), x0, y0, cw, ch)) under.push(vid);
     }
-    for (var li = 0; li < liveEls.length; li++) {
-      var le = liveEls[li], lr = le.getBoundingClientRect();
-      var lx = lr.left + window.scrollX, ly = lr.top + window.scrollY;
-      if (!lr.width || lx > x0 + cw || lx + lr.width < x0 || ly > y0 + ch || ly + lr.height < y0) continue;
-      drawLive(rc2, le, x0, y0, k);
-      moving = true;                        // 跑马灯一直在走：玻璃压在上面时逐帧重画
+    for (var ti = 0; ti < liveTracks.length; ti++) {
+      var track = liveTracks[ti], tr = track.getBoundingClientRect();
+      if (!overlaps(tr, x0 - 60, y0 - 60, cw + 120, ch + 120)) continue;   // 整条不沾边就不逐张看
+      // 照片在条内的位置是固定的，只有整条在平移：用条的当前位置加各张的偏移粗筛（放宽 60px
+      // 盖住错落的 translateY 与悬停放大），沾边的才读精确位置
+      var kids = track.children, tx0 = tr.left + window.scrollX, ty0 = tr.top + window.scrollY;
+      for (var li = 0; li < kids.length; li++) {
+        var kid = kids[li];
+        if (kid._ow == null) { kid._ox = kid.offsetLeft; kid._oy = kid.offsetTop; kid._ow = kid.offsetWidth; kid._oh = kid.offsetHeight; }
+        var ax = tx0 + kid._ox, ay = ty0 + kid._oy;
+        if (ax - 60 > x0 + cw || ax + kid._ow + 60 < x0 || ay - 60 > y0 + ch || ay + kid._oh + 60 < y0) continue;
+        if (overlaps(kid.getBoundingClientRect(), x0, y0, cw, ch)) under.push(kid);
+      }
     }
-    // 模糊 σ：收起时按物理像素（同原库），展开的菜单卡片按 CSS 像素；放大镜不模糊
-    var frost = v.frost ? v.frost(k) : 0;
-    c.clearRect(0, 0, CW, CH);
-    if ('filter' in c) c.filter = frost ? 'blur(' + frost + 'px)' : 'none';
-    c.drawImage(raw, 0, 0);
-    if ('filter' in c) c.filter = 'none';
+    var animating = under.some(function (el) { return el.tagName !== 'VIDEO' || !el.paused; });
+    v.anim = animating;
+    if (!moved && !under.length) return false;              // 重新找了一遍，什么也没有
+    v.at = key;
+    v.t = now;
+
+    // 静态底图：缓存覆盖 [bx0, by0] 起、四周各多 band 的一块；当前取样范围落在里面就直接拷
+    var st = v.st || (v.st = { cv: document.createElement('canvas') });
+    var band = 120 / v.mag;
+    if (st.ver !== sceneVer || st.k !== k || x0 < st.x0 || y0 < st.y0 ||
+        x0 + cw > st.x0 + st.w || y0 + ch > st.y0 + st.h) {
+      st.ver = sceneVer; st.k = k; st.x0 = x0 - band; st.y0 = y0 - band; st.w = cw + 2 * band; st.h = ch + 2 * band;
+      var SW = Math.ceil(st.w * k), SH = Math.ceil(st.h * k), sc = st.cv.getContext('2d');
+      if (st.cv.width !== SW || st.cv.height !== SH) { st.cv.width = SW; st.cv.height = SH; }
+      sc.fillStyle = pageBg;                               // 超出页面的部分填底色
+      sc.fillRect(0, 0, SW, SH);
+      var sx = Math.max(st.x0, 0), sy = Math.max(st.y0, 0);
+      var ex = Math.min(st.x0 + st.w, scene.W), ey = Math.min(st.y0 + st.h, scene.H);
+      if (ex > sx && ey > sy) {
+        sc.drawImage(scene.img, sx, sy, ex - sx, ey - sy, (sx - st.x0) * k, (sy - st.y0) * k, (ex - sx) * k, (ey - sy) * k);
+      }
+    }
+    var ox = (x0 - st.x0) * k, oy = (y0 - st.y0) * k;
+
+    // 合成：静态底图 + 动的内容（视频当前帧、跑马灯照片）→ raw；要磨砂再整体模糊进 crop
+    var raw = v.raw, rc2 = v.r2, crop = v.crop, c = v.c2, src;
+    [raw, crop].forEach(function (cv2) { if (cv2.width !== CW || cv2.height !== CH) { cv2.width = CW; cv2.height = CH; } });
+    rc2.clearRect(0, 0, CW, CH);
+    rc2.drawImage(st.cv, ox, oy, CW, CH, 0, 0, CW, CH);
+    for (var j = 0; j < under.length; j++) {
+      var el = under[j];
+      if (el.tagName === 'VIDEO') {
+        var vr = el.getBoundingClientRect();
+        try { rc2.drawImage(el, (vr.left + window.scrollX - x0) * k, (vr.top + window.scrollY - y0) * k, vr.width * k, vr.height * k); } catch (e) {}
+      } else drawLive(rc2, el, x0, y0, k);
+    }
+    src = raw;
+    if (frost) {
+      c.clearRect(0, 0, CW, CH);
+      if ('filter' in c) c.filter = 'blur(' + frost + 'px)';
+      c.drawImage(raw, 0, 0);
+      if ('filter' in c) c.filter = 'none';
+      src = crop;
+    }
+
     var cv = v.cv, gl = v.gl, u = v.u;
     if (cv.width !== PW || cv.height !== PH) { cv.width = PW; cv.height = PH; }
     gl.viewport(0, 0, PW, PH);
     try {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, crop);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
     } catch (e) { giveUp(); return false; }
-    var r = parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0;
+    if (v.rw !== w || v.rh !== h) {                         // 圆角只在尺寸变了时重新读
+      v.rw = w; v.rh = h;
+      v.radius = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, w / 2, h / 2);
+    }
     gl.uniform1i(u.u_tex, 0);
     gl.uniform2f(u.u_size, PW, PH);
     gl.uniform2f(u.u_crop, CW, CH);
     gl.uniform1f(u.u_pad, pad * d);
-    gl.uniform1f(u.u_radius, Math.min(r, w / 2, h / 2) * d);
+    gl.uniform1f(u.u_radius, v.radius * d);
     gl.uniform1f(u.u_refract, G.refraction);
     gl.uniform1f(u.u_chroma, G.chroma);
     gl.uniform1f(u.u_edgeHL, G.edgeHL);
@@ -379,16 +445,16 @@
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    return moving;
+    return animating;
   }
 
   var raf = 0;
-  function frame() {
+  function frame(now) {
     raf = 0;
     if (!live) return;
     var moving = loupe ? loupe.step() : false;
-    views.forEach(function (v) { if (render(v)) moving = true; });
-    if (moving) schedule();                 // 玻璃下面有正在播放的视频：下一帧接着画
+    views.forEach(function (v) { if (render(v, now)) moving = true; });
+    if (moving) schedule();                 // 还有在动的：下一帧接着看
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
   window.addEventListener('scroll', schedule, { passive: true });
@@ -433,7 +499,7 @@
     function sync() {
       var on = enabled && live;                     // 截图就绪前不出现，免得浮着一块空玻璃
       btn.setAttribute('aria-pressed', String(enabled));
-      if (on && !el.classList.contains('on')) { clamp(); x = tx; y = ty; last = 0; place(); }   // 出现时直接落位
+      if (on && !el.classList.contains('on')) { clamp(); x = tx; y = ty; last = 0; place(); v.at = null; }   // 出现时直接落位、重画
       el.classList.toggle('on', on);
       schedule();
     }
@@ -493,7 +559,7 @@
     if (capturing) { again = true; return; }
     capturing = true;
     capturePage().then(function (cap) {
-      scene = cap;
+      scene = cap; sceneVer++;
       goLive();
       schedule();
     }, function () {}).then(function () {
