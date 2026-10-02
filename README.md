@@ -12,6 +12,7 @@
 ├── gallery/index.html  相册页，URL 为 /gallery/
 ├── CNAME               GitHub Pages 自定义域名，内容为 caozhijun.top
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
+├── caozhijun.top.png   域名证书；同目录的 caozhijun.top-sitemaps.zip 是旧站 sitemap 存档，两者都不进 git
 └── assets/
     ├── css/style.css   全站样式，配色沿用简历 LaTeX 的莫兰迪色板
     ├── fonts/          自托管字体（Inter + Newsreader 可变字体，167 KB）
@@ -21,7 +22,7 @@
     │   ├── write/          Writing & Media 配图，宽 900px（bgtree 用原图）
     │   ├── icon/           联系方式图标，64×64 透明 PNG
     │   ├── gallery/        相册：560/ 跑马灯用（高 560px），1120/ 放大镜用（高 1120px），
-    │   │                   src/ 原图（按页面上的名字命名，本地保留、不进 git）
+    │   │                   src/ 原图（原文件名，本地保留、不进 git），campus-01.jpg 这类是指向原图的符号链接
     │   └── src/            未压缩源素材，本地保留、不进 git
     └── pdf/
         ├── CV_ZhijunCao.pdf            英文简历，原件（288 KB）
@@ -105,14 +106,18 @@ cmp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf   # 无输出即一致
 
 ### 相册图片
 
-每张照片导出两档 WebP，原图放 `assets/img/gallery/src/`，文件名就是页面上的名字（如 `lake-06.jpg`）：
+每张照片导出两档 WebP。原图以原文件名放在 `assets/img/gallery/src/`，再用一个按页面命名的符号链接指向它
+（如 `lake-12.jpg -> 20250330-_ARC2114.jpg`），`ls -l src` 就是完整的对照表。
+`campus-02.jpg` 例外：它是从 `250116_ARC copy.psd` 导出的合成图（`magick 'xxx.psd[0]'`），是普通文件。
+
+导出两档：
 
 - `560/`：跑马灯显示用，高 560px（最高的照片框 262px，悬停放大后在 2 倍屏上约 548px）
 - `1120/`：放大镜用，高 1120px，只在打开放大镜、且扫到这张照片时才下载
 
 ```bash
 cd assets/img/gallery/src
-for f in *.jpg; do n=${f%.jpg}
+for f in campus-*.jpg lake-*.jpg more-*.jpg; do n=${f%.jpg}
   magick "$f" -auto-orient -colorspace sRGB -depth 8 -strip -write mpr:o +delete \
     \( mpr:o -resize 'x1120>' -quality 86 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../1120/$n.webp +delete \) \
     \( mpr:o -resize 'x560>'  -quality 85 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../560/$n.webp  +delete \) null:
@@ -125,13 +130,14 @@ done
 然后在 `gallery/index.html` 对应的轨道里加一条 `<figure>`，`data-lg-hi` 指向大图：
 
 ```html
-<figure><img src="/assets/img/gallery/560/lake-17.webp" data-lg-hi="/assets/img/gallery/1120/lake-17.webp" alt="" loading="lazy"></figure>
+<figure><img src="/assets/img/gallery/560/lake-17.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-17.webp?v=20261002order" alt="" loading="lazy"></figure>
 ```
 
 错落的高度由脚本按序号自动标，照片数不必凑 4 的倍数。增减照片后按比例调整该栏的 `--dur`，保持滚动速度不变。
 同名文件换了内容（重新导出、重排编号）时，把页面里这些地址的 `?v=` 版本串统一换掉，
 否则看过旧页面的访客会拿到缓存的旧图，跑马灯和放大镜还可能对不上同一张照片。
-换原图时按同名覆盖 `src/` 里的文件、重新导出即可；宽高比变了的话，顺手按比例微调该栏的 `--dur`。
+换原图时把新文件放进 `src/`，改链接指向它（`ln -sf 新原图.jpg lake-12.jpg`），重新导出即可；
+宽高比变了的话，顺手按比例微调该栏的 `--dur`。
 
 ## 搜索引擎收录
 
