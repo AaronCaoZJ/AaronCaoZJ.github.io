@@ -108,7 +108,7 @@ cmp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf   # 无输出即一致
 
 每张照片导出两档 WebP。原图以原文件名放在 `assets/img/gallery/src/`，再用一个按页面命名的符号链接指向它
 （如 `lake-12.jpg -> 20250330-_ARC2114.jpg`），`ls -l src` 就是完整的对照表。
-`campus-02.jpg` 例外：它是从 `250116_ARC copy.psd` 导出的合成图（`magick 'xxx.psd[0]'`），是普通文件。
+链接名的扩展名跟着原图走（如 `campus-02.png -> 250116_ARC copy.png`，那张星轨是 Photoshop 导出的 PNG）。
 
 导出两档：
 
@@ -117,8 +117,8 @@ cmp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf   # 无输出即一致
 
 ```bash
 cd assets/img/gallery/src
-for f in campus-*.jpg lake-*.jpg more-*.jpg; do n=${f%.jpg}
-  magick "$f" -auto-orient -colorspace sRGB -depth 8 -strip -write mpr:o +delete \
+for f in campus-* lake-* more-*; do n=${f%.*}
+  magick "$f" -auto-orient -colorspace sRGB -depth 8 -alpha off -strip -write mpr:o +delete \
     \( mpr:o -resize 'x1120>' -quality 86 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../1120/$n.webp +delete \) \
     \( mpr:o -resize 'x560>'  -quality 85 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../560/$n.webp  +delete \) null:
 done
