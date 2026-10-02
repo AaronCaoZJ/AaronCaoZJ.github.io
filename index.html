@@ -6,6 +6,9 @@
 <title data-i18n="home.title">Cao Zhijun Aaron · 曹植竣</title>
 <meta name="description" content="Cao Zhijun Aaron (曹植竣), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
 <meta name="author" content="Cao Zhijun Aaron">
+<!-- 语言：主语言英文（<html lang>），同时声明面向中文读者 —— Bing 参考 content-language 判断
+     页面语言与受众（Google 不看它）。正文里夹着的中文片段另用 lang="zh-CN" 标出。 -->
+<meta http-equiv="content-language" content="en, zh-CN">
 
 <!-- Open Graph：分享到社交平台时的预览卡片 -->
 <meta property="og:type" content="profile">
@@ -13,6 +16,8 @@
 <meta property="og:description" content="M.Sc. Electrical Engineering, Show Lab, National University of Singapore. Diffusion Models, VLA Models, World Models." data-i18n-content="home.description">
 <meta property="og:url" content="https://caozhijun.top/">
 <meta property="og:image" content="https://caozhijun.top/assets/img/avatar.jpg">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
 
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
@@ -37,13 +42,15 @@
       "@id": "https://caozhijun.top/#website",
       "url": "https://caozhijun.top/",
       "name": "Cao Zhijun Aaron",
-      "alternateName": ["曹植竣", "Zhijun Cao", "caozhijun.top"]
+      "alternateName": ["曹植竣", "Zhijun Cao", "caozhijun.top"],
+      "inLanguage": ["en", "zh-CN"]
     },
     {
       "@type": "ProfilePage",
       "@id": "https://caozhijun.top/#profile",
       "url": "https://caozhijun.top/",
       "name": "Cao Zhijun Aaron · 曹植竣",
+      "inLanguage": ["en", "zh-CN"],
       "isPartOf": { "@id": "https://caozhijun.top/#website" },
       "mainEntity": { "@id": "https://caozhijun.top/#person" }
     },
@@ -84,7 +91,7 @@
   ]
 }
 </script>
-<script src="assets/js/i18n.js?v=20261002navicons" defer></script>
+<script src="assets/js/i18n.js?v=20261002zhlang" defer></script>
 <script src="assets/js/nav.js?v=20261002navicons" defer></script>
 <script src="assets/js/glass.js?v=20261002navicons" defer></script>
 </head>
@@ -107,7 +114,7 @@
   <!-- ============ 头部名片 ============ -->
   <header class="hero">
     <div>
-      <h1 class="rise" data-i18n="hero.name">Cao Zhijun Aaron <span class="cn">曹植竣</span></h1>
+      <h1 class="rise" data-i18n="hero.name">Cao Zhijun Aaron <span class="cn" lang="zh-CN">曹植竣</span></h1>
       <div class="role rise" data-i18n="hero.role">M.Sc. Student at Show Lab, NUS</div>
       <p class="affil rise" data-i18n="hero.opportunities">Currently seeking <strong>Researcher / Algorithm Engineer</strong> roles in <strong>Embodied Foundation Models / Generative AI</strong>, and open to <strong>PhD Opportunities</strong>. See my <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202609291444">CV</a> for details.</p>
 

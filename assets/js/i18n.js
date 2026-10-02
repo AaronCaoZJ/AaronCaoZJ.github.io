@@ -11,7 +11,7 @@
   "footer.updated": "最后更新：2026 年 9 月",
   "home.title": "曹植竣 Aaron · 个人主页",
   "home.description": "曹植竣 Aaron — 新加坡国立大学电气工程硕士生，Show Lab。研究方向：扩散模型、视觉–语言–动作模型与世界模型。浙江大学本科。",
-  "hero.name": "曹植竣 <span class=\"cn\">Aaron Cao</span>",
+  "hero.name": "曹植竣 <span class=\"cn\" lang=\"en\">Aaron Cao</span>",
   "hero.role": "新加坡国立大学 Show Lab · 硕士研究生",
   "hero.opportunities": "正在寻找<strong>具身基础模型 / 生成式 AI</strong> 方向的<strong>研究员 / 算法工程师</strong>岗位，同时关注<strong>博士机会</strong>。详情请见我的<a href=\"/assets/pdf/CV_ZhijunCao.pdf?v=202609291444\">英文简历</a>。",
   "contact.email": "<img src=\"assets/img/icon/email.png\" alt=\"\" width=\"15\" height=\"15\">邮箱",
