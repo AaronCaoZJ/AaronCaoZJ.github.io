@@ -493,8 +493,15 @@
       tx = Math.min(Math.max(tx, r), innerWidth - r);
       ty = Math.min(Math.max(ty, r), innerHeight - r);
     }
+    /* 用独立的 translate 属性定位，而不是 transform：按规范的顺序 translate → rotate → scale →
+       transform，出现动画的 scale 会把 transform 里的位移一起缩小 —— 刚打开时（scale 0.82）
+       放大镜实际在目标位置的 0.82 倍处，第一帧按那个位置取样，光标不动就一直错着
+       （手机上尤其明显：没有光标，打开后不动）。translate 在 scale 之外，缩放只绕自身中心。 */
+    var useTranslate = 'translate' in el.style;
     function place() {
-      el.style.transform = 'translate3d(' + (x - el.offsetWidth / 2) + 'px,' + (y - el.offsetHeight / 2) + 'px,0)';
+      var px = (x - el.offsetWidth / 2) + 'px', py = (y - el.offsetHeight / 2) + 'px';
+      if (useTranslate) el.style.translate = px + ' ' + py;
+      else el.style.transform = 'translate3d(' + px + ',' + py + ',0)';
     }
     function sync() {
       var on = enabled && live;                     // 截图就绪前不出现，免得浮着一块空玻璃

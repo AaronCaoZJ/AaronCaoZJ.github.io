@@ -169,7 +169,7 @@ img { max-width: 100%; }
 }
 /* 相册页的放大镜（glass.js 生成）：圆形，开关打开后常驻。鼠标下跟随光标、不挡点击；
    触屏上没有光标，改为用手指拖动（脚本给它打开 pointer-events）。
-   位置由脚本每帧写 transform，出现 / 消失用 opacity 与 scale */
+   位置由脚本每帧写 translate 属性，出现 / 消失用 opacity 与 scale（scale 只绕自身中心，不影响位置） */
 .lg-loupe {
   position: fixed; left: 0; top: 0; z-index: 45; pointer-events: none;
   width: 170px; height: 170px; border-radius: 999px;
@@ -177,7 +177,7 @@ img { max-width: 100%; }
   box-shadow: 0 14px 34px rgba(0, 0, 0, .16), 0 2px 6px rgba(0, 0, 0, .08);
   opacity: 0; scale: .82;
   transition: opacity .2s ease, scale .45s var(--lg-spring);
-  will-change: transform; touch-action: none;
+  will-change: translate, transform; touch-action: none;
 }
 .lg-loupe.on { opacity: 1; scale: 1; }
 .lg-loupe.drag { pointer-events: auto; cursor: grab; }
