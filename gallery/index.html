@@ -22,7 +22,7 @@
   .marquee {
     position: relative;
     overflow: hidden;
-    padding: 30px 0 34px;          /* 给悬浮上移与投影留出余量 */
+    padding: 30px 0 34px;          /* 给悬停放大与投影留出余量 */
     /* 两端渐隐，照片像是从页面边缘之外流进来 */
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
             mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
@@ -49,17 +49,18 @@
   /* 错落：高度与垂直位置四张一轮换，避免一条笔直的带子。
      h1–h4 由页尾脚本按照片在「每一份」里的序号标上，不用 nth-child：照片数不是 4 的倍数时，
      nth-child 会接着数进复制出的那一份，两份的错落对不上，循环处就会跳一下 */
-  .track figure.h1 { height: 212px; transform: translateY(26px); }
+  .track figure { transform: translateY(var(--y, 0px)); }
+  .track figure.h1 { height: 212px; --y: 26px; }
   .track figure.h2 { height: 262px; }
-  .track figure.h3 { height: 226px; transform: translateY(14px); }
-  .track figure.h4 { height: 246px; transform: translateY(34px); }
+  .track figure.h3 { height: 226px; --y: 14px; }
+  .track figure.h4 { height: 246px; --y: 34px; }
 
-  /* 悬浮：在各自错落的基线上再抬起一点 */
-  .track figure.h1:hover { transform: translateY(16px) scale(1.045); }
-  .track figure.h2:hover { transform: translateY(-10px) scale(1.045); }
-  .track figure.h3:hover { transform: translateY(4px)  scale(1.045); }
-  .track figure.h4:hover { transform: translateY(24px) scale(1.045); }
-  .track figure:hover { box-shadow: 0 16px 38px rgba(45,42,41,.22); z-index: 3; }
+  /* 悬停：在原位略微放大，不上浮；投影只淡淡一圈，免得读成"浮起来"。
+     位移写在 --y 里，放大接在它后面，窄屏换了错落值也照样在原位放大 */
+  .track figure:hover {
+    transform: translateY(var(--y, 0px)) scale(1.045);
+    box-shadow: 0 4px 14px rgba(45,42,41,.14); z-index: 3;
+  }
 
 
   .gsec { padding-top: 46px; }
@@ -85,8 +86,8 @@
 
   @media (max-width: 700px) {
     .track figure { height: 180px !important; }
-    .track figure.h2, .track figure.h4 { transform: translateY(18px); }
-    .track figure.h1, .track figure.h3 { transform: none; }
+    .track figure.h2, .track figure.h4 { --y: 18px; }
+    .track figure.h1, .track figure.h3 { --y: 0px; }
   }
   /* ============ 彩蛋 ============
      点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
