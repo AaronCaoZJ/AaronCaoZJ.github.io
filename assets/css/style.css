@@ -251,8 +251,10 @@ img { max-width: 100%; }
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
 }
 .nav a.language-pair {
-  /* 五个入口等宽，中英文切换后文字中心仍落在同一组位置。 */
-  display: grid; flex: 0 0 100px; text-align: center;
+  /* 入口至少 100px 宽，短的几个等宽；中英两种文字叠在同一格里，切换语言时宽度不变。
+     宽度按内容算、100px 只作下限：写成 flex-basis: 100px 的话，Safari 量胶囊宽度时
+     按 100px 算，比 100px 宽的入口（🖼️ Gallery、Publications）就被胶囊圆角裁掉一截。 */
+  display: grid; flex: 0 0 auto; min-width: 100px; text-align: center;
 }
 .nav-divider {
   /* 竖线两侧留出呼吸空间，避免相邻入口的悬停底色贴在线上。 */
@@ -285,10 +287,10 @@ img { max-width: 100%; }
 /* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
    见 i18n.js 的 language-pair）。再窄就只留首页与相册两个入口（中间仍是分隔线），
    整组靠到右上角，语言按钮在最右；正文的几个锚点在窄屏上往下滚就到。
-   最窄的 320px 手机：胶囊 232 + 间距 10 + 语言按钮 50 = 292，正好放进两侧各留 14px 的宽度。
+   最窄的 320px 手机：胶囊 233 + 间距 8 + 语言按钮 50 = 291，放得进两侧各留 14px 后的 292。
    页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。 */
 @media (max-width: 660px) {
-  .nav { margin: 14px 14px 0 auto; }
+  .nav { margin: 14px 14px 0 auto; gap: 8px; }
   .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { display: none; }
 }
 
