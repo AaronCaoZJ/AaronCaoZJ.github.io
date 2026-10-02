@@ -11,7 +11,7 @@
   "footer.updated": "最后更新：2026 年 9 月",
   "home.title": "曹植竣 Aaron · 个人主页",
   "home.description": "曹植竣 Aaron — 新加坡国立大学电气工程硕士生，Show Lab。研究方向：扩散模型、视觉–语言–动作模型与世界模型。浙江大学本科。",
-  "hero.name": "曹植竣 <span class=\"cn\">Aaron Cao</span>",
+  "hero.name": "曹植竣 <span class=\"cn\" lang=\"en\">Aaron Cao</span>",
   "hero.role": "新加坡国立大学 Show Lab · 硕士研究生",
   "hero.opportunities": "正在寻找<strong>具身基础模型 / 生成式 AI</strong> 方向的<strong>研究员 / 算法工程师</strong>岗位，同时关注<strong>博士机会</strong>。详情请见我的<a href=\"/assets/pdf/CV_ZhijunCao.pdf?v=202609291444\">英文简历</a>。",
   "contact.email": "<img src=\"assets/img/icon/email.png\" alt=\"\" width=\"15\" height=\"15\">邮箱",
@@ -85,6 +85,7 @@
   "gallery.title": "相册 · 曹植竣 Aaron",
   "gallery.description": "曹植竣 Aaron 的摄影记录：浙江大学校园、西湖与旅途中的风景。",
   "gallery.heading": "🖼️ 相册",
+  "gallery.loupe": "🔍 放大镜",
   "gallery.welcome": "<strong>欢迎来到我的相册！</strong>",
   "gallery.intro": "摄影是我观察世界的方式之一。这里记录了一些令我难忘的地方、人物与瞬间，希望你也能从中找到喜欢的画面。",
   "gallery.campus": "求是园",
@@ -92,8 +93,7 @@
   "gallery.lake": "一枕湖山",
   "gallery.lakeWhere": "摄于中国杭州",
   "gallery.more": "在路上",
-  "nav.label": "主导航",
-  "nav.menu": "菜单"
+  "nav.label": "主导航"
 };
   var root = document.documentElement;
   var toggle = document.querySelector('.language-toggle');

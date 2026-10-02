@@ -3,14 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-i18n="gallery.title">Gallery · Cao Zhijun Aaron</title>
-<meta name="description" content="Photography by Cao Zhijun Aaron — Zhejiang University campus, West Lake, and travels." data-i18n-content="gallery.description">
+<title data-i18n="gallery.title">Gallery · Cao Zhijun Aaron · 曹植竣</title>
+<meta name="description" content="Photography by Cao Zhijun Aaron — Zhejiang University campus, West Lake, and travels. 曹植竣的摄影记录：浙江大学校园、西湖与旅途中的风景。" data-i18n-content="gallery.description">
 <!-- 同一份内容在 /gallery/ 和 /gallery/index.html 两个 URL 上都可达，
      不声明 canonical 的话 Google 会判定为重复内容、自行择一收录。 -->
 <link rel="canonical" href="https://caozhijun.top/gallery/">
+<!-- 语言：主语言英文（<html lang>），同时声明面向中文读者 —— Bing 参考 content-language 判断
+     页面语言与受众（Google 不看它）。正文里夹着的中文片段另用 lang="zh-CN" 标出。 -->
+<meta http-equiv="content-language" content="en, zh-CN">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="/assets/css/style.css?v=20261001pin-blue">
+<link rel="stylesheet" href="/assets/css/style.css?v=20261002navfit">
 <script src="/assets/js/reveal.js?v=202609291444"></script>
 
 
@@ -18,11 +21,11 @@
 <style>
   /* ============ 轮播 ============
      两份相同的图片首尾相接，轨道匀速平移到 -50% 时正好回到起点，
-     于是循环处没有接缝。悬停时暂停整条轨道。 */
+     于是循环处没有接缝。终点与步数由页尾脚本按物理像素取整（见「整像素」）。 */
   .marquee {
     position: relative;
     overflow: hidden;
-    padding: 30px 0 34px;          /* 给悬浮上移与投影留出余量 */
+    padding: 30px 0 34px;          /* 给悬停放大与投影留出余量 */
     /* 两端渐隐，照片像是从页面边缘之外流进来 */
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
             mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
@@ -30,11 +33,12 @@
   .track {
     display: flex; align-items: flex-start;
     gap: 16px; width: max-content;
+    padding-right: 16px;           /* 末尾补一个间距，两份内容才各占一半，-50% 正好落在副本开头 */
     animation: slide var(--dur, 66s) linear infinite;
   }
   .track.rev { animation-direction: reverse; }
   @keyframes slide { from { transform: translate3d(0,0,0); }
-                      to   { transform: translate3d(-50%,0,0); } }
+                      to   { transform: translate3d(var(--shift, -50%),0,0); } }
 
   .track figure {
     flex: 0 0 auto; margin: 0;
@@ -45,18 +49,21 @@
   }
   .track img { display: block; height: 100%; width: auto; }
 
-  /* 错落：高度与垂直位置轮换，避免一条笔直的带子 */
-  .track figure:nth-child(4n+1) { height: 212px; transform: translateY(26px); }
-  .track figure:nth-child(4n+2) { height: 262px; }
-  .track figure:nth-child(4n+3) { height: 226px; transform: translateY(14px); }
-  .track figure:nth-child(4n)   { height: 246px; transform: translateY(34px); }
+  /* 错落：高度与垂直位置四张一轮换，避免一条笔直的带子。
+     h1–h4 由页尾脚本按照片在「每一份」里的序号标上，不用 nth-child：照片数不是 4 的倍数时，
+     nth-child 会接着数进复制出的那一份，两份的错落对不上，循环处就会跳一下 */
+  .track figure { transform: translateY(var(--y, 0px)); }
+  .track figure.h1 { height: 212px; --y: 26px; }
+  .track figure.h2 { height: 262px; }
+  .track figure.h3 { height: 226px; --y: 14px; }
+  .track figure.h4 { height: 246px; --y: 34px; }
 
-  /* 悬浮：在各自错落的基线上再抬起一点 */
-  .track figure:nth-child(4n+1):hover { transform: translateY(16px) scale(1.045); }
-  .track figure:nth-child(4n+2):hover { transform: translateY(-10px) scale(1.045); }
-  .track figure:nth-child(4n+3):hover { transform: translateY(4px)  scale(1.045); }
-  .track figure:nth-child(4n):hover   { transform: translateY(24px) scale(1.045); }
-  .track figure:hover { box-shadow: 0 16px 38px rgba(45,42,41,.22); z-index: 3; }
+  /* 悬停：在原位略微放大，不上浮；投影只淡淡一圈，免得读成"浮起来"。
+     位移写在 --y 里，放大接在它后面，窄屏换了错落值也照样在原位放大 */
+  .track figure:hover {
+    transform: translateY(var(--y, 0px)) scale(1.045);
+    box-shadow: 0 4px 14px rgba(45,42,41,.14); z-index: 3;
+  }
 
 
   .gsec { padding-top: 46px; }
@@ -82,8 +89,8 @@
 
   @media (max-width: 700px) {
     .track figure { height: 180px !important; }
-    .track figure:nth-child(2n) { transform: translateY(18px); }
-    .track figure:nth-child(2n+1) { transform: none; }
+    .track figure.h2, .track figure.h4 { --y: 18px; }
+    .track figure.h1, .track figure.h3 { --y: 0px; }
   }
   /* ============ 彩蛋 ============
      点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
@@ -113,15 +120,15 @@
     }
   }
 </style>
-<script src="/assets/js/i18n.js?v=20261001nav-mobile" defer></script>
-<script src="/assets/js/nav.js?v=20261001no-ring" defer></script>
+<script src="/assets/js/i18n.js?v=20261002zhlang" defer></script>
+<script src="/assets/js/nav.js?v=20261002navicons" defer></script>
+<script src="/assets/js/glass.js?v=20261002navicons" defer></script>
 </head>
 <body>
 
 <nav class="nav" aria-label="Main navigation" data-i18n-aria-label="nav.label">
   <div class="wrap">
     <a href="/" data-i18n="nav.home">🏠 Home</a>
-    <button class="nav-menu" type="button" aria-expanded="false" aria-label="Menu" data-i18n-aria-label="nav.menu"><span aria-hidden="true"></span></button>
     <a href="/#biography" data-i18n="nav.biography">Biography</a>
     <a href="/#publications" data-i18n="nav.publications">Publications</a>
     <a href="/#internship" data-i18n="nav.experiences">Experiences</a>
@@ -134,7 +141,11 @@
 <main>
 
   <section class="intro wrap" style="padding-top:56px">
-    <h2 class="rise" data-i18n="gallery.heading">🖼️ Gallery</h2>
+    <div class="gallery-head rise">
+      <h2 data-i18n="gallery.heading">🖼️ Gallery</h2>
+      <button class="loupe-toggle" type="button" aria-pressed="false" data-lg-loupe-toggle hidden
+              data-i18n="gallery.loupe">🔍 Magnifier</button>
+    </div>
     <p class="rise" style="margin-top:16px" data-i18n="gallery.welcome"><strong>Welcome to my gallery!</strong></p>
     <p class="rise" data-i18n="gallery.intro">
       Photography is one of the ways I pay attention to the world. The images below
@@ -144,68 +155,73 @@
 
   <section class="gsec" id="campus">
     <div class="wrap">
-      <h2 class="rise" data-i18n="gallery.campus">The Campus <span class="zh">求是园</span></h2>
-      <p class="where rise" data-i18n="gallery.campusWhere">Photos taken @ Zhejiang University</p>
+      <h2 class="rise" data-i18n="gallery.campus">The Campus <span class="zh" lang="zh-CN">求是园</span></h2>
+      <p class="where rise" data-i18n="gallery.campusWhere">Photos taken at Zhejiang University</p>
     </div>
-    <div class="marquee bleed rise" style="--dur:72s">
-      <div class="track">
-        <figure><img src="/assets/img/gallery/campus-01.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-02.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-03.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-04.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-05.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-06.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-07.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-08.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-09.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-10.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-11.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-12.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/campus-13.webp" alt="" loading="lazy"></figure>
+    <div class="marquee bleed rise" style="--dur:64s">
+      <div class="track" data-lg-live>
+        <figure><img src="/assets/img/gallery/560/campus-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-01.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-02.webp?v=20261002png" data-lg-hi="/assets/img/gallery/1120/campus-02.webp?v=20261002png" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-03.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-04.webp?v=20261002order" width="839" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-05.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-06.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-07.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-08.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-09.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-10.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-11.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/campus-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/campus-12.webp?v=20261002order" width="996" height="560" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
 
   <section class="gsec" id="westlake">
     <div class="wrap">
-      <h2 class="rise" data-i18n="gallery.lake">Pillowed by the West Lake <span class="zh">一枕湖山</span></h2>
+      <h2 class="rise" data-i18n="gallery.lake">Pillowed by the West Lake <span class="zh" lang="zh-CN">一枕湖山</span></h2>
       <p class="where rise" data-i18n="gallery.lakeWhere">Photos taken in Hangzhou, China</p>
     </div>
-    <div class="marquee bleed rise" style="--dur:84s">
-      <div class="track rev">
-        <figure><img src="/assets/img/gallery/lake-01.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-02.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-03.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-04.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-05.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-06.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-07.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-08.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-09.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-10.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-11.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-12.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/lake-13.webp" alt="" loading="lazy"></figure>
+    <div class="marquee bleed rise" style="--dur:108s">
+      <div class="track rev" data-lg-live>
+        <figure><img src="/assets/img/gallery/560/lake-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-01.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-02.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-02.webp?v=20261002order" width="373" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-03.webp?v=20261002order" width="747" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-04.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-05.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-06.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-07.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-08.webp?v=20261002order" width="560" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-09.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-10.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-11.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-12.webp?v=20261002order" width="839" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-13.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-13.webp?v=20261002order" width="996" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-14.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-14.webp?v=20261002order" width="433" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-15.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-15.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/lake-16.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-16.webp?v=20261002order" width="374" height="560" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
 
   <section class="gsec" id="more">
     <div class="wrap">
-      <h2 class="rise" data-i18n="gallery.more">More <span class="zh">在路上</span></h2>
+      <h2 class="rise" data-i18n="gallery.more">More <span class="zh" lang="zh-CN">在路上</span></h2>
     </div>
-    <div class="marquee bleed rise" style="--dur:64s">
-      <div class="track">
-        <figure><img src="/assets/img/gallery/more-01.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-02.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-03.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-04.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-05.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-06.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-07.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-08.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-09.webp" alt="" loading="lazy"></figure>
-        <figure><img src="/assets/img/gallery/more-10.webp" alt="" loading="lazy"></figure>
+    <div class="marquee bleed rise" style="--dur:84s">
+      <div class="track" data-lg-live>
+        <figure><img src="/assets/img/gallery/560/more-01.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-01.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-02.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-02.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-03.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-03.webp?v=20261002order" width="839" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-04.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-04.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-05.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-05.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-06.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-06.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-07.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-07.webp?v=20261002order" width="374" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-08.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-08.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-09.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-09.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-10.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-10.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-11.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-11.webp?v=20261002order" width="996" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-12.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-12.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
+        <figure><img src="/assets/img/gallery/560/more-13.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/more-13.webp?v=20261002order" width="840" height="560" alt="" loading="lazy"></figure>
       </div>
     </div>
   </section>
@@ -232,6 +248,8 @@
    那一刻的画面才与起点重合，循环处才看不出接缝。 */
 (function () {
   [].forEach.call(document.querySelectorAll('.track'), function (tr) {
+    // 错落按每份里的序号标（见样式「错落」），副本复制过去的也就是同一套
+    [].forEach.call(tr.children, function (n, i) { n.classList.add('h' + (i % 4 + 1)); });
     var copy = tr.cloneNode(true);
     while (copy.firstElementChild) {
       var n = copy.firstElementChild;
@@ -243,10 +261,36 @@
 })();
 
 
+/* ---------- 整像素：跑马灯每一步正好走 1 个物理像素 ----------
+   平移量落在小数像素上时，浏览器只能在相邻像素之间插值，照片清晰度会掉一半
+   （实测 2 倍屏上停在半像素处只剩整像素时的一半）。改用 steps()：总步数是半条轨道的
+   物理像素数，终点取整到这个步数，与 -50% 相差不到 1 个物理像素，循环处看不出来。
+   图片带宽高属性，加载前轨道宽度就是准的；窗口尺寸或像素密度变了再算一次。 */
+(function () {
+  var tracks = document.querySelectorAll('.track');
+  function snap() {
+    var d = window.devicePixelRatio || 1;
+    [].forEach.call(tracks, function (tr) {
+      var n = Math.round(tr.getBoundingClientRect().width / 2 * d);
+      if (!n) return;
+      tr.style.setProperty('--shift', -n / d + 'px');
+      tr.style.animationTimingFunction = 'steps(' + n + ')';
+    });
+  }
+  snap();
+  window.addEventListener('resize', snap);
+  // 窗口拖到另一块屏幕时像素密度会变，未必触发 resize
+  (function watch() {
+    var mq = window.matchMedia && window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+    if (mq && mq.addEventListener) mq.addEventListener('change', function () { snap(); watch(); }, { once: true });
+  })();
+})();
+
+
 /* ---------- 彩蛋：点中特定照片蹦出 emoji ----------
    按文件名匹配而不是按 DOM 位置，所以上面复制出的那一份副本同样生效。 */
 (function () {
-  var EGGS = { 'campus-07': '\uD83C\uDF93', 'lake-04': '\uD83D\uDC30', 'more-07': '\uD83D\uDC18' };
+  var EGGS = { 'campus-08': '\uD83C\uDF93', 'lake-16': '\uD83D\uDC30', 'more-05': '\uD83D\uDC18' };
   var layer = null;
 
   function burst(rect, emoji) {
@@ -279,7 +323,7 @@
   document.addEventListener('click', function (e) {
     var img = e.target.closest && e.target.closest('.track img');
     if (!img) return;
-    var m = img.getAttribute('src').match(/([a-z]+-\d+)\.webp$/);
+    var m = img.getAttribute('src').match(/([a-z]+-\d+)\.webp(?:\?|$)/);
     var emoji = m && EGGS[m[1]];
     if (emoji) burst(img.getBoundingClientRect(), emoji);
   });

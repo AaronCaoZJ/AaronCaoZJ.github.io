@@ -93,9 +93,11 @@
 
   /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节。
      取值对照 liquid-dom（github.com/AndrewPrifer/liquid-dom）的默认值 */
-  --lg-tint:        rgba(255, 255, 255, .15);   /* 叠在折射结果上的一层白 */
+  --lg-tint:        rgba(255, 255, 255, 0);     /* 不叠白：同 ybouane/liquidglass，清玻璃 */
   --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
-  --lg-shadow: 0 10px 24px rgba(0, 0, 0, .12);
+  /* 原库默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度只留原值的一小部分：
+     原值（0.3）在浅色页面上显得重 */
+  --lg-shadow: 0 3px 16px rgba(0, 0, 0, .07), 0 0 1px rgba(0, 0, 0, .04);
 }
 
 * { box-sizing: border-box; }
@@ -136,21 +138,16 @@ img { max-width: 100%; }
 /* ---------- 顶部导航 ----------
    悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。
 
-   液态玻璃对照两个参考实现重做：liquid-dom（WebGPU 着色器）的模糊、本体、高光、阴影参数，
-   liquid-glass（shuding）把 SVG 位移滤镜挂在 backdrop-filter 上的做法。自下而上：
-   1. 折射层 .lg-refract（nav.js 生成，仅 Chromium）：沿边缘法线向内取样。
-      最外侧几像素内位移从 0 升到峰值（边界两侧连续，字弯进玻璃而不被切断），
-      再往里平滑降回 0（凸边把靠里的内容拉伸铺开）；峰值取刚好不倒转的最大值。
-      取样的是轻度模糊（σ 1.5）的背景，保持通透。四周外扩给模糊留余量，
-      多出的部分被胶囊的 overflow 裁掉。
-      backdrop-filter: url(#…) 只有 Chromium 渲染；Safari / Firefox 没有这一层，
-      改由胶囊自己的 backdrop-filter 模糊兜底。
-   2. 本体 ::after：一层 15% 的白。
-   3. 高光 .lg-light（所有浏览器都有）：轮廓往里 2.5px 的一条带，朝左上方光源最亮，
-      对侧一道镜像高光，整体不透明度 0.45；外加四周统一的一圈 4px 淡白边。
-      这两样加上折射最外侧那圈被压缩的内容，读出来就是玻璃边缘的厚度。
-   4. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
-   投影 0 10px 24px（12% 黑）不能留在胶囊本身（会被折射层读进去，见 .lg-shadow）。 */
+   液态玻璃移植自 ybouane/liquidglass：glass.js 把玻璃背后的页面截成图，在 WebGL 里用它的
+   片元着色器渲染（参数取其默认值；小块玻璃的弯边收窄、加原库胶囊按钮的磨砂）。自下而上：
+   1. 折射层 .lg-refract（WebGL 画布）：双凸玻璃的折射、色散、菲涅耳反射、内描边与边缘光
+      都在着色器里；纹理按双线性插值取样，放大、压缩处平滑。另加正上方来的光照：
+      弯边轻微的上亮下暗，以及只在轮廓最外缘的一道细高光（上沿最亮、下沿较弱的反光）。
+      内部不加白 —— 加在面上，深色底上就成了一层白雾。
+      截不到图或没有 WebGL 时不出现，胶囊保持自己的 backdrop-filter 模糊。
+   2. 本体 ::after：不叠白（清玻璃）。
+   3. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
+   投影同原库默认（不透明度 0.3、扩散 10px、下移 1px）。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
@@ -160,38 +157,48 @@ img { max-width: 100%; }
 }
 .nav .wrap, .language-toggle {
   position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
-  overflow: hidden; overflow: clip;         /* 裁掉折射层多出的那圈；clip 不会变成滚动容器 */
+  overflow: hidden; overflow: clip;         /* 圆角之外的画布裁掉；clip 不会变成滚动容器 */
   border: 0; border-radius: 999px; background: none;
-  /* Safari / Firefox 的兜底；Chromium 下 nav.js 会把它清掉，交给折射层 ——
-     胶囊自己带 backdrop-filter 时，子元素读到的背景就只剩胶囊内部了 */
+  /* WebGL 画布就绪前、以及截不到图时的兜底；画布接手后 glass.js 把它清掉 */
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   box-shadow: var(--lg-shadow);
 }
 .lg-refract {
-  position: absolute; inset: -15px; z-index: -3; pointer-events: none;   /* 实际值由 nav.js 按磨砂强度设定 */
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;
 }
-/* 投影的替身（仅 Chromium，由 nav.js 生成并对齐到胶囊）。投影若画在胶囊自己身上，
-   折射层的磨砂会把边外这圈灰影也读进来、晕进边缘，看上去像里面又套了一层胶囊。
-   外投影只画在盒子外面，所以挪到胶囊之后再画，样子完全一样，折射层却读不到它。 */
-.lg-shadow {
-  position: absolute; pointer-events: none;
-  border-radius: 999px; box-shadow: var(--lg-shadow);
-  transition: transform .5s var(--lg-spring);
+/* 相册页的放大镜（glass.js 生成）：圆形，开关打开后常驻。鼠标下跟随光标、不挡点击；
+   触屏上没有光标，改为用手指拖动（脚本给它打开 pointer-events）。
+   位置由脚本每帧写 translate 属性，出现 / 消失用 opacity 与 scale（scale 只绕自身中心，不影响位置） */
+.lg-loupe {
+  position: fixed; left: 0; top: 0; z-index: 45; pointer-events: none;
+  width: 170px; height: 170px; border-radius: 999px;
+  overflow: hidden; overflow: clip; isolation: isolate;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .16), 0 2px 6px rgba(0, 0, 0, .08);
+  opacity: 0; scale: .82;
+  transition: opacity .2s ease, scale .45s var(--lg-spring);
+  will-change: translate, transform; touch-action: none;
 }
-.language-toggle:hover + .lg-shadow { transform: scale(1.06); }   /* 跟着按钮一起鼓起 */
-.language-toggle:active + .lg-shadow { transform: scale(.95); transition-duration: .15s; }
-/* 体积：薄白本体与内侧的明暗 */
+.lg-loupe.on { opacity: 1; scale: 1; }
+.lg-loupe.drag { pointer-events: auto; cursor: grab; }
+@media (prefers-reduced-motion: reduce) { .lg-loupe { transition: opacity .15s ease; scale: 1; } }
+/* 标题旁的开关，样式同首页联系方式那排小胶囊；打开时描边与文字用主题蓝 */
+.gallery-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.loupe-toggle {
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
+  padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  background: var(--glass-fill); color: var(--fg);
+  border: 1px solid var(--rule); box-shadow: 0 2px 8px var(--glass-cast);
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.loupe-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.loupe-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: rgba(77, 110, 138, .08); }
+.loupe-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 本体：一层底色（默认不叠白） */
 .nav .wrap::after, .language-toggle::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
   border-radius: inherit;
   background: var(--lg-tint);
-}
-/* 边缘光：nav.js 按弯边几何算好的一张亮边图，铺满胶囊 */
-.lg-light {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  border-radius: inherit; background: no-repeat 0 0 / 100% 100%;
-  transition: opacity .2s ease;   /* 尺寸变化时 nav.js 先隐藏，重画后淡入 */
 }
 /* 光标处局部点亮：--mx / --my 由 nav.js 跟随指针写在胶囊上 */
 .lg-glow {
@@ -244,8 +251,10 @@ img { max-width: 100%; }
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
 }
 .nav a.language-pair {
-  /* 五个入口等宽，中英文切换后文字中心仍落在同一组位置。 */
-  display: grid; flex: 0 0 100px; text-align: center;
+  /* 入口至少 100px 宽，短的几个等宽；中英两种文字叠在同一格里，切换语言时宽度不变。
+     宽度按内容算、100px 只作下限：写成 flex-basis: 100px 的话，Safari 量胶囊宽度时
+     按 100px 算，比 100px 宽的入口（🖼️ Gallery、Publications）就被胶囊圆角裁掉一截。 */
+  display: grid; flex: 0 0 auto; min-width: 100px; text-align: center;
 }
 .nav-divider {
   /* 竖线两侧留出呼吸空间，避免相邻入口的悬停底色贴在线上。 */
@@ -275,75 +284,14 @@ img { max-width: 100%; }
   .nav .wrap::after, .language-toggle::after { background: rgba(255, 255, 255, .95); }
 }
 
-/* ☰ 菜单按钮：只在窄屏横幅里出现。三条线由一个 span 和它的前后伪元素画成，
-   展开时中间那条淡出、上下两条转成 ×。 */
-.nav-menu {
-  display: none; place-items: center;
-  flex: 0 0 44px; width: 44px; height: 50px; margin-left: auto; padding: 0;
-  border: 0; border-radius: 999px; background: none;
-  color: var(--fg); cursor: pointer;
-}
-.nav-menu:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
-.nav-menu span, .nav-menu span::before, .nav-menu span::after {
-  display: block; width: 18px; height: 2px; border-radius: 1px;
-  background: currentColor;
-  transition: transform .25s ease, background-color .2s ease;
-}
-.nav-menu span { position: relative; }
-.nav-menu span::before, .nav-menu span::after { content: ''; position: absolute; left: 0; }
-.nav-menu span::before { top: -6px; }
-.nav-menu span::after  { top: 6px; }
-.nav.open .nav-menu span { background-color: transparent; }
-.nav.open .nav-menu span::before { transform: translateY(6px) rotate(45deg); }
-.nav.open .nav-menu span::after  { transform: translateY(-6px) rotate(-45deg); }
-
 /* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
-   见 i18n.js 的 language-pair）。再窄就把菜单收成右上角一个玻璃圆，排在语言按钮
-   左边（与宽屏的先后顺序一致）；点开时这个圆以右边缘为锚向左下长成一张卡片，
-   竖排列出全部入口。
-   页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。
-
-   .wrap 绝对定位、.nav 固定 50px 高：展开的卡片浮在正文上面，
-   不会把下面的内容往下推。圆角始终 25px —— 50x50 时正好是圆，
-   长开后就是圆角卡片，形状是连续变过去的。 */
+   见 i18n.js 的 language-pair）。再窄就只留首页与相册两个入口（中间仍是分隔线），
+   整组靠到右上角，语言按钮在最右；正文的几个锚点在窄屏上往下滚就到。
+   最窄的 320px 手机：胶囊 233 + 间距 8 + 语言按钮 50 = 291，放得进两侧各留 14px 后的 292。
+   页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。 */
 @media (max-width: 660px) {
-  .nav {
-    width: auto; max-width: none; height: 50px; margin: 14px 14px 0;
-    justify-content: flex-end;
-  }
-  .nav .wrap {
-    position: absolute; top: 0; left: auto; right: 60px;   /* 60 = 语言按钮 50 + 间距 10 */
-    width: 50px; height: auto; max-height: 50px; padding: 0;
-    flex-wrap: wrap; align-content: flex-start; gap: 0;
-    overflow: hidden; overflow: clip; border-radius: 25px;
-    /* 收起用普通缓动：回弹会让卡片短暂缩得比圆还小 */
-    transition: width .3s cubic-bezier(.32,.72,0,1), max-height .3s cubic-bezier(.32,.72,0,1);
-  }
-  /* 展开带回弹，像一滴液体被拉开 */
-  .nav.open .wrap {
-    width: min(232px, calc(100% - 60px)); max-height: 340px; padding-bottom: 8px;
-    transition: width .5s var(--lg-spring), max-height .5s var(--lg-spring);
-  }
-  /* 展开的卡片与胶囊是同一块玻璃：模糊、折射都一样，只把白底调实一些，
-     入口文字整片压在正文上时更稳。白底随展开淡入 */
-  .nav .wrap::after { transition: background-color .3s ease; }
-  .nav.open .wrap::after { background-color: rgba(255, 255, 255, .45); }
-  .nav-menu { display: grid; order: -1; flex: 0 0 50px; width: 50px; height: 50px; margin: 0 0 0 auto; }
-  /* 入口行左右各缩进 8px：水滴与行同宽，贴满卡片会被圆角裁掉 */
-  .nav .wrap > a { flex: 0 0 calc(100% - 16px); margin: 0 8px; justify-items: start; text-align: left; padding: 11px 10px; }
-  /* 收起时所有入口设为 visibility: hidden：仅靠 overflow 藏起来，
-     Tab 键仍会聚焦到看不见的链接上。关闭时等收起动画走完再隐藏。 */
-  .nav .wrap > a, .nav .wrap > .nav-divider {
-    visibility: hidden;
-    transition: background .2s ease, box-shadow .2s ease, visibility 0s linear .3s;
-  }
-  .nav.open .wrap > a, .nav.open .wrap > .nav-divider {
-    visibility: visible; transition-delay: 0s;
-  }
-  .nav-divider {
-    flex: 0 0 calc(100% - 36px); height: 0; margin: 4px 18px;
-    border-left: 0; border-top: 1px solid var(--rule);
-  }
+  .nav { margin: 14px 14px 0 auto; gap: 8px; }
+  .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { display: none; }
 }
 
 /* ---------- 头部名片 ---------- */
