@@ -12,7 +12,7 @@
 ├── gallery/index.html  相册页，URL 为 /gallery/
 ├── CNAME               GitHub Pages 自定义域名，内容为 caozhijun.top
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
-├── caozhijun.top.png   域名证书；同目录的 caozhijun.top-sitemaps.zip 是旧站 sitemap 存档，两者都不进 git
+├── caozhijun.top.png   域名证书，本地保留、不进 git
 └── assets/
     ├── css/style.css   全站样式，配色沿用简历 LaTeX 的莫兰迪色板
     ├── fonts/          自托管字体（Inter + Newsreader 可变字体，167 KB）
