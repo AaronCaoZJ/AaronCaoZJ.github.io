@@ -72,7 +72,37 @@
     var root = document.documentElement;
     var W = root.clientWidth, H = Math.max(root.scrollHeight, document.body.scrollHeight);
     var body = document.body.cloneNode(true), jobs = [];
-    // 原件与克隆按文档顺序一一对应：先配对处理图片、视频、画布，再删掉导航等
+    // 原件与克隆按文档顺序一一对应。
+    // 先把直接装着文字的块（段落、标题、列表项……）的高度照原件钉死：截图里的字未必和页面在
+    // 同一处折行（字体晚一步生效、各家手机浏览器对字号的处理不同……），多折一行，它下面的内容
+    // 就全低一行，一路累加，玻璃里的背景越往下滚错得越远。钉住之后，折行不同只影响那一块内部。
+    // 普通的块容器不动：给它写死高度，它最后一个子元素的下边距就不再穿出去与外面合并，
+    // 后面的内容反而会上移。SVG（地图）、跑马灯里的照片本来就有固定尺寸，跳过
+    var oAll = document.body.querySelectorAll('*'), cAll = body.querySelectorAll('*'), boxes = new Map(), q, el;
+    for (q = 0; q < oAll.length; q++) {
+      el = oAll[q];
+      if (el.namespaceURI !== 'http://www.w3.org/1999/xhtml' || nav.contains(el) || el.closest('[data-lg-live]')) continue;
+      var es = getComputedStyle(el);
+      boxes.set(el, { d: es.display, h: es.height, out: es.position === 'absolute' || es.position === 'fixed' });
+    }
+    for (q = 0; q < oAll.length; q++) {
+      var bx = boxes.get(oAll[q]);
+      if (!bx || bx.d === 'none' || bx.d === 'inline' || bx.d === 'contents' || bx.d.indexOf('table') === 0) continue;
+      var hasInline = false, hasBlock = false;
+      for (var kid = oAll[q].firstChild; kid; kid = kid.nextSibling) {
+        if (kid.nodeType === 3) { if (/\S/.test(kid.nodeValue)) hasInline = true; continue; }
+        if (kid.nodeType !== 1) continue;
+        var kb = boxes.get(kid);
+        if (!kb) hasInline = true;                                   // 内嵌的 SVG 等：按行内替换元素算
+        else if (kb.d === 'none' || kb.d === 'contents' || kb.out) continue;
+        else if (kb.d.indexOf('inline') === 0) hasInline = true;
+        else hasBlock = true;
+      }
+      // 弹性 / 网格容器也钉：里面的条目变宽了会多折一排（联系方式那排小胶囊），
+      // 而它们的子元素边距本来就不往外合并，写死高度没有上面说的副作用
+      if (/flex|grid/.test(bx.d) || (hasInline && !hasBlock)) cAll[q].style.height = bx.h;
+    }
+    // 再配对处理图片、视频、画布，最后删掉导航等
     var sel = 'img, video, canvas', oList = document.body.querySelectorAll(sel), cList = body.querySelectorAll(sel);
     for (var i = 0; i < oList.length; i++) (function (o, c) {
       if (nav.contains(o) || o.hasAttribute('data-lg-skip')) return;   // 纯装饰的动画画布（如头像的去噪动效）不截
@@ -619,6 +649,14 @@
     }
   }).observe(document.body, { subtree: true, childList: true, characterData: true,
                               attributes: true, attributeFilter: ['hidden', 'src', 'open'] });
+  // 图片、视频晚到：自身尺寸变了，页面总高却不一定变（并排布局里行高由旁边的文字决定，
+  // 比如论文卡片的视频从封面换成画面），下面按总高判断的那条察觉不到。跑马灯里的照片是实时画的，不算
+  function mediaChanged() { if (scene || capturing) recapture(); }
+  document.addEventListener('load', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !nav.contains(t) && !t.closest('[data-lg-live]')) mediaChanged();
+  }, true);
+  videos.forEach(function (vd) { vd.addEventListener('loadedmetadata', mediaChanged); });
   // 页面高度变化（如图片晚到、折叠展开）。正在截的时候长高也要算：截图用的是开始那一刻的排版，
   // 手机上第一次截图要好几秒，图片恰好在这期间陆续到齐 —— 漏掉的话那张旧截图会一直用下去，
   // 玻璃里的背景越往下滚错得越远。（还没开始截时不必管，首次截图自己会来）
