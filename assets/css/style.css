@@ -160,7 +160,7 @@ img { max-width: 100%; }
   width: fit-content; max-width: calc(100% - 28px);
   margin: 14px auto 0;
 }
-.nav .wrap, .language-toggle, .loupe-fab {
+.nav .wrap, .language-toggle, .dock-btn {
   position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
   overflow: hidden; overflow: clip;         /* 圆角之外的画布裁掉；clip 不会变成滚动容器 */
   border: 0; border-radius: 999px; background: none;
@@ -187,36 +187,34 @@ img { max-width: 100%; }
 .lg-loupe.on { opacity: 1; scale: 1; }
 .lg-loupe.drag { pointer-events: auto; cursor: grab; }
 @media (prefers-reduced-motion: reduce) { .lg-loupe { transition: opacity .15s ease; scale: 1; } }
-/* 放大镜的开关：右下角一颗圆形玻璃钮，与右上角的语言按钮同款（玻璃的底子与它共用上面的规则，
-   glass.js 同样给它画折射）。固定定位，不随页面滚动；底部让开手机的安全区。
-   打开时外圈一道主题蓝 —— 画在外面，内圈会被折射画布盖住 */
-.loupe-fab {
+/* 相册页右下角的悬浮按钮组：显示模式开关（胶囊，滚动 / 列表）+ 放大镜开关（圆钮，靠角落）。
+   固定在视口里，滚到哪都能点；底部让开手机的安全区。两颗都是玻璃 —— 底子与导航共用上面的规则，
+   glass.js 同样给它们画折射 —— 与右上角的「导航胶囊 + 语言圆钮」一上一下呼应。
+   它们单独浮在页面上，投影比导航略重一点，才看得出是按钮。
+   胶囊上写的是点了之后会切到的模式（与语言按钮同一个逻辑）；放大镜打开时外圈一道主题蓝，
+   画在外面是因为内圈会被折射画布盖住 */
+.gallery-dock {
   position: fixed; z-index: 46;                 /* 压在放大镜（45）上面，拖过来也点得到 */
   right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  width: 50px; height: 50px; padding: 0;
-  display: grid; place-items: center;
-  font-size: 20px; line-height: 1; color: var(--fg); cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+}
+.dock-btn {
+  height: 50px; padding: 0 18px;
+  display: grid; place-items: center; white-space: nowrap;
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700; letter-spacing: .02em;
+  color: var(--fg); cursor: pointer;
+  text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .1), 0 0 1px rgba(0, 0, 0, .06);
   transition: transform .5s var(--lg-spring), box-shadow .2s ease;
 }
-.loupe-fab:hover { transform: scale(1.06); }
-.loupe-fab:active { transform: scale(.95); transition-duration: .15s; }
-.loupe-fab[aria-pressed="true"] { box-shadow: var(--lg-shadow), 0 0 0 2px var(--accent); }
-.loupe-fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-/* 标题旁的显示模式开关（滚动 / 列表），样式同首页联系方式那排小胶囊。
-   上面写的是点了之后会切到的模式，与语言按钮同一个逻辑 */
-.gallery-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
-.view-toggle {
-  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
-  padding: 5px 12px; border-radius: 999px; cursor: pointer;
-  background: var(--glass-fill); color: var(--fg);
-  border: 1px solid var(--rule); box-shadow: 0 2px 8px var(--glass-cast);
-  transition: border-color .18s ease, color .18s ease, background .18s ease;
-}
-.view-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.view-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dock-btn:hover { transform: scale(1.05); }
+.dock-btn:active { transform: scale(.95); transition-duration: .15s; }
+.dock-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .view-toggle[data-mode="scroll"] .to-scroll, .view-toggle[data-mode="list"] .to-list { display: none; }
+.loupe-fab { width: 50px; padding: 0; font-size: 20px; line-height: 1; text-shadow: none; }
+.loupe-fab[aria-pressed="true"] { box-shadow: 0 4px 18px rgba(0, 0, 0, .1), 0 0 0 2px var(--accent); }
 /* 本体：一层底色（默认不叠白） */
-.nav .wrap::after, .language-toggle::after, .loupe-fab::after {
+.nav .wrap::after, .language-toggle::after, .dock-btn::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
   border-radius: inherit;
   background: var(--lg-tint);
@@ -229,7 +227,7 @@ img { max-width: 100%; }
               rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 70%);
   opacity: 0; transition: opacity .35s ease;
 }
-.nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow, .loupe-fab:hover > .lg-glow { opacity: 1; }
+.nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow, .dock-btn:hover > .lg-glow { opacity: 1; }
 /* 悬停水滴（nav.js 的 liquidLens）：本身也是一小块玻璃，跟着指针在入口之间滑，
    换位时被拉长再弹回 */
 .liquid-lens {
@@ -301,8 +299,8 @@ img { max-width: 100%; }
 
 /* 系统开了"降低透明度"：玻璃改成近乎实心，折射也不挂（nav.js 同样会跳过） */
 @media (prefers-reduced-transparency: reduce) {
-  .nav .wrap, .language-toggle, .loupe-fab { backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .nav .wrap::after, .language-toggle::after, .loupe-fab::after { background: rgba(255, 255, 255, .95); }
+  .nav .wrap, .language-toggle, .dock-btn { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .nav .wrap::after, .language-toggle::after, .dock-btn::after { background: rgba(255, 255, 255, .95); }
 }
 
 /* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，

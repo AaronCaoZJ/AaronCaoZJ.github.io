@@ -86,6 +86,9 @@
 
   /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */
   .bleed { width: 100vw; margin-left: calc(50% - 50vw); }
+  /* 100vw 把竖向滚动条的宽度也算进去了：滚动条占位的系统（如 Windows）上会多出十几像素，
+     顶出一条横向滚动条。在 main 这一层裁掉（clip 不会变成滚动容器，不影响吸顶的导航） */
+  main { overflow-x: clip; }
 
   @media (max-width: 700px) {
     .track figure { height: 180px !important; }
@@ -93,8 +96,11 @@
     .track figure.h1, .track figure.h3 { --y: 0px; }
   }
 
+  /* 窄屏上页脚的文字是居中的，会被右下角的悬浮按钮组挡住：滚到底时给它让出位置 */
+  @media (max-width: 700px) { footer.wrap { padding-bottom: 92px; } }
+
   /* ============ 列表模式 ============
-     标题旁的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
+     右下角的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
      每张保持原比例（--ar 由页尾脚本从图片的宽高属性算出），用于循环的那份副本不显示。
      flex-grow 与 flex-basis 都按宽高比给，同一行各张被拉伸后高度相同；末尾那个空元素吃掉
      最后一行的余量，最后一行才不会被拉得特别高。宽度收回到正文栏，不再铺满视口。
@@ -168,12 +174,7 @@
 <main>
 
   <section class="intro wrap" style="padding-top:56px">
-    <div class="gallery-head rise">
-      <h2 data-i18n="gallery.heading">🖼️ Gallery</h2>
-      <button class="view-toggle" type="button" data-view-toggle data-mode="scroll">
-        <span class="to-list" data-i18n="gallery.toList">📋 List view</span><span class="to-scroll" data-i18n="gallery.toScroll">🎞️ Scroll view</span>
-      </button>
-    </div>
+    <h2 class="rise" data-i18n="gallery.heading">🖼️ Gallery</h2>
     <p class="rise" style="margin-top:16px" data-i18n="gallery.welcome"><strong>Welcome to my gallery!</strong></p>
     <p class="rise" data-i18n="gallery.intro">
       Photography is one of the ways I pay attention to the world. The images below
@@ -269,11 +270,16 @@
   <span data-i18n="footer.updated">Last Update: Sep. 2026</span>
 </footer>
 
-<!-- 放大镜开关：右下角的玻璃圆钮，玻璃就绪后由 glass.js 露出。
-     data-lg-pane 让它也被画成液态玻璃，data-lg-skip 不让它进背景截图 -->
-<button class="loupe-fab" type="button" aria-pressed="false" aria-label="Magnifier" title="Magnifier"
-        data-i18n-aria-label="gallery.loupe" data-i18n-title="gallery.loupe"
-        data-lg-loupe-toggle data-lg-pane data-lg-skip hidden>🔍</button>
+<!-- 右下角的悬浮按钮组：显示模式开关 + 放大镜开关（后者要等玻璃就绪才由 glass.js 露出）。
+     data-lg-pane 让按钮也被画成液态玻璃，data-lg-skip 不让这一组进背景截图 -->
+<div class="gallery-dock" data-lg-skip>
+  <button class="dock-btn view-toggle" type="button" data-view-toggle data-mode="scroll" data-lg-pane>
+    <span class="to-list" data-i18n="gallery.toList">📋 List view</span><span class="to-scroll" data-i18n="gallery.toScroll">🎞️ Scroll view</span>
+  </button>
+  <button class="dock-btn loupe-fab" type="button" aria-pressed="false" aria-label="Magnifier" title="Magnifier"
+          data-i18n-aria-label="gallery.loupe" data-i18n-title="gallery.loupe"
+          data-lg-loupe-toggle data-lg-pane hidden>🔍</button>
+</div>
 
 
 <script>

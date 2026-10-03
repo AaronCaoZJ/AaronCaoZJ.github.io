@@ -299,7 +299,7 @@
     views.push(v);
     return v;
   }
-  // 导航的两块，加上页面里标了 data-lg-pane 的（相册页右下角的放大镜开关）
+  // 导航的两块，加上页面里标了 data-lg-pane 的（相册页右下角那组悬浮按钮）
   var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
     .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
   for (var i = 0; i < panes.length; i++) {
