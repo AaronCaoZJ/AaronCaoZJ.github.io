@@ -114,30 +114,28 @@
 
   /* ============ 列表模式 ============
      简介下面的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
-     每张保持原比例（--ar 由页尾脚本从图片的宽高属性算出），用于循环的那份副本不显示。
-     flex-grow 与 flex-basis 都按宽高比给，同一行各张被拉伸后高度相同；末尾那个空元素吃掉
-     最后一行的余量，最后一行才不会被拉得特别高。宽度收回到正文栏，不再铺满视口。
-     基准宽度按容器算：一行放得下三张横图 —— --units 4.85 比两张 3:2 加一张 16:9（1.5 + 1.5 + 1.78）
-     略大，--gaps 是这一行里的两个间距。窄屏也是一行三张，照片跟着缩小，只把间距收窄。
-     写死一个行高的话，换个宽度就时而两张时而三张，只有两张的那行会被拉得特别高 */
+     每张保持原比例，用于循环的那份副本不显示。宽度收回到正文栏，不再铺满视口。
+     分行由页尾脚本算好（见「显示模式」），写在每张照片上：--ar 是它的宽高比，--units 是它
+     所在那一行的宽高比之和，--k 是那一行的间距数。基准宽度 = 去掉间距后的行宽 × --ar / --units，
+     一行正好排满，下一张放不下就折行；flex-grow 也按宽高比给，同一行各张高度相同。
+     一行大约三张横图，窄屏也是这个分法，照片跟着缩小，只把间距收窄。 */
   main.list .marquee {
     width: auto; max-width: var(--w); margin: 0 auto; padding: 18px 22px 6px;
     overflow: visible; -webkit-mask-image: none; mask-image: none;
   }
   main.list .track {
-    --units: 4.85; --gaps: 20px;
-    width: auto; flex-wrap: wrap; gap: 10px; padding-right: 0;
+    --gap: 10px;
+    width: auto; flex-wrap: wrap; gap: var(--gap); padding-right: 0;
     animation: none; transform: none;
   }
-  main.list .track::after { content: ''; flex: 1000 1 0; }
   main.list .track figure {
     --y: 0px; height: auto !important;
-    flex: var(--ar, 1.5) 1 calc(var(--ar, 1.5) * (100% - var(--gaps)) / var(--units));
+    flex: var(--ar, 1.5) 1 calc(var(--ar, 1.5) * (100% - var(--k, 2) * var(--gap)) / var(--units, 4.5));
     aspect-ratio: var(--ar, 1.5);
   }
   main.list .track figure[aria-hidden="true"] { display: none; }
   main.list .track img { width: 100%; height: 100%; object-fit: cover; }
-  @media (max-width: 700px) { main.list .track { --gaps: 12px; gap: 6px; } }
+  @media (max-width: 700px) { main.list .track { --gap: 6px; } }
   /* ============ 彩蛋 ============
      点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
      pointer-events:none，所以不挡任何交互，也不参与轮播的布局。 */
@@ -349,9 +347,33 @@
   var box = document.querySelector('[data-view-switch]'), main = document.querySelector('main');
   if (!box || !main) return;
   var tracks = document.querySelectorAll('.track'), opts = box.querySelectorAll('[data-view]');
-  [].forEach.call(document.querySelectorAll('.track img'), function (im) {
-    var w = +im.getAttribute('width'), h = +im.getAttribute('height');
-    if (w && h) im.parentNode.style.setProperty('--ar', (w / h).toFixed(4));
+  // 列表的分行：一栏的照片整体分，让每行的宽高比之和尽量接近 ROW（三张 3:2 的横图），
+  // 取各行偏差平方和最小的分法。逐行"放不下就折行"的话，最后常常只剩一张孤零零的；
+  // 整体分时那一张会并进前面某一行，那行四张、略矮一些。分行只看宽高比，与窗口宽度无关。
+  var ROW = 4.5;
+  [].forEach.call(tracks, function (tr) {
+    var figs = tr.querySelectorAll('figure:not([aria-hidden])'), n = figs.length, i, j;
+    var sum = [0], cost = [0], from = [0];
+    for (i = 0; i < n; i++) {
+      var im = figs[i].querySelector('img'), ar = im.getAttribute('width') / im.getAttribute('height') || 1.5;
+      figs[i].style.setProperty('--ar', ar.toFixed(4));
+      sum.push(sum[i] + ar);
+    }
+    for (i = 1; i <= n; i++) {
+      cost[i] = Infinity;
+      for (j = 0; j < i; j++) {
+        var d = sum[i] - sum[j] - ROW, c = cost[j] + d * d;
+        if (c < cost[i]) { cost[i] = c; from[i] = j; }
+      }
+    }
+    for (i = n; i > 0; i = j) {
+      j = from[i];
+      // 多留千分之二，免得各张宽度取整后加起来超出一点，把最后一张挤到下一行
+      for (var k = j; k < i; k++) {
+        figs[k].style.setProperty('--units', ((sum[i] - sum[j]) * 1.002).toFixed(4));
+        figs[k].style.setProperty('--k', i - j - 1);
+      }
+    }
   });
   box.addEventListener('click', function (e) {
     var opt = e.target.closest && e.target.closest('[data-view]');
