@@ -648,6 +648,7 @@
       }
       sc.restore();
       st.up = false;
+      if (!healing && !healT) healT = heal(400);
     }
 
     // 纹理：没有实时内容就用整张底图（只在它重画后上传一次）；有就拷出取样范围、把实时内容画上去再上传
@@ -718,10 +719,23 @@
     if (easing) views.forEach(function (v) { v.rescan = true; });
     var moving = loupe ? loupe.step() : false;
     groups.forEach(function (g) { if (renderGroup(g, now)) moving = true; });
+    healing = false;
     // 还有在动的、有过渡没走完、或刚滚动 / 触摸过（见 follow）：下一帧接着看
     if (moving || easing || now < keepUntil) schedule();
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
+  /* 底图画好以后会用很久。Safari 把截图（SVG）画进画布时，嵌在里面的图片要是还没载入、解码完，那一处就是
+     空的，等它好了也不会自己补上 —— 玻璃下的图片就「透不出来」。所以每次画过底图，等滚动停下来再整张
+     重画一次（这一次不再触发下一次）；刚截完图时图片最容易没到齐，runCapture 那边再多补两次 */
+  var healT = 0, healing = false;
+  function heal(ms) {
+    return setTimeout(function again() {
+      if (performance.now() < keepUntil) { healT = setTimeout(again, 200); return; }
+      healT = 0; healing = true; liveVer++;
+      views.forEach(function (v) { v.rescan = true; });
+      schedule();
+    }, ms);
+  }
   /* 不动的照片（相册的列表模式）烘在底图里，玻璃不逐帧重画。但照片悬停（触屏上是点一下）会在原位
      放大，切换显示模式时也要挪一下位置，都带一小段过渡 —— 这样的照片记进 hot，改为实时画，
      过渡期间逐帧重画，玻璃里的照片跟着变。逐帧重画只管挨着玻璃的照片（放宽 60px，盖住放大与错落
@@ -908,6 +922,7 @@
       scene = cap; sceneVer++; layoutVer++;
       goLive();
       schedule();
+      [1500, 4000].forEach(function (ms) { setTimeout(function () { if (scene === cap && !healT) healT = heal(0); }, ms); });
     }, function () {}).then(function () {
       capturing = false;
       if (again) { again = false; recapture(); }

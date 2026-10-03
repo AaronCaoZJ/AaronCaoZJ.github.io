@@ -93,7 +93,7 @@
 </script>
 <script src="assets/js/i18n.js?v=20261003switch" defer></script>
 <script src="assets/js/nav.js?v=20261003lean" defer></script>
-<script src="assets/js/glass.js?v=20261003chroma" defer></script>
+<script src="assets/js/glass.js?v=20261003heal" defer></script>
 </head>
 <body>
 
@@ -494,7 +494,8 @@
 
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.play().catch(function () {}); }
+      // 浏览器不许自动播放时（如 iPhone 开着低电量模式）给出播放控件，至少能手动点开
+      if (e.isIntersecting) { e.target.play().catch(function (err) { if (err && err.name === 'NotAllowedError') e.target.controls = true; }); }
       else { e.target.pause(); }
     });
   }, { threshold: 0.25 });
