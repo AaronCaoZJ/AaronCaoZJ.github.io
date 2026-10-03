@@ -198,6 +198,14 @@ img { max-width: 100%; }
   right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; gap: 10px;
 }
+/* 手机浏览器的地址栏 / 工具栏随滚动收起、展开时，贴着底边的固定元素会跟着视口底边挪位置，
+   页面内容却没动 —— 玻璃里的背景一时对不上，收放完才跳过去。改成从视口顶边往下量
+   （svh 是工具栏展开时的视口高度；64 = 按钮高 50 + 边距 14）：工具栏怎么收放，它相对页面内容
+   都不动，与吸顶的导航是同一个道理。代价是工具栏收起后它不再贴到最底，而是留在原处。
+   桌面上 svh 就是视口高度，位置与上面那条一样 */
+@supports (height: 100svh) {
+  .gallery-dock { top: calc(100svh - 64px - env(safe-area-inset-bottom, 0px)); bottom: auto; }
+}
 .dock-btn {
   height: 50px; padding: 0 18px;
   display: grid; place-items: center; white-space: nowrap;

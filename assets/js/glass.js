@@ -515,16 +515,28 @@
     return animating;
   }
 
-  var raf = 0;
+  var raf = 0, keepUntil = 0;
   function frame(now) {
     raf = 0;
     if (!live) return;
     var moving = loupe ? loupe.step() : false;
     views.forEach(function (v) { if (render(v, now)) moving = true; });
-    if (moving) schedule();                 // 还有在动的：下一帧接着看
+    if (moving || now < keepUntil) schedule();   // 还有在动的、或刚滚动 / 触摸过（见 follow）：下一帧接着看
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
-  window.addEventListener('scroll', schedule, { passive: true });
+  /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（相册页的悬浮按钮）会跟着视口
+     挪位置，页面却没有滚动、也不发 scroll 事件，收放完才来一个 resize —— 玻璃里的背景停在旧位置，
+     等下一次滚动才突然跳过去。所以滚动、触摸、视口变化之后再连着看半秒：位置没变的帧只是读一下
+     包围盒、不重画；视口一变也马上重画，不等下一次滚动 */
+  function follow() { keepUntil = performance.now() + 500; schedule(); }
+  window.addEventListener('scroll', follow, { passive: true });
+  window.addEventListener('touchmove', follow, { passive: true });
+  window.addEventListener('touchend', follow, { passive: true });
+  window.addEventListener('resize', follow);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', follow);
+    window.visualViewport.addEventListener('scroll', follow);
+  }
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(schedule);
     views.forEach(function (v) { ro.observe(v.pane); });
