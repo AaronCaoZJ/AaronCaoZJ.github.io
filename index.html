@@ -527,26 +527,21 @@
 
 <script>
 /* ------------------------------------------------------------------
-   头像入场动效：latent diffusion + rectified flow 的视觉复刻。
+   头像入场动效：DDPM（Ho et al. 2020）的采样过程，按公式算。
 
-   路径用 rectified flow 的直线插值（SD3 / Flux 的做法）：
-       x_t = (1 - t) * x_0 + t * eps,   t: 1 -> 0
-   这恰好就是 canvas 的 alpha 合成公式，于是整段可以纯靠
-   globalAlpha + drawImage 完成，走 GPU，不必逐像素读写，
-   也就不受 tainted canvas 的跨源限制。
-   （DDPM 是球面路径 sqrt(abar)*x0 + sqrt(1-abar)*eps，
-     系数平方和为 1，那个就必须逐像素算了。）
+   DDPM 在像素空间里做，噪声逐像素独立、颗粒大小固定。前向过程的边缘分布是
+       x_t = sqrt(abar_t) * x_0 + sqrt(1 - abar_t) * eps
+   两个系数的平方和为 1（保方差）。它不是画布透明度混合那样的凸组合（那是 rectified flow 的
+   直线路径 (1 - t) * x_0 + t * eps，系数的和为 1），所以这里逐像素算，不靠 globalAlpha。
 
-   噪声不在像素空间采样，而是先在低分辨率“latent”上生成，
-   再由 drawImage 平滑上采样 —— 模拟 VAE 解码，得到块状而非
-   针尖状的颗粒。
+   采样用原文的祖先采样：从 x_T ~ N(0, I) 出发，每一步
+       x_{t-1} = c0 * x0_hat + c1 * x_t + sigma_t * z
+   其中 c0、c1 是后验均值 q(x_{t-1} | x_t, x_0) 的两个系数，sigma_t^2 是后验方差，z 是新抽的噪声。
+   也就是说每步保留上一步的大部分内容，只补一小份新噪声 —— 画面是连续演化的，不是每步整张重撒。
+   从 T = 1000 步里等间隔取 20 步来走（跨步采样），系数按跨过的那一段重新算。
 
-   关键点：混合进去的不是成品图，而是随 t 变化的“当前预测”
-   x_hat_0(t)。真实采样跑的是反向过程，早期模型只能给出粗糙
-   模糊、细节尚不存在的估计；若始终拿成品图去混噪声，得到的
-   只是前向加噪的倒放 —— 看上去像给照片盖了层噪声，而不是
-   把照片一点点生成出来。这里用降采样再上采样来模拟受 latent
-   分辨率限制的预测，并让饱和度、对比度一同从低到高恢复。
+   没有真的网络，x0_hat（模型在第 t 步对成品图的估计）用模糊的头像代替：噪声越大，估计越模糊；
+   真实的模型在高噪声时给出的也是一个只有大轮廓的平均图。
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
@@ -556,89 +551,97 @@
   var ctx    = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
 
-  var STEPS  = 20;    // 采样步数
+  var STEPS  = 20;    // 采样步数：从 T 步里等间隔取
   var DT     = 45;    // 每步毫秒（20 x 45ms 约 0.90s）
-  var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
-  var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
-  var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
-  var GAMMA  = 1.35;  // 预测清晰度的回升曲线：>1 表示结构在中段快速涌现
+  var T      = 1000;  // 训练时的总步数
+  var R      = 230;   // 像素网格的边长：采样在 R x R 上做，再放大到画布
+  var COARSE = 16;    // 噪声最大时 x0_hat 的模糊程度（相当于降采样的倍率）
+  var GAMMA  = 1.35;  // x0_hat 清晰度的回升曲线：>1 表示结构在中段较快涌现
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // 低分辨率噪声画布，充当 latent
-  var nz = document.createElement('canvas');
-  var nctx = nz.getContext('2d');
-  // 当前步的预测图 x_hat_0(t)，同样先降到低分辨率
-  var pr = document.createElement('canvas');
-  var pctx = pr.getContext('2d');
-  pctx.imageSmoothingEnabled = true;
-  pctx.imageSmoothingQuality = 'high';
+  // 噪声表：原文的线性 beta（1e-4 -> 0.02）。abar[t] 是 alpha_1 … alpha_t 的连乘，abar[0] = 1
+  var abar = new Float64Array(T + 1), i;
+  abar[0] = 1;
+  for (i = 1; i <= T; i++) abar[i] = abar[i - 1] * (1 - (1e-4 + (0.02 - 1e-4) * (i - 1) / (T - 1)));
 
-  // Box-Muller
-  var spare = null;
-  function gauss() {
-    if (spare !== null) { var v = spare; spare = null; return v; }
-    var u1 = Math.random() || 1e-9, u2 = Math.random();
-    var r = Math.sqrt(-2 * Math.log(u1)), th = 2 * Math.PI * u2;
-    spare = r * Math.sin(th);
-    return r * Math.cos(th);
+  // 标准正态随机数（Box-Muller）。先备好一池，每步从随机位置起顺序取，省得逐像素现算
+  var POOL = 1 << 18, pool = null;
+  function fillPool() {
+    pool = new Float32Array(POOL);
+    for (var j = 0; j < POOL; j += 2) {
+      var u1 = Math.random() || 1e-9, u2 = Math.random();
+      var r = Math.sqrt(-2 * Math.log(u1)), th = 2 * Math.PI * u2;
+      pool[j] = r * Math.cos(th); pool[j + 1] = r * Math.sin(th);
+    }
   }
 
-  function fillLatent(t) {
-    var scale = FINE + (COARSE - FINE) * t;
-    var n = Math.max(2, Math.round(W / scale));
-    nz.width = n; nz.height = n;                 // 改尺寸即清空
-    var d = nctx.createImageData(n, n), a = d.data;
-    for (var i = 0; i < a.length; i += 4) {
-      // 三通道共享一部分分量，制造成片的偏色 —— latent 解码后的典型观感
-      var base = gauss() * 34 * CHROMA, ind = 34 * (1 - CHROMA);
-      a[i]     = 128 + base + gauss() * ind;
-      a[i + 1] = 128 + base + gauss() * ind;
-      a[i + 2] = 128 + base + gauss() * ind;
-      a[i + 3] = 255;
+  var N = R * R;
+  var x = new Float32Array(N * 3);                // 当前的 x_t；图像的取值范围记作 [-1, 1]
+  function mk(n, read) {
+    var c = document.createElement('canvas');
+    c.width = c.height = n;
+    var g = c.getContext('2d', read ? { willReadFrequently: true } : undefined);
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    return g;
+  }
+  var lo = mk(2), hi = mk(R, true), disp = mk(R), out = disp.createImageData(R, R);
+
+  /* 第 t 步的 x0_hat：头像先缩小再放大回 R x R（丢掉细节），噪声越大缩得越狠 */
+  function predict(t) {
+    var q = Math.pow(Math.sqrt(1 - abar[t]), GAMMA);
+    var n = Math.max(2, Math.round(R / (1 + (COARSE - 1) * q)));
+    lo.canvas.width = lo.canvas.height = n;       // 改尺寸即清空
+    lo.drawImage(img, 0, 0, n, n);
+    hi.drawImage(lo.canvas, 0, 0, R, R);
+    return hi.getImageData(0, 0, R, R).data;
+  }
+
+  /* 把 x_t 画出来：[-1, 1] 映到 [0, 255]，超出的部分截掉（显示 DDPM 的中间结果都是这样） */
+  function show() {
+    var d = out.data;
+    for (var a = 0, b = 0; a < N * 3; a += 3, b += 4) {
+      d[b] = (x[a] + 1) * 127.5; d[b + 1] = (x[a + 1] + 1) * 127.5; d[b + 2] = (x[a + 2] + 1) * 127.5; d[b + 3] = 255;
     }
-    nctx.putImageData(d, 0, 0);
+    disp.putImageData(out, 0, 0);
+    ctx.drawImage(disp.canvas, 0, 0, W, H);
   }
 
   var running = false;
-
-  /* 当前步的预测 x_hat_0(t)：分辨率受限 + 色彩未完全恢复。
-     用 GAMMA 让结构在中段快速涌现，而不是随 t 线性变清晰。 */
-  function drawPred(t) {
-    var q = Math.pow(t, GAMMA);
-    var scale = 1 + (COARSE - 1) * q;
-    var n = Math.max(2, Math.round(W / scale));
-    pr.width = n; pr.height = n;
-    pctx.drawImage(img, 0, 0, n, n);              // 降采样：丢掉高频细节
-    ctx.filter = 'saturate(' + (1 - 0.45 * q).toFixed(3) + ') ' +
-                 'contrast(' + (1 - 0.12 * q).toFixed(3) + ')';
-    ctx.drawImage(pr, 0, 0, W, H);                // 上采样回画布
-    ctx.filter = 'none';
-  }
-
-  function render(t) {
-    fillLatent(t);
-    ctx.globalAlpha = 1;
-    drawPred(t);                                  // x_hat_0(t)，而非成品图
-    ctx.globalAlpha = t;                          // 直线路径的 sigma
-    ctx.drawImage(nz, 0, 0, W, H);                // latent 噪声，上采样时自动平滑
-    ctx.globalAlpha = 1;
-  }
+  function done() { wrap.classList.remove('fx-on'); running = false; }   // 淡出画布，露出原图
 
   function play() {
     if (running || !img.naturalWidth) return;
     running = true;
+    if (!pool) fillPool();
+    var m = POOL - 1, o = (Math.random() * POOL) | 0, a;
+    for (a = 0; a < N * 3; a++) x[a] = pool[(o + a) & m];   // x_T ~ N(0, I)
+    show();
     wrap.classList.add('fx-on');
     var k = 0;
-    (function step() {
-      render(1 - k / STEPS);
-      if (k++ < STEPS) { setTimeout(step, DT); return; }
-      wrap.classList.remove('fx-on');            // 淡出画布，露出原图
-      running = false;
-    })();
+    setTimeout(function step() {
+      if (k >= STEPS) { done(); return; }
+      // 这一步从 t 走到 tp（跨步）。at、ap 是两头的 abar，al、be 是跨过这一段的 alpha、beta
+      var t = Math.round(T * (1 - k / STEPS)), tp = Math.round(T * (1 - (k + 1) / STEPS));
+      var at = abar[t], ap = abar[tp], al = at / ap, be = 1 - al;
+      var c0 = Math.sqrt(ap) * be / (1 - at);               // 后验均值里 x0_hat 的系数
+      var c1 = Math.sqrt(al) * (1 - ap) / (1 - at);         // 后验均值里 x_t 的系数
+      var sg = Math.sqrt((1 - ap) / (1 - at) * be);         // 后验标准差；最后一步（tp = 0）为 0
+      var p;
+      try { p = predict(t); } catch (e) { done(); return; } // 读不了像素（画布被污染）：直接露出原图
+      o = (Math.random() * POOL) | 0;
+      for (var a = 0, b = 0; a < N * 3; a += 3, b += 4) {
+        x[a]     = c0 * (p[b]     / 127.5 - 1) + c1 * x[a]     + sg * pool[(o + a) & m];
+        x[a + 1] = c0 * (p[b + 1] / 127.5 - 1) + c1 * x[a + 1] + sg * pool[(o + a + 1) & m];
+        x[a + 2] = c0 * (p[b + 2] / 127.5 - 1) + c1 * x[a + 2] + sg * pool[(o + a + 2) & m];
+      }
+      show();
+      k++;
+      setTimeout(step, DT);
+    }, DT);
   }
 
   if (img.complete) play();
