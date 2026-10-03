@@ -246,8 +246,9 @@
        在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
        小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
      - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素）；
-       Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。 */
-  var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .05, edgeHL: .05, fresnel: 1, pad: 20,
+       Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
+     - 色散：原库默认 0.05，这里取 0.08 —— 弯边上的彩色镶边再明显一点。 */
+  var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
             frost: 3.1, loupeMag: 2, loupeZ: 24,
             shade: .015, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
