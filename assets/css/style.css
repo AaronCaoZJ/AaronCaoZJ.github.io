@@ -93,7 +93,7 @@
 
   /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节。
      取值对照 liquid-dom（github.com/AndrewPrifer/liquid-dom）的默认值 */
-  --lg-tint:        rgba(255, 255, 255, 0);     /* 不叠白：同 ybouane/liquidglass，清玻璃 */
+  --lg-tint:        rgba(255, 255, 255, .1);    /* 只叠一成白：压在深色照片上略微发白，浅色底上看不出 */
   --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
   /* 原库默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度只留原值的一小部分：
      原值（0.3）在浅色页面上显得重 */
@@ -106,7 +106,12 @@
    display 声明（如 .news li 的 display:grid）覆盖，必须显式兜底。 */
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+html {
+  scroll-behavior: smooth; scroll-padding-top: 72px;
+  /* iOS Safari 会自作主张放大文字（横屏时，或把一份文档当成桌面版时）。关掉，字号只听样式表的；
+     glass.js 把整页截成 SVG 图时也吃这条，截图与页面的排版才对得上 */
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+}
 
 body {
   margin: 0;
@@ -143,19 +148,20 @@ img { max-width: 100%; }
    1. 折射层 .lg-refract（WebGL 画布）：双凸玻璃的折射、色散、菲涅耳反射、内描边与边缘光
       都在着色器里；纹理按双线性插值取样，放大、压缩处平滑。另加正上方来的光照：
       弯边轻微的上亮下暗，以及只在轮廓最外缘的一道细高光（上沿最亮、下沿较弱的反光）。
-      内部不加白 —— 加在面上，深色底上就成了一层白雾。
+      高光只在轮廓上，不往面上铺 —— 铺在面上，深色底上就成了一层白雾。
       截不到图或没有 WebGL 时不出现，胶囊保持自己的 backdrop-filter 模糊。
-   2. 本体 ::after：不叠白（清玻璃）。
+   2. 本体 ::after：叠一层很淡的白（--lg-tint），压在深色内容上时玻璃略微发白，不至于整块发暗。
    3. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
    投影同原库默认（不透明度 0.3、扩散 10px、下移 1px）。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
-  display: flex; align-items: center; gap: 10px;
+  --nav-gap: 10px;
+  display: flex; align-items: center; gap: var(--nav-gap);
   width: fit-content; max-width: calc(100% - 28px);
   margin: 14px auto 0;
 }
-.nav .wrap, .language-toggle {
+.nav .wrap, .language-toggle, .nav-loupe {
   position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
   overflow: hidden; overflow: clip;         /* 圆角之外的画布裁掉；clip 不会变成滚动容器 */
   border: 0; border-radius: 999px; background: none;
@@ -167,7 +173,10 @@ img { max-width: 100%; }
 .lg-refract {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;
 }
-/* 相册页的放大镜（glass.js 生成）：圆形，开关打开后常驻。鼠标下跟随光标、不挡点击；
+/* 导航的几块玻璃共用一张画布（一个 WebGL 环境，滚动时显卡的负担小得多），垫在它们下面；
+   四周多出 6px，圆钮悬停放大时不被裁掉 */
+.nav > .lg-refract { inset: -6px auto auto -6px; width: calc(100% + 12px); height: calc(100% + 12px); z-index: -1; }
+/* 相册页的放大镜（glass.js 生成）：圆形，导航里的开关打开后常驻。鼠标下跟随光标、不挡点击；
    触屏上没有光标，改为用手指拖动（脚本给它打开 pointer-events）。
    位置由脚本每帧写 translate 属性，出现 / 消失用 opacity 与 scale（scale 只绕自身中心，不影响位置） */
 .lg-loupe {
@@ -182,20 +191,27 @@ img { max-width: 100%; }
 .lg-loupe.on { opacity: 1; scale: 1; }
 .lg-loupe.drag { pointer-events: auto; cursor: grab; }
 @media (prefers-reduced-motion: reduce) { .lg-loupe { transition: opacity .15s ease; scale: 1; } }
-/* 标题旁的开关，样式同首页联系方式那排小胶囊；打开时描边与文字用主题蓝 */
-.gallery-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
-.loupe-toggle {
-  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
-  padding: 5px 12px; border-radius: 999px; cursor: pointer;
-  background: var(--glass-fill); color: var(--fg);
-  border: 1px solid var(--rule); box-shadow: 0 2px 8px var(--glass-cast);
-  transition: border-color .18s ease, color .18s ease, background .18s ease;
+/* 相册页简介下面的显示模式开关（胶卷 / 列表）：一条分段开关，两个选项并排，当前的那个用主题蓝
+   高亮。底子同首页联系方式那排小胶囊，不是玻璃 */
+.view-switch {
+  display: inline-flex; gap: 2px; margin-top: 12px; padding: 3px;
+  border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--glass-fill); box-shadow: 0 2px 8px var(--glass-cast);
 }
-.loupe-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.loupe-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: rgba(77, 110, 138, .08); }
-.loupe-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* 本体：一层底色（默认不叠白） */
-.nav .wrap::after, .language-toggle::after {
+.view-switch button {
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700; line-height: 1.4;
+  padding: 4px 13px; border: 0; border-radius: 999px; cursor: pointer;
+  background: none; color: var(--subtle); white-space: nowrap;
+  transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.view-switch button:hover { color: var(--fg); }
+.view-switch button[aria-pressed="true"] {
+  color: var(--accent); background: rgba(77, 110, 138, .1);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 本体：一层很淡的白 */
+.nav .wrap::after, .language-toggle::after, .nav-loupe::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
   border-radius: inherit;
   background: var(--lg-tint);
@@ -208,7 +224,7 @@ img { max-width: 100%; }
               rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 70%);
   opacity: 0; transition: opacity .35s ease;
 }
-.nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow { opacity: 1; }
+.nav .wrap:hover > .lg-glow, .language-toggle:hover > .lg-glow, .nav-loupe:hover > .lg-glow { opacity: 1; }
 /* 悬停水滴（nav.js 的 liquidLens）：本身也是一小块玻璃，跟着指针在入口之间滑，
    换位时被拉长再弹回 */
 .liquid-lens {
@@ -228,7 +244,7 @@ img { max-width: 100%; }
   min-width: 0; margin: 0;
   height: 50px; padding: 0 8px;
 }
-.language-toggle {
+.language-toggle, .nav-loupe {
   flex: 0 0 50px; width: 50px; height: 50px; padding: 0;
   display: grid; place-items: center;
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
@@ -236,9 +252,33 @@ img { max-width: 100%; }
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
   transition: transform .5s var(--lg-spring);
 }
-.language-toggle:hover { transform: scale(1.06); }
-.language-toggle:active { transform: scale(.95); transition-duration: .15s; }
-.language-toggle:focus-visible, .nav a:focus-visible {
+.language-toggle:hover, .nav-loupe:hover { transform: scale(1.06); }
+.language-toggle:active, .nav-loupe:active { transform: scale(.95); transition-duration: .15s; }
+/* 相册页的放大镜开关：导航里语言按钮左边的一颗圆钮，与它同款。
+   玻璃就绪后才由 glass.js 露出（去掉 hidden）。它夹在胶囊与语言按钮之间，直接冒出来会把导航
+   顶一下，所以收起时不是 display: none，而是宽度为 0、并用负边距抵掉自己那份间距，露出时
+   平滑展开；玻璃没能启用（无 WebGL 等）时它一直收着，导航里不留空位。
+   打开时外圈一道主题蓝 —— 画在外面，内圈会被折射画布盖住 */
+.nav-loupe {
+  font-size: 18px; line-height: 1; text-shadow: none;
+  transition: transform .5s var(--lg-spring), flex-basis .4s cubic-bezier(.32,.72,0,1),
+              width .4s cubic-bezier(.32,.72,0,1), margin .4s cubic-bezier(.32,.72,0,1),
+              opacity .3s ease, box-shadow .2s ease;
+}
+.nav .nav-loupe[hidden] {
+  display: grid !important;                     /* 盖过全局的 [hidden]，才有过渡可言 */
+  flex-basis: 0; width: 0; margin-left: calc(-1 * var(--nav-gap));
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+.nav-loupe[aria-pressed="true"] { box-shadow: var(--lg-shadow), 0 0 0 2px var(--accent); }
+/* 提示这里有个放大镜：打开相册约 2 秒后，外圈那道主题蓝快闪两下（glass.js 加上 .hint，闪完去掉），
+   之后就是常规的样子 */
+.nav-loupe.hint { animation: loupe-hint .9s ease-in-out; }
+@keyframes loupe-hint {
+  0%, 50%, 100% { box-shadow: var(--lg-shadow), 0 0 0 0 rgba(77, 110, 138, 0); }
+  25%, 75%      { box-shadow: var(--lg-shadow), 0 0 0 2.5px var(--accent); }
+}
+.language-toggle:focus-visible, .nav-loupe:focus-visible, .nav a:focus-visible {
   outline: 2px solid var(--accent); outline-offset: -3px;
 }
 .nav a {
@@ -280,8 +320,8 @@ img { max-width: 100%; }
 
 /* 系统开了"降低透明度"：玻璃改成近乎实心，折射也不挂（nav.js 同样会跳过） */
 @media (prefers-reduced-transparency: reduce) {
-  .nav .wrap, .language-toggle { backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .nav .wrap::after, .language-toggle::after { background: rgba(255, 255, 255, .95); }
+  .nav .wrap, .language-toggle, .nav-loupe { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .nav .wrap::after, .language-toggle::after, .nav-loupe::after { background: rgba(255, 255, 255, .95); }
 }
 
 /* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
@@ -290,7 +330,7 @@ img { max-width: 100%; }
    最窄的 320px 手机：胶囊 233 + 间距 8 + 语言按钮 50 = 291，放得进两侧各留 14px 后的 292。
    页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。 */
 @media (max-width: 660px) {
-  .nav { margin: 14px 14px 0 auto; gap: 8px; }
+  .nav { margin: 14px 14px 0 auto; --nav-gap: 8px; }
   .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { display: none; }
 }
 
@@ -478,8 +518,10 @@ strong { font-weight: 700; }
 .pub > div:not(.thumb) { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .pub > div:not(.thumb) > * { margin: 0; line-height: 1.45; }
 
+/* height: auto 不能省：图片带着宽高属性（让浏览器在加载前就留好位置，图片到了页面不跳），
+   不写的话高度属性会被当成固定高度，图片被拉变形 */
 .pub .thumb img,
-.pub .thumb video { display: block; width: 100%; }
+.pub .thumb video { display: block; width: 100%; height: auto; }
 .pub h3 {
   font-family: var(--sans); font-size: var(--fs-md); font-weight: 650;
   /* pretty 而非 balance：balance 会把两行调成等长，于是第一行本来能铺满，
