@@ -545,15 +545,45 @@
     return animating;
   }
 
-  var raf = 0, keepUntil = 0;
+  var raf = 0, keepUntil = 0, easing = 0, easeCap = 0;
   function frame(now) {
     raf = 0;
     if (!live) return;
+    if (easing && now > easeCap) easing = 0;
+    if (easing) views.forEach(function (v) { v.rescan = true; });
     var moving = loupe ? loupe.step() : false;
     views.forEach(function (v) { if (render(v, now)) moving = true; });
-    if (moving || now < keepUntil) schedule();   // 还有在动的、或刚滚动 / 触摸过（见 follow）：下一帧接着看
+    // 还有在动的、照片的过渡没走完、或刚滚动 / 触摸过（见 follow）：下一帧接着看
+    if (moving || easing || now < keepUntil) schedule();
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
+  /* 标了 still 的照片（相册的列表模式）不动，玻璃不逐帧重画。但照片悬停（触屏上是点一下）会在原位
+     放大，切换显示模式时也要挪一下位置，都带一小段过渡 —— 过渡期间逐帧重画，玻璃里的照片跟着变，
+     不然就停在放大前的样子。只管挨着玻璃的照片（放宽 60px，盖住放大与错落的位移），别处的照片
+     悬停不必重画。过渡事件每个属性各发一次，开始与结束（或取消）成对，数着就知道还有没有在走的；
+     结束时不论远近都再看一次收尾。万一漏了结束事件，2 秒后不再等 */
+  function nearGlass(el) {
+    var r = el.getBoundingClientRect(), m = 60;
+    return views.some(function (v) {
+      if (v.active && !v.active()) return false;
+      var p = v.pane.getBoundingClientRect();
+      return r.width && !(r.left - m > p.right || r.right + m < p.left || r.top - m > p.bottom || r.bottom + m < p.top);
+    });
+  }
+  liveTracks.forEach(function (t) {
+    t.addEventListener('transitionrun', function (e) {
+      if (!nearGlass(e.target)) return;
+      e.target._lgEase = (e.target._lgEase || 0) + 1;
+      easing++; easeCap = performance.now() + 2000; schedule();
+    });
+    ['transitionend', 'transitioncancel'].forEach(function (n) {
+      t.addEventListener(n, function (e) {
+        if (e.target._lgEase) { e.target._lgEase--; if (easing) easing--; }
+        views.forEach(function (v) { v.rescan = true; });
+        schedule();
+      });
+    });
+  });
   /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（如贴着底边的按钮、放大镜）会跟着视口
      挪位置，页面却没有滚动、也不发 scroll 事件，收放完才来一个 resize —— 玻璃里的背景停在旧位置，
      等下一次滚动才突然跳过去。所以滚动、触摸、视口变化之后再连着看半秒：位置没变的帧只是读一下
