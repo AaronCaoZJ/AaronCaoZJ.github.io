@@ -93,7 +93,7 @@
 
   /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节。
      取值对照 liquid-dom（github.com/AndrewPrifer/liquid-dom）的默认值 */
-  --lg-tint:        rgba(255, 255, 255, 0);     /* 不叠白：同 ybouane/liquidglass，清玻璃 */
+  --lg-tint:        rgba(255, 255, 255, .1);    /* 只叠一成白：压在深色照片上略微发白，浅色底上看不出 */
   --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
   /* 原库默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度只留原值的一小部分：
      原值（0.3）在浅色页面上显得重 */
@@ -148,9 +148,9 @@ img { max-width: 100%; }
    1. 折射层 .lg-refract（WebGL 画布）：双凸玻璃的折射、色散、菲涅耳反射、内描边与边缘光
       都在着色器里；纹理按双线性插值取样，放大、压缩处平滑。另加正上方来的光照：
       弯边轻微的上亮下暗，以及只在轮廓最外缘的一道细高光（上沿最亮、下沿较弱的反光）。
-      内部不加白 —— 加在面上，深色底上就成了一层白雾。
+      高光只在轮廓上，不往面上铺 —— 铺在面上，深色底上就成了一层白雾。
       截不到图或没有 WebGL 时不出现，胶囊保持自己的 backdrop-filter 模糊。
-   2. 本体 ::after：不叠白（清玻璃）。
+   2. 本体 ::after：叠一层很淡的白（--lg-tint），压在深色内容上时玻璃略微发白，不至于整块发暗。
    3. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
    投影同原库默认（不透明度 0.3、扩散 10px、下移 1px）。 */
 .nav {
@@ -207,7 +207,7 @@ img { max-width: 100%; }
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 .view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* 本体：一层底色（默认不叠白） */
+/* 本体：一层很淡的白 */
 .nav .wrap::after, .language-toggle::after, .nav-loupe::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
   border-radius: inherit;
