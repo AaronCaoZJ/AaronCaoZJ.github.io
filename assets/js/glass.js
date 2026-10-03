@@ -113,6 +113,7 @@
         // 多错一截，玻璃里的背景越往下滚错得越远
         var cs = getComputedStyle(o);
         if (cs.display !== 'none' && cs.width !== 'auto') { c.style.width = cs.width; c.style.height = cs.height; }
+        o._lgBox = cs.width + ' ' + cs.height;        // 记下这次钉的尺寸：图片晚到时尺寸没变就不必重截
         // 跑马灯里的照片在截图里本来就是隐藏的（render() 每帧按实时位置画），不必内联成
         // data URL —— 否则每次截图都要把整个相册读一遍、编码进 SVG，懒加载也形同虚设
         if (o.closest('[data-lg-live]')) { c.removeAttribute('src'); return; }
@@ -332,6 +333,34 @@
     return h._ok ? h : im;
   }
 
+  /* 导航玻璃里画照片用的小图。直接把 <img> 画进画布的话，浏览器要在主线程上解码整张图
+     （一张十几到几十毫秒，img.decode() 预解码对画布无效）：相册的列表模式里，每滚过一行就有
+     三张新照片经过导航，滚动跟着一顿一顿。所以照片一加载完，就在后台给它做一张缩小的位图
+     （createImageBitmap 的解码不占主线程），玻璃里画这张 —— 导航玻璃带磨砂，用不着原图的
+     分辨率，每帧画起来也更省。按图片地址存，原件和循环用的副本共用一张；
+     做好之前这一格只画底色。放大镜不走这里，它要的是大图（sharper） */
+  var THUMB_H = 360, thumbs = {};
+  function thumb(im) {
+    var key = im.currentSrc || im.src, t = thumbs[key];
+    if (t) return t.b || null;
+    t = thumbs[key] = {};
+    var h = Math.min(im.naturalHeight, THUMB_H), w = Math.max(1, Math.round(im.naturalWidth * h / im.naturalHeight));
+    var done = function (b) { t.b = b; views.forEach(function (v) { v.rescan = true; }); schedule(); };
+    if (!window.createImageBitmap) { done(im); return im; }       // 老浏览器：照旧直接画 <img>
+    try {
+      createImageBitmap(im, { resizeWidth: w, resizeHeight: h, resizeQuality: 'medium' }).then(function (b) {
+        if (b.height <= h * 1.2) return done(b);
+        // 没理会缩放参数（旧版 Safari）：位图已经解码好了，再画进小画布很便宜；原尺寸的那张随即释放
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(b, 0, 0, w, h);
+        if (b.close) b.close();
+        done(c);
+      }, function () { done(im); });
+    } catch (e) { done(im); }
+    return null;
+  }
+
   function drawLive(ctx2, el, x0, y0, k, hi) {
     var r = el.getBoundingClientRect();
     if (!el._lg) {
@@ -347,9 +376,10 @@
     ctx2.fillStyle = el._lg.bg;
     ctx2.fillRect(x, y, r.width * k, r.height * k);
     var im = el._lg.img;
-    if (im && im.complete && im.naturalWidth) {
+    var pic = im && im.complete && im.naturalWidth ? (hi ? sharper(im) : thumb(im)) : null;
+    if (pic) {
       var ir = im.getBoundingClientRect();
-      ctx2.drawImage(hi ? sharper(im) : im, (ir.left + window.scrollX - x0) * k, (ir.top + window.scrollY - y0) * k, ir.width * k, ir.height * k);
+      ctx2.drawImage(pic, (ir.left + window.scrollX - x0) * k, (ir.top + window.scrollY - y0) * k, ir.width * k, ir.height * k);
     }
     ctx2.restore();
   }
@@ -633,13 +663,22 @@
 
   /* ---------- 什么时候重截 ---------- */
 
-  var capTimer = 0, capturing = false, again = false;
+  var capTimer = 0, capturing = false, again = false, capWaitFrom = 0;
   function recapture(delay) {
     clearTimeout(capTimer);
     capTimer = setTimeout(runCapture, delay == null ? 300 : delay);
   }
   function runCapture() {
     if (capturing) { again = true; return; }
+    /* 一次截图连同它的首次绘制要占住主线程一两百毫秒（手机上更久），正在滚动、触摸时做，页面会顿一下。
+       已经有一张截图可用的话，等手停下来再截（keepUntil 由 follow 在每次滚动 / 触摸时往后推）；
+       最多等 4 秒，免得一直滚就一直不更新 */
+    var now = performance.now();
+    if (scene && now < keepUntil && now - (capWaitFrom || (capWaitFrom = now)) < 4000) {
+      capTimer = setTimeout(runCapture, 200);
+      return;
+    }
+    capWaitFrom = 0;
     capturing = true;
     capturePage().then(function (cap) {
       scene = cap; sceneVer++;
@@ -676,8 +715,11 @@
   document.addEventListener('load', function (e) {
     var t = e.target;
     if (!t || t.tagName !== 'IMG' || nav.contains(t)) return;
-    if (t.closest('[data-lg-live]')) { views.forEach(function (v) { v.rescan = true; }); schedule(); }   // 实时画的照片：重画即可
-    else mediaChanged();
+    if (t.closest('[data-lg-live]')) { thumb(t); return; }   // 实时画的照片：后台备好小图，好了会重画
+    // 写了宽高属性的图片，加载前后占的位置一样，截图里也早就有它的像素（截图自己去读了图片文件），
+    // 不必为它重截；尺寸真变了的才重截
+    var bs = getComputedStyle(t);
+    if (t._lgBox !== bs.width + ' ' + bs.height) mediaChanged();
   }, true);
   videos.forEach(function (vd) { vd.addEventListener('loadedmetadata', mediaChanged); });
   // 页面高度变化（如图片晚到、折叠展开）。正在截的时候长高也要算：截图用的是开始那一刻的排版，

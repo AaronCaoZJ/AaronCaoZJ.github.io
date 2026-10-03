@@ -508,8 +508,10 @@ strong { font-weight: 700; }
 .pub > div:not(.thumb) { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .pub > div:not(.thumb) > * { margin: 0; line-height: 1.45; }
 
+/* height: auto 不能省：图片带着宽高属性（让浏览器在加载前就留好位置，图片到了页面不跳），
+   不写的话高度属性会被当成固定高度，图片被拉变形 */
 .pub .thumb img,
-.pub .thumb video { display: block; width: 100%; }
+.pub .thumb video { display: block; width: 100%; height: auto; }
 .pub h3 {
   font-family: var(--sans); font-size: var(--fs-md); font-weight: 650;
   /* pretty 而非 balance：balance 会把两行调成等长，于是第一行本来能铺满，
