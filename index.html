@@ -537,9 +537,13 @@
    （DDPM 是球面路径 sqrt(abar)*x0 + sqrt(1-abar)*eps，
      系数平方和为 1，那个就必须逐像素算了。）
 
-   噪声不在像素空间采样，而是先在低分辨率“latent”上生成，
-   再由 drawImage 平滑上采样 —— 模拟 VAE 解码，得到块状而非
-   针尖状的颗粒。
+   噪声不在像素空间采样，而是在 latent 的格子上生成（VAE 把图缩小 8 倍，一格对应 8×8 像素），
+   再由 drawImage 平滑上采样 —— 模拟 VAE 解码：出来的是一片彩色的斑驳纹理，不是针尖状的雪花。
+   三件事照真实的采样来：
+   - eps 一次采样只抽一张，全程是同一张，只是占比 t 逐步降到 0（确定性的 ODE 采样）。
+     每步重新撒的话画面像电视雪花一样闪，那是随机采样器的样子，不是现在常见的。
+   - latent 的格子是固定的，颗粒大小全程不变；变的只是噪声的占比和预测图的清晰度。
+   - 时间步按 SD3 / Flux 的 shift 重排：高噪声段多走几步，结构在后半段较快地浮现。
 
    关键点：混合进去的不是成品图，而是随 t 变化的“当前预测”
    x_hat_0(t)。真实采样跑的是反向过程，早期模型只能给出粗糙
@@ -556,11 +560,11 @@
   var ctx    = canvas.getContext('2d');
   var W = canvas.width, H = canvas.height;
 
-  var STEPS  = 20;    // 采样步数
-  var DT     = 45;    // 每步毫秒（20 x 45ms 约 0.90s）
-  var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
-  var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
-  var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
+  var STEPS  = 24;    // 采样步数（SD3 / Flux 常用 20–30 步）
+  var DT     = 42;    // 每步毫秒（24 x 42ms 约 1.0s）
+  var LAT    = 8;     // VAE 的下采样倍率：latent 一格对应 8×8 像素，全程固定
+  var SHIFT  = 2;     // 时间步偏移：>1 时高噪声段多走几步
+  var COARSE = 16;    // t=1 时预测图的模糊程度（相当于降采样的倍率）
   var GAMMA  = 1.35;  // 预测清晰度的回升曲线：>1 表示结构在中段快速涌现
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -568,10 +572,16 @@
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // 低分辨率噪声画布，充当 latent
+  // eps 解码后的样子：一次采样抽一张，画在与头像同样大小的画布上
   var nz = document.createElement('canvas');
   var nctx = nz.getContext('2d');
-  // 当前步的预测图 x_hat_0(t)，同样先降到低分辨率
+  nz.width = W; nz.height = H;
+  nctx.imageSmoothingEnabled = true;
+  nctx.imageSmoothingQuality = 'high';
+  // latent 格子上的高斯噪声（上采样前）
+  var lat = document.createElement('canvas');
+  var lctx = lat.getContext('2d');
+  // 当前步的预测图 x_hat_0(t)，先降到低分辨率
   var pr = document.createElement('canvas');
   var pctx = pr.getContext('2d');
   pctx.imageSmoothingEnabled = true;
@@ -587,20 +597,30 @@
     return r * Math.cos(th);
   }
 
-  function fillLatent(t) {
-    var scale = FINE + (COARSE - FINE) * t;
-    var n = Math.max(2, Math.round(W / scale));
-    nz.width = n; nz.height = n;                 // 改尺寸即清空
-    var d = nctx.createImageData(n, n), a = d.data;
+  /* n×n 的高斯噪声。三个通道大体各自独立（解码出来的纯噪声是彩色的），只共享一小部分明暗 */
+  function field(n, sigma) {
+    lat.width = n; lat.height = n;                // 改尺寸即清空
+    var d = lctx.createImageData(n, n), a = d.data;
     for (var i = 0; i < a.length; i += 4) {
-      // 三通道共享一部分分量，制造成片的偏色 —— latent 解码后的典型观感
-      var base = gauss() * 34 * CHROMA, ind = 34 * (1 - CHROMA);
-      a[i]     = 128 + base + gauss() * ind;
-      a[i + 1] = 128 + base + gauss() * ind;
-      a[i + 2] = 128 + base + gauss() * ind;
+      var l = gauss() * sigma * .45;
+      a[i]     = 128 + l + gauss() * sigma * .9;
+      a[i + 1] = 128 + l + gauss() * sigma * .9;
+      a[i + 2] = 128 + l + gauss() * sigma * .9;
       a[i + 3] = 255;
     }
-    nctx.putImageData(d, 0, 0);
+    lctx.putImageData(d, 0, 0);
+  }
+  /* 抽一张 eps 并「解码」：latent 格子上的噪声平滑放大成一块块柔和的色斑，
+     再叠一层细一倍的 —— 解码器自己带出来的纹理，免得只有一种尺度、看着像马赛克 */
+  function sampleNoise() {
+    var n = Math.max(2, Math.round(W / LAT));
+    nctx.globalAlpha = 1;
+    field(n, 66);
+    nctx.drawImage(lat, 0, 0, W, H);
+    field(n * 2, 44);
+    nctx.globalAlpha = .42;
+    nctx.drawImage(lat, 0, 0, W, H);
+    nctx.globalAlpha = 1;
   }
 
   var running = false;
@@ -620,11 +640,10 @@
   }
 
   function render(t) {
-    fillLatent(t);
     ctx.globalAlpha = 1;
     drawPred(t);                                  // x_hat_0(t)，而非成品图
     ctx.globalAlpha = t;                          // 直线路径的 sigma
-    ctx.drawImage(nz, 0, 0, W, H);                // latent 噪声，上采样时自动平滑
+    ctx.drawImage(nz, 0, 0, W, H);                // 同一张 eps，占比逐步降到 0
     ctx.globalAlpha = 1;
   }
 
@@ -633,8 +652,10 @@
     running = true;
     wrap.classList.add('fx-on');
     var k = 0;
+    sampleNoise();
     (function step() {
-      render(1 - k / STEPS);
+      var u = 1 - k / STEPS;                      // 均匀的步进，经 shift 重排成实际的 t
+      render(SHIFT * u / (1 + (SHIFT - 1) * u));
       if (k++ < STEPS) { setTimeout(step, DT); return; }
       wrap.classList.remove('fx-on');            // 淡出画布，露出原图
       running = false;
