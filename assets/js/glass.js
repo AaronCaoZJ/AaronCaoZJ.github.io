@@ -18,6 +18,9 @@
   /* ---------- 截图 ---------- */
 
   var CAPTURE_CSS =
+    // 导航的上边距不能穿出 body：真实页面里它被视口拦住，SVG 的 foreignObject 里（Safari）却会
+    // 一路合并出去，整张截图比页面高出 14px
+    '.lg-cap body{display:flow-root}' +
     '.lg-cap .rise{opacity:1!important;transform:none!important}' +
     '.lg-cap *,.lg-cap *::before,.lg-cap *::after{transition:none!important;animation:none!important}';
 
@@ -75,14 +78,14 @@
       if (nav.contains(o) || o.hasAttribute('data-lg-skip')) return;   // 纯装饰的动画画布（如头像的去噪动效）不截
       if (o.tagName === 'IMG') {
         c.removeAttribute('srcset'); c.removeAttribute('loading');
+        // 尺寸照原件钉死。截图是一张把图片都嵌进去的 SVG：手机上它定版的那一刻，嵌着的图片
+        // 往往还没解码完，没写宽高的 <img> 就按 0 高排版，下面的内容整体上移 —— 每过一张图
+        // 多错一截，玻璃里的背景越往下滚错得越远
+        var cs = getComputedStyle(o);
+        if (cs.display !== 'none' && cs.width !== 'auto') { c.style.width = cs.width; c.style.height = cs.height; }
         // 跑马灯里的照片在截图里本来就是隐藏的（render() 每帧按实时位置画），不必内联成
-        // data URL —— 否则每次截图都要把整个相册读一遍、编码进 SVG，懒加载也形同虚设。
-        // 只去掉地址、钉住宽度，照片框的尺寸不变
-        if (o.closest('[data-lg-live]')) {
-          c.removeAttribute('src');
-          c.style.width = o.offsetWidth + 'px';
-          return;
-        }
+        // data URL —— 否则每次截图都要把整个相册读一遍、编码进 SVG，懒加载也形同虚设
+        if (o.closest('[data-lg-live]')) { c.removeAttribute('src'); return; }
         var src = o.currentSrc || o.src;
         if (!src) return;
         jobs.push(dataURL(src).then(function (d) { if (d) c.setAttribute('src', d); }));
@@ -616,12 +619,14 @@
     }
   }).observe(document.body, { subtree: true, childList: true, characterData: true,
                               attributes: true, attributeFilter: ['hidden', 'src', 'open'] });
-  // 页面高度变化（如图片晚到、折叠展开）
+  // 页面高度变化（如图片晚到、折叠展开）。正在截的时候长高也要算：截图用的是开始那一刻的排版，
+  // 手机上第一次截图要好几秒，图片恰好在这期间陆续到齐 —— 漏掉的话那张旧截图会一直用下去，
+  // 玻璃里的背景越往下滚错得越远。（还没开始截时不必管，首次截图自己会来）
   if (window.ResizeObserver) {
     var lastH = 0;
     new ResizeObserver(function () {
       var hh = document.body.scrollHeight;
-      if (Math.abs(hh - lastH) > 2) { lastH = hh; if (scene) recapture(); }
+      if (Math.abs(hh - lastH) > 2) { lastH = hh; if (scene || capturing) recapture(); }
     }).observe(document.body);
   }
 

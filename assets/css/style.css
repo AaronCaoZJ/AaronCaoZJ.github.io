@@ -106,7 +106,12 @@
    display 声明（如 .news li 的 display:grid）覆盖，必须显式兜底。 */
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+html {
+  scroll-behavior: smooth; scroll-padding-top: 72px;
+  /* iOS Safari 会自作主张放大文字（横屏时，或把一份文档当成桌面版时）。关掉，字号只听样式表的；
+     glass.js 把整页截成 SVG 图时也吃这条，截图与页面的排版才对得上 */
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+}
 
 body {
   margin: 0;
