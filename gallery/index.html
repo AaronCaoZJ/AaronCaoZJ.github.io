@@ -136,6 +136,20 @@
   main.list .track figure[aria-hidden="true"] { display: none; }
   main.list .track img { width: 100%; height: 100%; object-fit: cover; }
   @media (max-width: 700px) { main.list .track { --gap: 6px; } }
+  /* 列表的进场：每一栏的照片从左上到右下依次落下 —— 先悬在半空（略大、带投影、还看不见），再落到
+     页面上。页尾脚本给每张写 --dl（按它离这一栏左上角的远近），这一栏滚进视口才开始（之前挂着 .wait，
+     照片不显示）；落完去掉 .deal，悬停放大照旧 */
+  main.list .track.wait figure { opacity: 0; }
+  main.list .track figure.deal { animation: land .62s cubic-bezier(.2, .75, .25, 1) var(--dl, 0ms) both; }
+  @keyframes land {
+    0%   { opacity: 0; transform: translateY(-20px) scale(1.09); box-shadow: 0 20px 32px rgba(45,42,41,.24); }
+    45%  { opacity: 1; }
+    100% { opacity: 1; transform: none; box-shadow: 0 0 0 rgba(45,42,41,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    main.list .track.wait figure { opacity: 1; }
+    main.list .track figure.deal { animation: none; }
+  }
   /* ============ 彩蛋 ============
      点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
      pointer-events:none，所以不挡任何交互，也不参与轮播的布局。 */
@@ -166,7 +180,7 @@
 </style>
 <script src="/assets/js/i18n.js?v=20261003switch" defer></script>
 <script src="/assets/js/nav.js?v=20261003lean" defer></script>
-<script src="/assets/js/glass.js?v=20261003heal" defer></script>
+<script src="/assets/js/glass.js?v=20261003deal" defer></script>
 </head>
 <body>
 
@@ -341,7 +355,7 @@
    简介下面的分段开关，两个选项并排，当前的那个高亮。默认胶卷模式。
    列表模式只是给 <main> 加一个类，排版全在样式里（见「列表模式」）；
    每次打开页面都从胶卷模式开始，不记住上次的选择。
-   轨道上的 data-lg-live="still" 告诉 glass.js 这些照片现在不动，玻璃不必逐帧重画；
+   轨道上的 data-lg-live="still" 告诉 glass.js 这些照片现在不动（进场动画落完之后），玻璃不必逐帧重画；
    lg:relayout 事件让它按新的排版重新量照片位置、重截背景。 */
 (function () {
   var box = document.querySelector('[data-view-switch]'), main = document.querySelector('main');
@@ -382,8 +396,38 @@
     if (list === main.classList.contains('list')) return;       // 点的就是当前模式
     main.classList.toggle('list', list);
     [].forEach.call(opts, function (o) { o.setAttribute('aria-pressed', String(o === opt)); });
-    [].forEach.call(tracks, function (t) { t.setAttribute('data-lg-live', list ? 'still' : ''); });
+    [].forEach.call(tracks, function (t) {
+      [].forEach.call(t.querySelectorAll('.deal'), function (f) { f.classList.remove('deal'); });
+      t.classList.toggle('wait', list);
+      // enter：照片正在进场，玻璃按实时的位置和透明度画；落完再改成 still（不动了，见下）
+      t.setAttribute('data-lg-live', list ? 'enter' : '');
+      if (io) { io.unobserve(t); if (list) io.observe(t); } else if (list) deal(t);
+    });
     document.dispatchEvent(new CustomEvent('lg:relayout'));
+  });
+
+  /* 列表的进场动画（样式见「列表的进场」）。延迟按照片离这一栏左上角的远近给：往下一行比往右一张
+     晚得多，看上去是一行行从左到右、整体由左上铺向右下；按栏宽折算，手机和桌面是同一个节奏。
+     栏目进了视口才开始。一栏全部落完，告诉 glass.js 这些照片不动了（lg:relive：重新量位置） */
+  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); deal(e.target); } });
+  }, { rootMargin: '0px 0px -10% 0px' }) : null;
+  function deal(tr) {
+    var box = tr.getBoundingClientRect();
+    [].forEach.call(tr.querySelectorAll('figure:not([aria-hidden])'), function (f) {
+      var r = f.getBoundingClientRect();
+      f.style.setProperty('--dl', Math.round(((r.left - box.left) * .4 + (r.top - box.top)) / box.width * 720) + 'ms');
+      f.classList.add('deal');
+    });
+    tr.classList.remove('wait');
+  }
+  main.addEventListener('animationend', function (e) {
+    var f = e.target, tr = f.parentNode;
+    if (e.animationName !== 'land' || !tr) return;
+    f.classList.remove('deal');
+    if (tr.querySelector('.deal') || !main.classList.contains('list')) return;
+    tr.setAttribute('data-lg-live', 'still');
+    document.dispatchEvent(new CustomEvent('lg:relive'));
   });
 })();
 

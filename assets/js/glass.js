@@ -663,7 +663,14 @@
           var el = dyn[j], er = el.getBoundingClientRect();
           if (el.tagName === 'VIDEO') {
             try { r2.drawImage(el, (er.left + sX - bx0) * s, (er.top + sY - by0) * s, er.width * s, er.height * s); } catch (e) {}
-          } else drawPhoto(r2, el, er.left + sX, er.top + sY, er.width, er.height, bx0, by0, s, mag > 1);
+          } else {
+            // 正在进场的照片（相册列表，轨道标着 enter）是淡入的：照它此刻的透明度画，还没露面的不画
+            var al = el.parentNode.getAttribute('data-lg-live') === 'enter' ? +getComputedStyle(el).opacity : 1;
+            if (al < .02) continue;
+            r2.globalAlpha = al;
+            drawPhoto(r2, el, er.left + sX, er.top + sY, er.width, er.height, bx0, by0, s, mag > 1);
+            r2.globalAlpha = 1;
+          }
         }
         g.tex = upload(g, raw, sigma);
         st.up = false; tx0 = bx0; ty0 = by0;
@@ -936,6 +943,8 @@
   document.addEventListener('languagechange', function () { recapture(60); });
   // 页面自己换了排版（相册切换滚动 / 列表）：照片位置重新量、先按新位置画，背景随后重截
   document.addEventListener('lg:relayout', function () { remeasure(); schedule(); recapture(60); });
+  // 排版没变，只是哪些照片算「不动的」变了（相册列表的进场动画落完）：照片位置重新量、底图重画，不必重截
+  document.addEventListener('lg:relive', function () { remeasure(); schedule(); });
   var lastW = document.documentElement.clientWidth;
   window.addEventListener('resize', function () {
     var w = document.documentElement.clientWidth;
