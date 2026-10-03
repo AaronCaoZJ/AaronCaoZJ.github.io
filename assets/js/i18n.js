@@ -87,7 +87,7 @@
   "gallery.heading": "🖼️ 相册",
   "gallery.loupe": "放大镜",
   "gallery.toList": "📋 列表模式",
-  "gallery.toScroll": "🎞️ 滚动模式",
+  "gallery.toScroll": "🎞️ 胶卷模式",
   "gallery.welcome": "<strong>欢迎来到我的相册！</strong>",
   "gallery.intro": "摄影是我观察世界的方式之一。这里记录了一些令我难忘的地方、人物与瞬间，希望你也会喜欢。",
   "gallery.campus": "求是园",

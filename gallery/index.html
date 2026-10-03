@@ -13,7 +13,7 @@
 <meta http-equiv="content-language" content="en, zh-CN">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="/assets/css/style.css?v=20261003dock">
+<link rel="stylesheet" href="/assets/css/style.css?v=20261003lean">
 <script src="/assets/js/reveal.js?v=202609291444"></script>
 
 
@@ -96,11 +96,24 @@
     .track figure.h1, .track figure.h3 { --y: 0px; }
   }
 
-  /* 窄屏上页脚的文字是居中的，会被右下角的悬浮按钮组挡住：滚到底时给它让出位置 */
-  @media (max-width: 700px) { footer.wrap { padding-bottom: 92px; } }
+  /* 这一页的导航比首页多一颗放大镜圆钮（60px），宽度要重新算：
+     - 完整的胶囊 552 + 两颗圆钮与间距 120 = 672，加两侧边距要 700px。所以收成「首页 | 相册」
+       两个入口的断点从首页的 660 提到 720（下面两条与 style.css 窄屏导航那两条相同）；
+     - 收起后是 233 + 8 + 50 + 8 + 50 = 349，两侧各留 14px 需要 377px 的视口；
+       不超过 400px 的手机上收紧间距、边距与胶囊的内边距，336 放得进 360px 宽的屏；
+     - 再窄（不超过 350px）放不下三样东西，放大镜在这么小的屏上用处也不大，不显示 */
+  @media (max-width: 720px) {
+    .nav { margin: 14px 14px 0 auto; --nav-gap: 8px; }
+    .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { display: none; }
+  }
+  @media (max-width: 400px) {
+    .nav { --nav-gap: 6px; margin-right: 10px; max-width: calc(100% - 20px); }
+    .nav .wrap { padding: 0 4px; }
+  }
+  @media (max-width: 350px) { .nav .nav-loupe { display: none !important; } }
 
   /* ============ 列表模式 ============
-     右下角的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
+     标题后面的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
      每张保持原比例（--ar 由页尾脚本从图片的宽高属性算出），用于循环的那份副本不显示。
      flex-grow 与 flex-basis 都按宽高比给，同一行各张被拉伸后高度相同；末尾那个空元素吃掉
      最后一行的余量，最后一行才不会被拉得特别高。宽度收回到正文栏，不再铺满视口。
@@ -153,9 +166,9 @@
     }
   }
 </style>
-<script src="/assets/js/i18n.js?v=20261003views" defer></script>
-<script src="/assets/js/nav.js?v=20261003views" defer></script>
-<script src="/assets/js/glass.js?v=20261003dock" defer></script>
+<script src="/assets/js/i18n.js?v=20261003lean" defer></script>
+<script src="/assets/js/nav.js?v=20261003lean" defer></script>
+<script src="/assets/js/glass.js?v=20261003lean" defer></script>
 </head>
 <body>
 
@@ -168,13 +181,22 @@
     <span class="nav-divider" aria-hidden="true"></span>
     <a href="/gallery/" data-i18n="nav.gallery">🖼️ Gallery</a>
   </div>
+  <!-- 放大镜开关：玻璃就绪后由 glass.js 露出；data-lg-pane 让它和导航的另外两块一样被画成液态玻璃 -->
+  <button class="nav-loupe" type="button" aria-pressed="false" aria-label="Magnifier" title="Magnifier"
+          data-i18n-aria-label="gallery.loupe" data-i18n-title="gallery.loupe"
+          data-lg-loupe-toggle data-lg-pane hidden>🔍</button>
   <button class="language-toggle" type="button" aria-label="切换到中文" title="切换到中文" lang="zh-CN" hidden>中</button>
 </nav>
 
 <main>
 
   <section class="intro wrap" style="padding-top:56px">
-    <h2 class="rise" data-i18n="gallery.heading">🖼️ Gallery</h2>
+    <div class="gallery-head rise">
+      <h2 data-i18n="gallery.heading">🖼️ Gallery</h2>
+      <button class="view-toggle" type="button" data-view-toggle data-mode="scroll">
+        <span class="to-list" data-i18n="gallery.toList">📋 List view</span><span class="to-scroll" data-i18n="gallery.toScroll">🎞️ Film view</span>
+      </button>
+    </div>
     <p class="rise" style="margin-top:16px" data-i18n="gallery.welcome"><strong>Welcome to my gallery!</strong></p>
     <p class="rise" data-i18n="gallery.intro">
       Photography is one of the ways I pay attention to the world. The images below
@@ -270,16 +292,6 @@
   <span data-i18n="footer.updated">Last Update: Sep. 2026</span>
 </footer>
 
-<!-- 右下角的悬浮按钮组：显示模式开关 + 放大镜开关（后者要等玻璃就绪才由 glass.js 露出）。
-     data-lg-pane 让按钮也被画成液态玻璃，data-lg-skip 不让这一组进背景截图 -->
-<div class="gallery-dock" data-lg-skip>
-  <button class="dock-btn view-toggle" type="button" data-view-toggle data-mode="scroll" data-lg-pane>
-    <span class="to-list" data-i18n="gallery.toList">📋 List view</span><span class="to-scroll" data-i18n="gallery.toScroll">🎞️ Scroll view</span>
-  </button>
-  <button class="dock-btn loupe-fab" type="button" aria-pressed="false" aria-label="Magnifier" title="Magnifier"
-          data-i18n-aria-label="gallery.loupe" data-i18n-title="gallery.loupe"
-          data-lg-loupe-toggle data-lg-pane hidden>🔍</button>
-</div>
 
 
 <script>
@@ -328,7 +340,7 @@
 
 
 /* ---------- 显示模式：滚动 / 列表 ----------
-   默认滚动。列表模式只是给 <main> 加一个类，排版全在样式里（见「列表模式」）；
+   默认滚动（按钮上叫胶卷模式）。列表模式只是给 <main> 加一个类，排版全在样式里（见「列表模式」）；
    每次打开页面都从滚动开始，不记住上次的选择。
    轨道上的 data-lg-live="still" 告诉 glass.js 这些照片现在不动，玻璃不必逐帧重画；
    lg:relayout 事件让它按新的排版重新量照片位置、重截背景。 */

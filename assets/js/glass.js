@@ -299,7 +299,7 @@
     views.push(v);
     return v;
   }
-  // 导航的两块，加上页面里标了 data-lg-pane 的（相册页右下角那组悬浮按钮）
+  // 导航的两块，加上页面里标了 data-lg-pane 的（相册页导航里的放大镜开关）
   var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
     .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
   for (var i = 0; i < panes.length; i++) {
@@ -524,7 +524,7 @@
     if (moving || now < keepUntil) schedule();   // 还有在动的、或刚滚动 / 触摸过（见 follow）：下一帧接着看
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
-  /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（相册页的悬浮按钮）会跟着视口
+  /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（如贴着底边的按钮、放大镜）会跟着视口
      挪位置，页面却没有滚动、也不发 scroll 事件，收放完才来一个 resize —— 玻璃里的背景停在旧位置，
      等下一次滚动才突然跳过去。所以滚动、触摸、视口变化之后再连着看半秒：位置没变的帧只是读一下
      包围盒、不重画；视口一变也马上重画，不等下一次滚动 */
@@ -544,7 +544,7 @@
 
   /* ---------- 放大镜（相册页） ----------
      仿 macOS 预览的放大镜：一块圆形液态玻璃，里面是 2 倍放大的画面（按照片原图与页面矢量重新
-     画，不是把纹理拉大，所以是清楚的）。由右下角的开关（data-lg-loupe-toggle）打开，打开后常驻：
+     画，不是把纹理拉大，所以是清楚的）。由导航里的开关（data-lg-loupe-toggle）打开，打开后常驻：
      鼠标 / 触控板下跟着光标走（带一点滞后，pointer-events: none 不挡点击）；
      触屏上没有光标，改为用手指拖动。每次打开页面都是关闭的，不记住上次的状态。 */
   var loupe = null;
