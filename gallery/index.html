@@ -13,7 +13,7 @@
 <meta http-equiv="content-language" content="en, zh-CN">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="/assets/css/style.css?v=20261003lean">
+<link rel="stylesheet" href="/assets/css/style.css?v=20261003switch">
 <script src="/assets/js/reveal.js?v=202609291444"></script>
 
 
@@ -113,7 +113,7 @@
   @media (max-width: 350px) { .nav .nav-loupe { display: none !important; } }
 
   /* ============ 列表模式 ============
-     标题后面的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
+     简介下面的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
      每张保持原比例（--ar 由页尾脚本从图片的宽高属性算出），用于循环的那份副本不显示。
      flex-grow 与 flex-basis 都按宽高比给，同一行各张被拉伸后高度相同；末尾那个空元素吃掉
      最后一行的余量，最后一行才不会被拉得特别高。宽度收回到正文栏，不再铺满视口。
@@ -166,7 +166,7 @@
     }
   }
 </style>
-<script src="/assets/js/i18n.js?v=20261003lean" defer></script>
+<script src="/assets/js/i18n.js?v=20261003switch" defer></script>
 <script src="/assets/js/nav.js?v=20261003lean" defer></script>
 <script src="/assets/js/glass.js?v=20261003lean" defer></script>
 </head>
@@ -191,17 +191,17 @@
 <main>
 
   <section class="intro wrap" style="padding-top:56px">
-    <div class="gallery-head rise">
-      <h2 data-i18n="gallery.heading">🖼️ Gallery</h2>
-      <button class="view-toggle" type="button" data-view-toggle data-mode="scroll">
-        <span class="to-list" data-i18n="gallery.toList">📋 List view</span><span class="to-scroll" data-i18n="gallery.toScroll">🎞️ Film view</span>
-      </button>
-    </div>
+    <h2 class="rise" data-i18n="gallery.heading">🖼️ Gallery</h2>
     <p class="rise" style="margin-top:16px" data-i18n="gallery.welcome"><strong>Welcome to my gallery!</strong></p>
     <p class="rise" data-i18n="gallery.intro">
       Photography is one of the ways I pay attention to the world. The images below
       are small records of places, people, and moments that have stayed with me. I hope you enjoy looking through them.
     </p>
+    <!-- 显示模式：两个选项并排，当前的那个高亮（aria-pressed="true"） -->
+    <div class="view-switch rise" role="group" aria-label="Display mode" data-i18n-aria-label="gallery.viewLabel" data-view-switch>
+      <button type="button" data-view="scroll" aria-pressed="true" data-i18n="gallery.viewFilm">🎞️ Film view</button>
+      <button type="button" data-view="list" aria-pressed="false" data-i18n="gallery.viewList">📋 List view</button>
+    </div>
   </section>
 
   <section class="gsec" id="campus">
@@ -339,23 +339,27 @@
 })();
 
 
-/* ---------- 显示模式：滚动 / 列表 ----------
-   默认滚动（按钮上叫胶卷模式）。列表模式只是给 <main> 加一个类，排版全在样式里（见「列表模式」）；
-   每次打开页面都从滚动开始，不记住上次的选择。
+/* ---------- 显示模式：胶卷（滚动）/ 列表 ----------
+   简介下面的分段开关，两个选项并排，当前的那个高亮。默认胶卷模式。
+   列表模式只是给 <main> 加一个类，排版全在样式里（见「列表模式」）；
+   每次打开页面都从胶卷模式开始，不记住上次的选择。
    轨道上的 data-lg-live="still" 告诉 glass.js 这些照片现在不动，玻璃不必逐帧重画；
    lg:relayout 事件让它按新的排版重新量照片位置、重截背景。 */
 (function () {
-  var btn = document.querySelector('[data-view-toggle]'), main = document.querySelector('main');
-  if (!btn || !main) return;
-  var tracks = document.querySelectorAll('.track');
+  var box = document.querySelector('[data-view-switch]'), main = document.querySelector('main');
+  if (!box || !main) return;
+  var tracks = document.querySelectorAll('.track'), opts = box.querySelectorAll('[data-view]');
   [].forEach.call(document.querySelectorAll('.track img'), function (im) {
     var w = +im.getAttribute('width'), h = +im.getAttribute('height');
     if (w && h) im.parentNode.style.setProperty('--ar', (w / h).toFixed(4));
   });
-  btn.addEventListener('click', function () {
-    var list = !main.classList.contains('list');
+  box.addEventListener('click', function (e) {
+    var opt = e.target.closest && e.target.closest('[data-view]');
+    if (!opt) return;
+    var list = opt.getAttribute('data-view') === 'list';
+    if (list === main.classList.contains('list')) return;       // 点的就是当前模式
     main.classList.toggle('list', list);
-    btn.setAttribute('data-mode', list ? 'list' : 'scroll');
+    [].forEach.call(opts, function (o) { o.setAttribute('aria-pressed', String(o === opt)); });
     [].forEach.call(tracks, function (t) { t.setAttribute('data-lg-live', list ? 'still' : ''); });
     document.dispatchEvent(new CustomEvent('lg:relayout'));
   });

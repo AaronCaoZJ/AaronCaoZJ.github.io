@@ -188,19 +188,25 @@ img { max-width: 100%; }
 .lg-loupe.on { opacity: 1; scale: 1; }
 .lg-loupe.drag { pointer-events: auto; cursor: grab; }
 @media (prefers-reduced-motion: reduce) { .lg-loupe { transition: opacity .15s ease; scale: 1; } }
-/* 相册页标题后面的显示模式开关（胶卷 / 列表）：一颗普通的小胶囊，样式同首页联系方式那一排，不是玻璃。
-   上面写的是点了之后会切到的模式，与语言按钮同一个逻辑 */
-.gallery-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
-.view-toggle {
-  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700;
-  padding: 5px 12px; border-radius: 999px; cursor: pointer;
-  background: var(--glass-fill); color: var(--fg);
-  border: 1px solid var(--rule); box-shadow: 0 2px 8px var(--glass-cast);
-  transition: border-color .18s ease, color .18s ease, background .18s ease;
+/* 相册页简介下面的显示模式开关（胶卷 / 列表）：一条分段开关，两个选项并排，当前的那个用主题蓝
+   高亮。底子同首页联系方式那排小胶囊，不是玻璃 */
+.view-switch {
+  display: inline-flex; gap: 2px; margin-top: 12px; padding: 3px;
+  border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--glass-fill); box-shadow: 0 2px 8px var(--glass-cast);
 }
-.view-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.view-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.view-toggle[data-mode="scroll"] .to-scroll, .view-toggle[data-mode="list"] .to-list { display: none; }
+.view-switch button {
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700; line-height: 1.4;
+  padding: 4px 13px; border: 0; border-radius: 999px; cursor: pointer;
+  background: none; color: var(--subtle); white-space: nowrap;
+  transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.view-switch button:hover { color: var(--fg); }
+.view-switch button[aria-pressed="true"] {
+  color: var(--accent); background: rgba(77, 110, 138, .1);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* 本体：一层底色（默认不叠白） */
 .nav .wrap::after, .language-toggle::after, .nav-loupe::after {
   content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
