@@ -13,7 +13,7 @@
 <meta http-equiv="content-language" content="en, zh-CN">
 <link rel="icon" href="/assets/img/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="/assets/css/style.css?v=20261003align">
+<link rel="stylesheet" href="/assets/css/style.css?v=20261003views">
 <script src="/assets/js/reveal.js?v=202609291444"></script>
 
 
@@ -92,6 +92,33 @@
     .track figure.h2, .track figure.h4 { --y: 18px; }
     .track figure.h1, .track figure.h3 { --y: 0px; }
   }
+
+  /* ============ 列表模式 ============
+     标题旁的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
+     每张保持原比例（--ar 由页尾脚本从图片的宽高属性算出），用于循环的那份副本不显示。
+     flex-grow 与 flex-basis 都按宽高比给，同一行各张被拉伸后高度相同；末尾那个空元素吃掉
+     最后一行的余量，最后一行才不会被拉得特别高。宽度收回到正文栏，不再铺满视口。
+     基准宽度按容器算：一行放得下三张横图 —— --units 4.85 比两张 3:2 加一张 16:9（1.5 + 1.5 + 1.78）
+     略大，--gaps 是这一行里的两个间距。窄屏也是一行三张，照片跟着缩小，只把间距收窄。
+     写死一个行高的话，换个宽度就时而两张时而三张，只有两张的那行会被拉得特别高 */
+  main.list .marquee {
+    width: auto; max-width: var(--w); margin: 0 auto; padding: 18px 22px 6px;
+    overflow: visible; -webkit-mask-image: none; mask-image: none;
+  }
+  main.list .track {
+    --units: 4.85; --gaps: 20px;
+    width: auto; flex-wrap: wrap; gap: 10px; padding-right: 0;
+    animation: none; transform: none;
+  }
+  main.list .track::after { content: ''; flex: 1000 1 0; }
+  main.list .track figure {
+    --y: 0px; height: auto !important;
+    flex: var(--ar, 1.5) 1 calc(var(--ar, 1.5) * (100% - var(--gaps)) / var(--units));
+    aspect-ratio: var(--ar, 1.5);
+  }
+  main.list .track figure[aria-hidden="true"] { display: none; }
+  main.list .track img { width: 100%; height: 100%; object-fit: cover; }
+  @media (max-width: 700px) { main.list .track { --gaps: 12px; gap: 6px; } }
   /* ============ 彩蛋 ============
      点中特定照片时从它中心炸开一串 emoji。整层 fixed 覆盖视口、
      pointer-events:none，所以不挡任何交互，也不参与轮播的布局。 */
@@ -120,9 +147,9 @@
     }
   }
 </style>
-<script src="/assets/js/i18n.js?v=20261003titles" defer></script>
-<script src="/assets/js/nav.js?v=20261002navicons" defer></script>
-<script src="/assets/js/glass.js?v=20261003pin" defer></script>
+<script src="/assets/js/i18n.js?v=20261003views" defer></script>
+<script src="/assets/js/nav.js?v=20261003views" defer></script>
+<script src="/assets/js/glass.js?v=20261003views" defer></script>
 </head>
 <body>
 
@@ -143,8 +170,9 @@
   <section class="intro wrap" style="padding-top:56px">
     <div class="gallery-head rise">
       <h2 data-i18n="gallery.heading">🖼️ Gallery</h2>
-      <button class="loupe-toggle" type="button" aria-pressed="false" data-lg-loupe-toggle hidden
-              data-i18n="gallery.loupe">🔍 Magnifier</button>
+      <button class="view-toggle" type="button" data-view-toggle data-mode="scroll">
+        <span class="to-list" data-i18n="gallery.toList">📋 List view</span><span class="to-scroll" data-i18n="gallery.toScroll">🎞️ Scroll view</span>
+      </button>
     </div>
     <p class="rise" style="margin-top:16px" data-i18n="gallery.welcome"><strong>Welcome to my gallery!</strong></p>
     <p class="rise" data-i18n="gallery.intro">
@@ -241,6 +269,12 @@
   <span data-i18n="footer.updated">Last Update: Sep. 2026</span>
 </footer>
 
+<!-- 放大镜开关：右下角的玻璃圆钮，玻璃就绪后由 glass.js 露出。
+     data-lg-pane 让它也被画成液态玻璃，data-lg-skip 不让它进背景截图 -->
+<button class="loupe-fab" type="button" aria-pressed="false" aria-label="Magnifier" title="Magnifier"
+        data-i18n-aria-label="gallery.loupe" data-i18n-title="gallery.loupe"
+        data-lg-loupe-toggle data-lg-pane data-lg-skip hidden>🔍</button>
+
 
 <script>
 /* ---------- 轨道复制：无缝循环的前提 ----------
@@ -284,6 +318,29 @@
     var mq = window.matchMedia && window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
     if (mq && mq.addEventListener) mq.addEventListener('change', function () { snap(); watch(); }, { once: true });
   })();
+})();
+
+
+/* ---------- 显示模式：滚动 / 列表 ----------
+   默认滚动。列表模式只是给 <main> 加一个类，排版全在样式里（见「列表模式」）；
+   每次打开页面都从滚动开始，不记住上次的选择。
+   轨道上的 data-lg-live="still" 告诉 glass.js 这些照片现在不动，玻璃不必逐帧重画；
+   lg:relayout 事件让它按新的排版重新量照片位置、重截背景。 */
+(function () {
+  var btn = document.querySelector('[data-view-toggle]'), main = document.querySelector('main');
+  if (!btn || !main) return;
+  var tracks = document.querySelectorAll('.track');
+  [].forEach.call(document.querySelectorAll('.track img'), function (im) {
+    var w = +im.getAttribute('width'), h = +im.getAttribute('height');
+    if (w && h) im.parentNode.style.setProperty('--ar', (w / h).toFixed(4));
+  });
+  btn.addEventListener('click', function () {
+    var list = !main.classList.contains('list');
+    main.classList.toggle('list', list);
+    btn.setAttribute('data-mode', list ? 'list' : 'scroll');
+    [].forEach.call(tracks, function (t) { t.setAttribute('data-lg-live', list ? 'still' : ''); });
+    document.dispatchEvent(new CustomEvent('lg:relayout'));
+  });
 })();
 
 

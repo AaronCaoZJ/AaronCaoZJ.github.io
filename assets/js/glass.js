@@ -299,7 +299,9 @@
     views.push(v);
     return v;
   }
-  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean);
+  // 导航的两块，加上页面里标了 data-lg-pane 的（相册页右下角的放大镜开关）
+  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
+    .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
   for (var i = 0; i < panes.length; i++) {
     if (!addView(panes[i], { frost: function () { return G.frost; } })) return;   // 没有 WebGL：保持 CSS 模糊玻璃
   }
@@ -355,9 +357,11 @@
     vd.addEventListener('play', function () { views.forEach(function (v) { v.rescan = true; }); schedule(); });
   });
   // 窗口尺寸变了，照片在条内的偏移也会变，下次重新量
-  window.addEventListener('resize', function () {
+  function remeasure() {
     liveTracks.forEach(function (t) { [].forEach.call(t.children, function (k) { k._ow = null; }); });
-  });
+    views.forEach(function (v) { v.rescan = true; });
+  }
+  window.addEventListener('resize', remeasure);
 
   function goLive() {
     if (live) return;
@@ -432,7 +436,10 @@
         if (overlaps(kid.getBoundingClientRect(), x0, y0, cw, ch)) under.push(kid);
       }
     }
-    var animating = under.some(function (el) { return el.tagName !== 'VIDEO' || !el.paused; });
+    // 视频看是否在播；照片看所在的条是否标了 still（相册的列表模式：照片排好不动，不必逐帧重画）
+    var animating = under.some(function (el) {
+      return el.tagName === 'VIDEO' ? !el.paused : el.parentNode.getAttribute('data-lg-live') !== 'still';
+    });
     v.anim = animating;
     if (!moved && !under.length) return false;              // 重新找了一遍，什么也没有
     v.at = key;
@@ -525,7 +532,7 @@
 
   /* ---------- 放大镜（相册页） ----------
      仿 macOS 预览的放大镜：一块圆形液态玻璃，里面是 2 倍放大的画面（按照片原图与页面矢量重新
-     画，不是把纹理拉大，所以是清楚的）。由标题旁的开关（data-lg-loupe-toggle）打开，打开后常驻：
+     画，不是把纹理拉大，所以是清楚的）。由右下角的开关（data-lg-loupe-toggle）打开，打开后常驻：
      鼠标 / 触控板下跟着光标走（带一点滞后，pointer-events: none 不挡点击）；
      触屏上没有光标，改为用手指拖动。每次打开页面都是关闭的，不记住上次的状态。 */
   var loupe = null;
@@ -637,6 +644,8 @@
   if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
   // 切换语言、窗口变宽变窄
   document.addEventListener('languagechange', function () { recapture(60); });
+  // 页面自己换了排版（相册切换滚动 / 列表）：照片位置重新量、先按新位置画，背景随后重截
+  document.addEventListener('lg:relayout', function () { remeasure(); schedule(); recapture(60); });
   var lastW = document.documentElement.clientWidth;
   window.addEventListener('resize', function () {
     var w = document.documentElement.clientWidth;
@@ -654,7 +663,9 @@
   function mediaChanged() { if (scene || capturing) recapture(); }
   document.addEventListener('load', function (e) {
     var t = e.target;
-    if (t && t.tagName === 'IMG' && !nav.contains(t) && !t.closest('[data-lg-live]')) mediaChanged();
+    if (!t || t.tagName !== 'IMG' || nav.contains(t)) return;
+    if (t.closest('[data-lg-live]')) { views.forEach(function (v) { v.rescan = true; }); schedule(); }   // 实时画的照片：重画即可
+    else mediaChanged();
   }, true);
   videos.forEach(function (vd) { vd.addEventListener('loadedmetadata', mediaChanged); });
   // 页面高度变化（如图片晚到、折叠展开）。正在截的时候长高也要算：截图用的是开始那一刻的排版，

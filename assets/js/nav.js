@@ -59,7 +59,9 @@ function liquidLens(box, pick, cls) {
   var nav = document.querySelector('.nav');
   var wrap = nav && nav.querySelector('.wrap');
   if (!wrap) return;
-  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean);
+  // 导航的两块，加上页面里标了 data-lg-pane 的玻璃钮（相册页右下角的放大镜开关）
+  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
+    .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
   nav.classList.add('lg-live');
 
   function layer(pane, cls) {
