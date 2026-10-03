@@ -835,6 +835,8 @@
       enabled = !enabled;
       sync();
     });
+    var hinted = false;
+    btn.addEventListener('animationend', function () { btn.classList.remove('hint'); });
 
     if (mouse) {
       document.addEventListener('pointermove', function (e) {
@@ -860,7 +862,14 @@
     window.addEventListener('resize', function () { clamp(); if (enabled) schedule(); });
 
     return {
-      ready: function () { btn.hidden = false; sync(); },   // 玻璃就绪：露出开关
+      // 玻璃就绪：露出开关。再提示一下这里有个放大镜 —— 打开页面满 2 秒后（圆钮这时也已经展开），
+      // 外圈闪两下（样式见 .nav-loupe.hint），只闪这一次；已经点开了就不必提示
+      ready: function () {
+        btn.hidden = false; sync();
+        if (hinted) return;
+        hinted = true;
+        setTimeout(function () { if (!enabled) btn.classList.add('hint'); }, Math.max(2000 - performance.now(), 500));
+      },
       // 每帧调用：朝目标位置靠近（时间常数 70ms 的指数跟随），还没跟上就返回 true 要下一帧
       step: function () {
         if (!el.classList.contains('on')) return false;

@@ -271,6 +271,13 @@ img { max-width: 100%; }
   opacity: 0; visibility: hidden; pointer-events: none;
 }
 .nav-loupe[aria-pressed="true"] { box-shadow: var(--lg-shadow), 0 0 0 2px var(--accent); }
+/* 提示这里有个放大镜：打开相册约 2 秒后，外圈那道主题蓝快闪两下（glass.js 加上 .hint，闪完去掉），
+   之后就是常规的样子 */
+.nav-loupe.hint { animation: loupe-hint .9s ease-in-out; }
+@keyframes loupe-hint {
+  0%, 50%, 100% { box-shadow: var(--lg-shadow), 0 0 0 0 rgba(77, 110, 138, 0); }
+  25%, 75%      { box-shadow: var(--lg-shadow), 0 0 0 2.5px var(--accent); }
+}
 .language-toggle:focus-visible, .nav-loupe:focus-visible, .nav a:focus-visible {
   outline: 2px solid var(--accent); outline-offset: -3px;
 }
