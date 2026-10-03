@@ -140,10 +140,10 @@
      页面上。页尾脚本给每张写 --dl（按它离这一栏左上角的远近），这一栏滚进视口才开始（之前挂着 .wait，
      照片不显示）；落完去掉 .deal，悬停放大照旧 */
   main.list .track.wait figure { opacity: 0; }
-  main.list .track figure.deal { animation: land .62s cubic-bezier(.2, .75, .25, 1) var(--dl, 0ms) both; }
+  main.list .track figure.deal { animation: land .95s cubic-bezier(.22, .61, .36, 1) var(--dl, 0ms) both; }
   @keyframes land {
-    0%   { opacity: 0; transform: translateY(-20px) scale(1.09); box-shadow: 0 20px 32px rgba(45,42,41,.24); }
-    45%  { opacity: 1; }
+    0%   { opacity: 0; transform: translateY(-12px) scale(1.05); box-shadow: 0 14px 26px rgba(45,42,41,.16); }
+    55%  { opacity: 1; }
     100% { opacity: 1; transform: none; box-shadow: 0 0 0 rgba(45,42,41,0); }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -416,7 +416,7 @@
     var box = tr.getBoundingClientRect();
     [].forEach.call(tr.querySelectorAll('figure:not([aria-hidden])'), function (f) {
       var r = f.getBoundingClientRect();
-      f.style.setProperty('--dl', Math.round(((r.left - box.left) * .4 + (r.top - box.top)) / box.width * 720) + 'ms');
+      f.style.setProperty('--dl', Math.round(((r.left - box.left) * .4 + (r.top - box.top)) / box.width * 1050) + 'ms');
       f.classList.add('deal');
     });
     tr.classList.remove('wait');
