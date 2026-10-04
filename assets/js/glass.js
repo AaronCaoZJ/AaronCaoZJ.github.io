@@ -858,7 +858,7 @@
       sync();
     });
     var hinted = false;
-    btn.addEventListener('animationend', function () { btn.classList.remove('hint'); });
+    btn.addEventListener('animationend', function (e) { if (e.target === btn) btn.classList.remove('hint'); });   // 图标自己的动画结束不算
 
     if (mouse) {
       document.addEventListener('pointermove', function (e) {
@@ -885,7 +885,7 @@
 
     return {
       // 玻璃就绪：露出开关。再提示一下这里有个放大镜 —— 打开页面满 1 秒后（至少等圆钮展开完），
-      // 外圈像呼吸灯那样亮暗两次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
+      // 图标晃两下、外圈亮暗一次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
       ready: function () {
         btn.hidden = false; sync();
         if (hinted) return;
