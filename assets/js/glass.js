@@ -885,7 +885,7 @@
 
     return {
       // 玻璃就绪：露出开关。再提示一下这里有个放大镜 —— 打开页面满 1 秒后（至少等圆钮展开完），
-      // 外圈像呼吸灯那样亮暗四次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
+      // 外圈像呼吸灯那样亮暗两次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
       ready: function () {
         btn.hidden = false; sync();
         if (hinted) return;

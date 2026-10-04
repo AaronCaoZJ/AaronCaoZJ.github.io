@@ -271,9 +271,9 @@ img { max-width: 100%; }
   opacity: 0; visibility: hidden; pointer-events: none;
 }
 .nav-loupe[aria-pressed="true"] { box-shadow: var(--lg-shadow), 0 0 0 2px var(--accent); }
-/* 提示这里有个放大镜：打开相册 1 秒后，外圈像呼吸灯那样亮起、暗下，来回四次（glass.js 加上 .hint，
-   四次走完去掉），之后就是常规的样子。亮的时候除了那道主题蓝，外面再晕开一圈光 */
-.nav-loupe.hint { animation: loupe-breathe 1.25s ease-in-out 4; }
+/* 提示这里有个放大镜：打开相册 1 秒后，外圈像呼吸灯那样亮起、暗下，来回两次（glass.js 加上 .hint，
+   两次走完去掉），之后就是常规的样子。亮的时候除了那道主题蓝，外面再晕开一圈光 */
+.nav-loupe.hint { animation: loupe-breathe 1.25s ease-in-out 2; }
 @keyframes loupe-breathe {
   0%, 100% { box-shadow: var(--lg-shadow), 0 0 0 0 rgba(77, 110, 138, 0), 0 0 0 0 rgba(77, 110, 138, 0); }
   50%      { box-shadow: var(--lg-shadow), 0 0 0 2px var(--accent), 0 0 14px 3px rgba(77, 110, 138, .5); }
