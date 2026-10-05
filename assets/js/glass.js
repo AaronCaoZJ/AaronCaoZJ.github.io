@@ -168,7 +168,8 @@
      原库把玻璃画在整页大小的画布上，这里一张画布上画一块或几块玻璃（u_at 是这一块在画布里的位置），
      背景取自一张已经备好的纹理：u_org 是这块玻璃左上角在纹理里的位置，u_k 是每个画布像素合几个
      纹理像素，u_tsize 是纹理尺寸。
-     所有长度都是物理像素（原库同样把尺寸、圆角、弯边深度乘 devicePixelRatio 传进来）。 */
+     所有长度都是物理像素（原库同样把尺寸、圆角、弯边深度乘 devicePixelRatio 传进来）；
+     着色器里写死的那几个像素数另按屏幕密度折算，见 dp。 */
   var VS = 'attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }';
   var FS = [
     'precision highp float;',
@@ -196,7 +197,11 @@
     '  float inside = -sdf;',
     '  float edge = smoothstep(maxD * 0.35, 0.0, inside);',
     '  float zR = u_zRadius;',
-    '  float e = 2.0;',
+    // 原库里凡是写死的像素数（位移、色散、描边、内发光）都是物理像素：同一块玻璃在 1 倍屏上折射得
+    // 厉害、在 3 倍屏手机上却很淡。这里统一乘 dp —— 以 2 倍屏为基准的屏幕密度比例，
+    // 各种屏幕上看到的弯折、色散、描边粗细就一样了；2 倍屏上 dp = 1，与原来分毫不差
+    '  float dp = u_px * 0.5;',
+    '  float e = 2.0 * dp;',
     '  float hC = bevelHeight(inside, zR);',
     '  float hR = bevelHeight(-rrSDF(lp + vec2(e, 0.0), half_, r), zR);',
     '  float hL = bevelHeight(-rrSDF(lp - vec2(e, 0.0), half_, r), zR);',
@@ -208,9 +213,9 @@
     '  float refrPow = 1.0 - 1.0 / 1.5;',
     '  float thickNorm = hC * 2.0 / max(zR * 2.0, 1.0);',
     '  vec2 entryRefr = hGrad * refrPow;',
-    '  vec2 refrPx = (entryRefr + entryRefr + entryRefr * thickNorm * 0.5) * u_refract * 30.0;',
-    '  refrPx += -lp / max(half_, vec2(1.0)) * u_refract * 4.0 * depth;',
-    '  float caS = u_chroma * 18.0 * (edge * 0.7 + 0.3) * 2.0;',
+    '  vec2 refrPx = (entryRefr + entryRefr + entryRefr * thickNorm * 0.5) * u_refract * 30.0 * dp;',
+    '  refrPx += -lp / max(half_, vec2(1.0)) * u_refract * 4.0 * depth * dp;',
+    '  float caS = u_chroma * 18.0 * (edge * 0.7 + 0.3) * 2.0 * dp;',
     '  vec2 caD = N.xy * caS * u_k / u_tsize;',
     '  vec2 base = (u_org + (lp + half_ + refrPx) * u_k) / u_tsize;',
     '  vec3 col = vec3(texture2D(u_tex, base + caD).r, texture2D(u_tex, base).g, texture2D(u_tex, base - caD).b);',
@@ -227,11 +232,11 @@
     '  float band = 1.0 - smoothstep(0.8 * u_px, 2.0 * u_px, inside);',   // 轮廓往里 0.8px 内全亮，到 2px 归零
     '  float rimHL = band * (u_rimTop * pow(max(facing, 0.0), 1.5) + u_rimBot * pow(max(-facing, 0.0), 1.5));',
     '  float fres = pow(1.0 - abs(N.z), 4.0) * u_fresnel;',
-    '  float bw = 1.5;',
+    '  float bw = 1.5 * dp;',
     '  float stroke = smoothstep(-bw - 1.0, -bw, sdf) * (1.0 - smoothstep(-1.0, 0.0, sdf));',
     '  stroke *= 0.4 + 0.6 * (0.5 + 0.5 * (-lp.y / half_.y));',
     '  float rim = edge * u_edgeHL * 0.22;',
-    '  float innerGlow = smoothstep(5.0, 0.0, -sdf) * u_edgeHL * 0.15;',
+    '  float innerGlow = smoothstep(5.0 * dp, 0.0, -sdf) * u_edgeHL * 0.15;',
     '  float envRefl = (N.y * 0.5 + 0.5) * fres * 0.08;',
     '  vec3 fin = col + vec3(rim + innerGlow + stroke * u_edgeHL * 0.55 + envRefl);',
     '  fin = mix(fin, vec3(1.0), fres * 0.2);',
@@ -245,7 +250,8 @@
      - 弯边深度：原库 40px 是给大面板的。放在 50px 高的胶囊上，比半高还深，上下两段圆弧
        在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
        小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
-     - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素）；
+     - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素 —— 指 2 倍屏上，即 1.55 个
+       CSS 像素；别的屏幕按密度折算，看到的模糊程度一样）；
        Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
      - 色散：原库默认 0.05，这里取 0.08 —— 弯边上的彩色镶边再明显一点。 */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
@@ -595,7 +601,9 @@
     g.anim = animating;
 
     // 底图还够不够用：内容没变，取样范围（模糊时再留出模糊半径）也还在里面
-    var st = g.st, s = mag * d * (g.frost >= 2 ? .5 : 1), ver = sceneVer + ':' + liveVer + ':' + s;
+    // 磨砂的 σ 也按看到的大小算：G.frost 是 2 倍屏上的物理像素，折成 CSS 像素是它的一半（fr）。
+    // 模糊够大（折成这块屏的物理像素不小于 2.4）底图才存一半分辨率；1 倍屏上模糊只有一个多像素，存原样
+    var fr = g.frost / 2, st = g.st, s = mag * d * (fr * d >= 2.4 ? .5 : 1), ver = sceneVer + ':' + liveVer + ':' + s;
     var guard = g.frost ? (BLUR_R + 1) / s : 0;
     var stale = st.ver !== ver || bx0 < st.x0 + guard || by0 < st.y0 + guard ||
                 bx1 > st.x0 + st.w - guard || by1 > st.y0 + st.h - guard;
@@ -652,7 +660,7 @@
     }
 
     // 纹理：没有实时内容就用整张底图（只在它重画后上传一次）；有就拷出取样范围、把实时内容画上去再上传
-    var sigma = g.frost * s / (d * mag), tx0, ty0, TW, TH;
+    var sigma = fr * s / mag, tx0, ty0, TW, TH;
     try {
       if (dyn.length) {
         TW = Math.max(1, Math.ceil((bx1 - bx0) * s)); TH = Math.max(1, Math.ceil((by1 - by0) * s));
