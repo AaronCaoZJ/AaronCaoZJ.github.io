@@ -632,17 +632,16 @@ strong { font-weight: 700; }
 .item .s { font-size: var(--fs-sm); color: var(--subtle); margin-top: 2px; text-wrap: pretty; }
 .item .s .me, .pub .authors .me { font-weight: 700; color: var(--fg); }
 
-/* 工作条目下的产出、挂在学校下面的经历（如 ZJU 下的 RA）：一条一段，每条前面一个主题色的小圆点。
-   以前是整块左边一道竖线，几条连成一整段，看着像一段引用。
+/* 工作条目下的产出、挂在学校下面的经历（如 ZJU 下的 RA）：一条一段，每条左边各有一小段竖线，
+   表明从属于上方的经历；条与条之间竖线是断开的。以前是整块共用一条竖线，几条连成一整段，
+   看着像一段引用。
    .prow 是一句话的产出行；.pitem 是「标题 + 日期 + 说明」的一段经历，标题比父条目小一档、
    字重降一级，一眼看出是从属关系而不是并列条目 */
-.item .plist > .prow, .item .plist > .pitem { position: relative; padding-left: 16px; font-size: var(--fs-sm); }
-.item .plist > .prow::before, .item .plist > .pitem::before {
-  content: ''; position: absolute; left: 3px; top: .68em;
-  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+.item .plist > .prow, .item .plist > .pitem {
+  border-left: 2px solid var(--rule); padding-left: 14px; font-size: var(--fs-sm);
 }
-.item .plist > .prow + .prow { margin-top: 5px; }
-.item .plist > .pitem + .pitem { margin-top: 10px; }
+.item .plist > .prow + .prow { margin-top: 7px; }
+.item .plist > .pitem + .pitem { margin-top: 11px; }
 .item .plist .row .t { font-size: var(--fs-sm); font-weight: 600; }
 /* 产品状态标签：次要色、小一号、正体，跟在产品名后面，
    靠颜色和字号而不是斜体与产品名区分 */
