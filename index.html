@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-i18n="home.title">Cao Zhijun Aaron · 曹植竣</title>
-<meta name="description" content="Cao Zhijun Aaron (曹植竣), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
-<meta name="author" content="Cao Zhijun Aaron">
+<title data-i18n="home.title">Aaron Zhijun Cao</title>
+<meta name="description" content="Aaron Zhijun Cao (曹植竣, caozhijun), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
+<meta name="author" content="Aaron Zhijun Cao">
 <!-- 语言：主语言英文（<html lang>），同时声明面向中文读者 —— Bing 参考 content-language 判断
      页面语言与受众（Google 不看它）。正文里夹着的中文片段另用 lang="zh-CN" 标出。 -->
 <meta http-equiv="content-language" content="en, zh-CN">
 
 <!-- Open Graph：分享到社交平台时的预览卡片 -->
 <meta property="og:type" content="profile">
-<meta property="og:title" content="Aaron Zhijun Cao · 曹植竣" data-i18n-content="home.title">
-<meta property="og:description" content="M.Sc. Electrical Engineering, Show Lab, National University of Singapore. Diffusion Models, VLA Models, World Models." data-i18n-content="home.description">
+<meta property="og:title" content="Aaron Zhijun Cao" data-i18n-content="home.title">
+<meta property="og:description" content="Aaron Zhijun Cao (曹植竣, caozhijun), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
 <meta property="og:url" content="https://caozhijun.top/">
 <meta property="og:image" content="https://caozhijun.top/assets/img/avatar.jpg">
 <meta property="og:locale" content="en_US">
@@ -32,7 +32,7 @@
 <!-- 结构化数据：WebSite 给出站点名称（Google 据此显示搜索结果里的站名），
      ProfilePage 声明这一页以一个人为主体，Person 是那个人本身。
      sameAs 把 Scholar / GitHub / LinkedIn 等身份关联到同一实体；
-     alternateName 里的中文名让「曹植竣」的搜索也能对上这个人。 -->
+     alternateName 保留中文名、拼音和曾用排列，帮助搜索引擎关联同一人的不同姓名。 -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -41,15 +41,15 @@
       "@type": "WebSite",
       "@id": "https://caozhijun.top/#website",
       "url": "https://caozhijun.top/",
-      "name": "Cao Zhijun Aaron",
-      "alternateName": ["曹植竣", "Zhijun Cao", "caozhijun.top"],
+      "name": "Aaron Zhijun Cao",
+      "alternateName": ["曹植竣", "caozhijun", "Zhijun Cao", "Aaron Cao", "Cao Zhijun Aaron", "caozhijun.top"],
       "inLanguage": ["en", "zh-CN"]
     },
     {
       "@type": "ProfilePage",
       "@id": "https://caozhijun.top/#profile",
       "url": "https://caozhijun.top/",
-      "name": "Cao Zhijun Aaron · 曹植竣",
+      "name": "Aaron Zhijun Cao",
       "inLanguage": ["en", "zh-CN"],
       "isPartOf": { "@id": "https://caozhijun.top/#website" },
       "mainEntity": { "@id": "https://caozhijun.top/#person" }
@@ -57,8 +57,8 @@
     {
       "@type": "Person",
       "@id": "https://caozhijun.top/#person",
-      "name": "Cao Zhijun Aaron",
-      "alternateName": ["曹植竣", "Zhijun Cao", "Aaron Cao"],
+      "name": "Aaron Zhijun Cao",
+      "alternateName": ["曹植竣", "caozhijun", "Zhijun Cao", "Aaron Cao", "Cao Zhijun Aaron"],
       "url": "https://caozhijun.top/",
       "image": "https://caozhijun.top/assets/img/avatar.jpg",
       "email": "mailto:aaroncaozj@gmail.com",
@@ -91,7 +91,7 @@
   ]
 }
 </script>
-<script src="assets/js/i18n.js?v=20261006alg" defer></script>
+<script src="assets/js/i18n.js?v=20261007name" defer></script>
 <script src="assets/js/nav.js?v=20261003lean" defer></script>
 <script src="assets/js/glass.js?v=20261005dpr" defer></script>
 </head>
@@ -114,7 +114,7 @@
   <!-- ============ 头部名片 ============ -->
   <header class="hero">
     <div>
-      <h1 class="rise" data-i18n="hero.name">Cao Zhijun Aaron <span class="cn" lang="zh-CN">曹植竣</span></h1>
+      <h1 class="rise" data-i18n="hero.name">Aaron Zhijun Cao <span class="cn" lang="zh-CN">曹植竣</span></h1>
       <div class="role rise" data-i18n="hero.role">M.Sc. Student at Show Lab, NUS</div>
       <p class="affil rise" data-i18n="hero.opportunities">Currently seeking <strong>Researcher / Algorithm Engineer</strong> roles in <strong>Embodied Foundation Models / Generative AI</strong>, and open to <strong>PhD Opportunities</strong>. See my <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202609291444">CV</a> for details.</p>
 
@@ -150,7 +150,7 @@
     </div>
 
     <div class="avatar-wrap" id="avatarFx" title="Click to re-run the denoising" data-i18n-title="avatar.replay">
-      <img class="avatar" src="assets/img/avatar.jpg" alt="Cao Zhijun Aaron" width="230" height="230" data-i18n-alt="avatar.name">
+      <img class="avatar" src="assets/img/avatar.jpg" alt="Aaron Zhijun Cao" width="230" height="230" data-i18n-alt="avatar.name">
       <canvas class="avatar-fx" width="460" height="460" aria-hidden="true" data-lg-skip></canvas>
     </div>
   </header>
@@ -477,7 +477,7 @@
 </main>
 
 <footer class="wrap">
-  <span data-i18n="footer.copyright">Copyright © Cao Zhijun. All Rights Reserved.</span>
+  <span data-i18n="footer.copyright">Copyright © Aaron Zhijun Cao. All Rights Reserved.</span>
   <span data-i18n="footer.updated">Last Update: Sep. 2026</span>
 </footer>
 

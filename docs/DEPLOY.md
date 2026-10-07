@@ -230,8 +230,8 @@ curl -s --resolve caozhijun.top:443:185.199.110.153 https://caozhijun.top/ | gre
 |---|---|
 | `robots.txt` | 允许全站抓取，并指出 sitemap 位置 |
 | `sitemap.xml` | 列出所有页面。**新增页面要手动补一条 `<url>`**，内容有实质改动时更新 `<lastmod>` |
-| `<title>` 与 `description` | 都带中文名「曹植竣」。页面只有一个网址，爬虫读到的是英文版，中文名必须写在这些静态位置 |
-| `index.html` 中的 JSON-LD | `WebSite`（站点名称）+ `ProfilePage` + `Person`，`alternateName` 含「曹植竣」，`sameAs` 关联 Scholar / GitHub / LinkedIn / HuggingFace |
+| `<title>` 与 `description` | 中英文主页标题统一为 `Aaron Zhijun Cao`；静态简介保留「曹植竣」和 `caozhijun`，页面主标题保留中文名，便于搜索引擎关联姓名 |
+| `index.html` 中的 JSON-LD | `WebSite`（站点名称）+ `ProfilePage` + `Person`，`alternateName` 含「曹植竣」、`caozhijun` 和其他姓名排列，`sameAs` 关联 Scholar / GitHub / LinkedIn / HuggingFace |
 
 `sameAs` 是学者主页最值得填的一项：它把散落各处的身份指向同一个实体，
 Google 才可能把它们并进同一条 Knowledge Graph 记录，
@@ -293,7 +293,7 @@ Google Sites 本身的地址（`sites.google.com/view/caozhijun`）无法从这�
 - **LinkedIn** 个人资料的网站栏
 - 论文项目页（Show-Harness、PAPAV）的作者链接
 
-这些地方的姓名统一写成 **Zhijun Cao（曹植竣）**，网站一律填 `https://caozhijun.top`。
+这些地方的姓名建议统一写成 **Aaron Zhijun Cao（曹植竣）**（论文署名保留发表时的写法），网站一律填 `https://caozhijun.top`。
 同一个人名在各处写法一致、都指向同一个网址，搜索引擎才会把它们认作同一个人。
 
 这些做完，通常一到两周内搜索姓名就能出现在首页。
