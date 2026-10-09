@@ -22,7 +22,7 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png?v=20261010full" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
-<link rel="stylesheet" href="assets/css/style.css?v=20261010tip">
+<link rel="stylesheet" href="assets/css/style.css?v=20261010chip">
 <script src="assets/js/reveal.js?v=202609291444"></script>
 
 
@@ -93,7 +93,7 @@
 </script>
 <script src="assets/js/i18n.js?v=20261010mail" defer></script>
 <script src="assets/js/nav.js?v=20261003lean" defer></script>
-<script src="assets/js/glass.js?v=20261010mail" defer></script>
+<script src="assets/js/glass.js?v=20261010chip" defer></script>
 </head>
 <body>
 
@@ -120,15 +120,15 @@
 
 
       <div class="links rise">
-        <!-- 邮箱：鼠标悬停时下面弹出一个小浮层（液态玻璃，glass.js 按 data-lg-float 接管），显示地址、
-             可以一键复制；点击仍是 mailto。.copy-tip 是指向入口的小尖角，也垫住入口与浮层之间那条缝。
-             两者都不进玻璃的截图（data-lg-skip） -->
+        <!-- 邮箱：鼠标悬停时下面弹出一个小浮层，样子和这一排入口一样，显示地址、可以一键复制；
+             点击仍是 mailto。.copy-tip 是指向入口的小尖角，也垫住入口与浮层之间那条缝。
+             两者都标了 data-lg-skip：不进导航玻璃的截图，里面的文字变了也不触发重截 -->
         <span class="mailbox">
           <a href="mailto:aaroncaozj@gmail.com" data-i18n="contact.email">
             <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
           </a>
           <span class="copy-tip" aria-hidden="true" data-lg-skip></span>
-          <span class="copy-pop" role="group" aria-label="Email address" data-i18n-aria-label="mail.label" data-lg-float data-lg-skip>
+          <span class="copy-pop" role="group" aria-label="Email address" data-i18n-aria-label="mail.label" data-lg-skip>
             <span class="addr">aaroncaozj@gmail.com</span>
             <button type="button" data-copy data-i18n="mail.copy">Copy</button>
           </span>
@@ -536,9 +536,13 @@
     copy.textContent = zh() ? '复制' : 'Copy';
   }
   function show() {
-    // 尖角对准入口的正中；垫缝的那一条和浮层一样宽
-    box.style.setProperty('--ax', link.offsetWidth / 2 + 'px');
+    // 浮层与入口左右居中对齐；窗口窄、左边放不下时贴着窗口左缘留 8px，尖角仍对准入口正中。
+    // 垫缝的那一条（.copy-tip）与浮层同宽、同位置
+    var half = link.offsetWidth / 2, left = half - pop.offsetWidth / 2;
+    left = Math.max(left, 8 - box.getBoundingClientRect().left);
+    box.style.setProperty('--px', left + 'px');
     box.style.setProperty('--pw', pop.offsetWidth + 'px');
+    box.style.setProperty('--ax', half - left + 'px');
     box.classList.add('open'); pop.classList.add('on');
   }
   function hide() { box.classList.remove('open'); pop.classList.remove('on'); reset(); }

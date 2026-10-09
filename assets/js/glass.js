@@ -386,13 +386,6 @@
   var navGroup = addGroup(nav, { frost: G.frost, band: { x: 8, ahead: 900, behind: 300 } });
   if (!navGroup) return;                                    // 没有 WebGL：保持 CSS 模糊玻璃
   panes.forEach(function (p) { addView(navGroup, p); });
-  // 页面里别处的小块玻璃（标了 data-lg-float，如首页邮箱入口点开的浮层）：各自一组，画布铺在它里面。
-  // 带 .on 才画；它们跟着页面一起滚，在页面上的位置不变，底图不必多留
-  var floats = [].slice.call(document.querySelectorAll('[data-lg-float]'));
-  floats.forEach(function (el) {
-    var fg = addGroup(el, { frost: G.frost, band: { x: 8, ahead: 40, behind: 40 } });
-    if (fg) addView(fg, el, { active: function () { return el.classList.contains('on'); } });
-  });
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
@@ -506,20 +499,14 @@
     if (live) return;
     live = true;
     groups.forEach(function (g) { g.host.insertBefore(g.cv, g.host.firstChild); });
-    views.forEach(function (v) {
-      v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = 'none';
-      v.pane.classList.add('lg-on');
-    });
+    views.forEach(function (v) { v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = 'none'; });
     nav.classList.add('lg-webgl');
     if (loupe) loupe.ready();
   }
   function giveUp() {                       // 截图不可用（如画布被污染）：退回 CSS 模糊
     live = false; scene = null;
     groups.forEach(function (g) { if (g.cv.parentNode) g.cv.parentNode.removeChild(g.cv); });
-    views.forEach(function (v) {
-      v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = '';
-      v.pane.classList.remove('lg-on');
-    });
+    views.forEach(function (v) { v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = ''; });
     nav.classList.remove('lg-webgl');
   }
 
@@ -806,13 +793,6 @@
     });
   });
   nav.addEventListener('transitionrun', function (e) { if (panes.indexOf(e.target) >= 0) easeStart(e.target); });
-  // 别处的小块玻璃出现 / 收起时有位移过渡，同样逐帧跟上
-  floats.forEach(function (el) {
-    el.addEventListener('transitionrun', function (e) { if (e.target === el) easeStart(el); });
-    ['transitionend', 'transitioncancel'].forEach(function (n) {
-      el.addEventListener(n, function (e) { if (e.target === el) easeEnd(el); });
-    });
-  });
   ['transitionend', 'transitioncancel'].forEach(function (n) {
     nav.addEventListener(n, function (e) { if (panes.indexOf(e.target) >= 0) easeEnd(e.target); });
   });

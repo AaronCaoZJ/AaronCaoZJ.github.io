@@ -414,19 +414,18 @@ img { max-width: 100%; }
 /* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
-/* 邮箱入口点开的小浮层：一块液态玻璃，和导航是同一套渲染（glass.js 按 data-lg-float 接管，
-   折射画布 .lg-refract 铺在里面；接管后加上 .lg-on）。鼠标悬停在入口上时出现，里面是地址和「复制」按钮。
-   接管之前、或没有 WebGL 时，退回半透明加模糊。带 .on 才显示；出现时从上方落下一点 */
+/* 邮箱入口悬停时弹出的小浮层：样子和这一排入口一样（同样的描边、圆角、投影、字体），里面是地址
+   和「复制」。底色是入口那层半透明白叠在页面底色上的结果，但写成实色 —— 浮层可能压在别的内容上，
+   透明的话字会叠在一起。与入口左右居中对齐（--px 由脚本算）。带 .on 才显示，出现时从上方落下一点 */
 .mailbox { position: relative; display: inline-flex; }
 .copy-pop {
-  position: absolute; left: 0; top: calc(100% + 9px); z-index: 20;
-  display: flex; align-items: center; gap: 6px;
-  height: 46px; padding: 0 7px 0 17px; white-space: nowrap;
-  border-radius: 999px; isolation: isolate; overflow: hidden; overflow: clip;
+  --pop-bg: #f5f8fa;
+  position: absolute; left: var(--px, 0px); top: calc(100% + 9px); z-index: 20;
+  display: flex; align-items: center; white-space: nowrap;
+  padding: 5px 4px 5px 13px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--pop-bg);
+  box-shadow: 0 2px 8px var(--glass-cast);
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 700; color: var(--fg);
-  background: rgba(255, 255, 255, .62);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--lg-shadow);
   opacity: 0; visibility: hidden; transform: translateY(-7px);
   transition: opacity .12s ease, transform .12s ease, visibility 0s .12s;
 }
@@ -434,32 +433,23 @@ img { max-width: 100%; }
   opacity: 1; visibility: visible; transform: none;
   transition: opacity .2s ease, transform .45s var(--lg-spring);
 }
-.copy-pop.lg-on { background: none; }
-.copy-pop::after {                                /* 同导航：叠一层很淡的白 */
-  content: ''; position: absolute; inset: 0; z-index: -2; pointer-events: none;
-  border-radius: inherit; background: var(--lg-tint);
-}
-.copy-pop .addr {
-  margin-right: 5px; user-select: all; -webkit-user-select: all;
-  text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
-}
+.copy-pop .addr { user-select: all; -webkit-user-select: all; }
+/* 「复制」是一段主题色的文字，前面一道细线与地址隔开；留够「已复制 ✓」的宽度，复制后浮层不变宽 */
 .copy-pop button {
-  height: 32px; min-width: 98px; padding: 0 12px; border: 0; border-radius: 999px; cursor: pointer;
-  font: inherit; color: var(--accent);
-  background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px var(--glass-edge);
-  transition: background .18s ease, color .18s ease;
+  min-width: 88px; margin-left: 11px; padding: 0 9px; border: 0; border-left: 1px solid var(--rule);
+  background: none; cursor: pointer; font: inherit; line-height: inherit; color: var(--accent);
+  transition: color .18s ease;
 }
-.copy-pop button:hover { background: rgba(255, 255, 255, .8); }
-.copy-pop button.done { color: var(--fg); background: rgba(255, 255, 255, .8); }
-.copy-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-@media (prefers-reduced-transparency: reduce) { .copy-pop { background: rgba(255, 255, 255, .96); } }
-/* 指向入口的小尖角。它所在的这一条（.copy-tip）正好填在入口与浮层之间那 9px 的缝里、和浮层
-   一样宽（--pw 由脚本写），打开时才接鼠标：从入口往下划到浮层上，中途不会被当成移开。
-   尖角是一个转了 45° 的小方块，下半截压在浮层后面，只露出上面的尖；位置对准入口正中（--ax）。
-   玻璃的着色器只会画圆角矩形，尖角就用接近玻璃上沿的白色来配，上面两条边带一道高光 */
+.copy-pop button:hover { text-decoration: underline; }
+.copy-pop button.done { color: var(--fg); text-decoration: none; }
+.copy-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+/* 指向入口的小尖角。它所在的这一条（.copy-tip）正好填在入口与浮层之间那 9px 的缝里、与浮层同宽同位置
+   （--pw、--px 由脚本写），打开时才接鼠标：从入口往下划到浮层上，中途不会被当成移开。
+   尖角是一个转了 45° 的小方块，底色同浮层、上面两条边带同样的描边，下半截压住浮层的上沿，
+   把那一小段描边盖掉，看上去是一体的；位置对准入口正中（--ax） */
 .copy-tip {
-  position: absolute; left: 0; top: 100%; z-index: 19;
-  width: var(--pw, 300px); height: 10px; pointer-events: none;
+  position: absolute; left: var(--px, 0px); top: 100%; z-index: 21;
+  width: var(--pw, 260px); height: 10px; pointer-events: none;
   opacity: 0; transform: translateY(-7px);
   transition: opacity .12s ease, transform .12s ease;
 }
@@ -468,10 +458,9 @@ img { max-width: 100%; }
   transition: opacity .2s ease, transform .45s var(--lg-spring);
 }
 .copy-tip::before {
-  content: ''; position: absolute; left: calc(var(--ax, 42px) - 7px); top: 3px;
-  width: 14px; height: 14px; transform: rotate(45deg); border-radius: 3px 0 0 0;
-  background: rgba(255, 255, 255, .95);
-  box-shadow: -1px -1px 0 #fff, -2px -2px 6px rgba(35, 52, 70, .13);
+  content: ''; position: absolute; left: calc(var(--ax, 42px) - 5px); top: 5px;
+  width: 9px; height: 9px; transform: rotate(45deg); border-radius: 2px 0 0 0;
+  background: #f5f8fa; border: solid var(--rule); border-width: 1px 0 0 1px;
 }
 
 
