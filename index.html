@@ -22,7 +22,7 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png?v=20261010full" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
-<link rel="stylesheet" href="assets/css/style.css?v=20261010mail">
+<link rel="stylesheet" href="assets/css/style.css?v=20261010tip">
 <script src="assets/js/reveal.js?v=202609291444"></script>
 
 
@@ -121,11 +121,13 @@
 
       <div class="links rise">
         <!-- 邮箱：鼠标悬停时下面弹出一个小浮层（液态玻璃，glass.js 按 data-lg-float 接管），显示地址、
-             可以一键复制；点击仍是 mailto。浮层不进玻璃的截图（data-lg-skip） -->
+             可以一键复制；点击仍是 mailto。.copy-tip 是指向入口的小尖角，也垫住入口与浮层之间那条缝。
+             两者都不进玻璃的截图（data-lg-skip） -->
         <span class="mailbox">
           <a href="mailto:aaroncaozj@gmail.com" data-i18n="contact.email">
             <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
           </a>
+          <span class="copy-tip" aria-hidden="true" data-lg-skip></span>
           <span class="copy-pop" role="group" aria-label="Email address" data-i18n-aria-label="mail.label" data-lg-float data-lg-skip>
             <span class="addr">aaroncaozj@gmail.com</span>
             <button type="button" data-copy data-i18n="mail.copy">Copy</button>
@@ -518,25 +520,28 @@
 
 <script>
 /* 邮箱入口：鼠标悬停（或键盘聚焦）时在下面弹出小浮层，里面是地址和「复制」按钮；点击入口本身
-   仍是原来的 mailto。鼠标移开后稍等一下再收起 —— 入口和浮层之间有一条缝，要留出划过去的时间。
+   仍是原来的 mailto。鼠标一离开就收起，不停留 —— 入口和浮层之间那条缝由 .copy-tip 垫着（它和浮层
+   一样宽，只在打开时接鼠标），所以从入口往下划到浮层上不算离开。
    复制成功后按钮变成「已复制」，过一会儿变回来。按 Esc 也收起。
    没有悬停的设备（手机）不弹：点一下就是写邮件，长按链接系统自带复制 */
 (function () {
   var box = document.querySelector('.mailbox');
   if (!box || !window.matchMedia || !matchMedia('(hover: hover)').matches) return;
   var link = box.querySelector('a'), pop = box.querySelector('.copy-pop'), copy = pop.querySelector('[data-copy]');
-  var addr = pop.querySelector('.addr').textContent.trim(), hideT = 0, doneT = 0;
+  var addr = pop.querySelector('.addr').textContent.trim(), doneT = 0;
   function zh() { return document.documentElement.lang === 'zh-CN'; }
   function reset() {
     clearTimeout(doneT);
     copy.classList.remove('done');
     copy.textContent = zh() ? '复制' : 'Copy';
   }
-  function show() { clearTimeout(hideT); pop.classList.add('on'); }
-  function hide(now) {
-    clearTimeout(hideT);
-    hideT = setTimeout(function () { pop.classList.remove('on'); reset(); }, now === true ? 0 : 260);
+  function show() {
+    // 尖角对准入口的正中；垫缝的那一条和浮层一样宽
+    box.style.setProperty('--ax', link.offsetWidth / 2 + 'px');
+    box.style.setProperty('--pw', pop.offsetWidth + 'px');
+    box.classList.add('open'); pop.classList.add('on');
   }
+  function hide() { box.classList.remove('open'); pop.classList.remove('on'); reset(); }
   function copied() {
     copy.classList.add('done');
     copy.textContent = zh() ? '已复制 ✓' : 'Copied ✓';
@@ -559,7 +564,7 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(copied, legacyCopy);
     else legacyCopy();
   });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(true); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
   document.addEventListener('languagechange', function () { if (!copy.classList.contains('done')) reset(); });
 })();
 

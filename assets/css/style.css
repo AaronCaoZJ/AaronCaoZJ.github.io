@@ -428,7 +428,7 @@ img { max-width: 100%; }
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--lg-shadow);
   opacity: 0; visibility: hidden; transform: translateY(-7px);
-  transition: opacity .18s ease, transform .18s ease, visibility 0s .18s;
+  transition: opacity .12s ease, transform .12s ease, visibility 0s .12s;
 }
 .copy-pop.on {
   opacity: 1; visibility: visible; transform: none;
@@ -453,6 +453,26 @@ img { max-width: 100%; }
 .copy-pop button.done { color: var(--fg); background: rgba(255, 255, 255, .8); }
 .copy-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 @media (prefers-reduced-transparency: reduce) { .copy-pop { background: rgba(255, 255, 255, .96); } }
+/* 指向入口的小尖角。它所在的这一条（.copy-tip）正好填在入口与浮层之间那 9px 的缝里、和浮层
+   一样宽（--pw 由脚本写），打开时才接鼠标：从入口往下划到浮层上，中途不会被当成移开。
+   尖角是一个转了 45° 的小方块，下半截压在浮层后面，只露出上面的尖；位置对准入口正中（--ax）。
+   玻璃的着色器只会画圆角矩形，尖角就用接近玻璃上沿的白色来配，上面两条边带一道高光 */
+.copy-tip {
+  position: absolute; left: 0; top: 100%; z-index: 19;
+  width: var(--pw, 300px); height: 10px; pointer-events: none;
+  opacity: 0; transform: translateY(-7px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.mailbox.open .copy-tip {
+  pointer-events: auto; opacity: 1; transform: none;
+  transition: opacity .2s ease, transform .45s var(--lg-spring);
+}
+.copy-tip::before {
+  content: ''; position: absolute; left: calc(var(--ax, 42px) - 7px); top: 3px;
+  width: 14px; height: 14px; transform: rotate(45deg); border-radius: 3px 0 0 0;
+  background: rgba(255, 255, 255, .95);
+  box-shadow: -1px -1px 0 #fff, -2px -2px 6px rgba(35, 52, 70, .13);
+}
 
 
 /* ---------- 章节 ---------- */
