@@ -16,6 +16,8 @@
   "hero.opportunities": "正在寻找<strong>具身基础模型 / 生成式 AI</strong> 方向的<strong>研究员 / 算法工程师</strong>岗位，同时关注<strong>博士机会</strong>。详情请见我的<a href=\"/assets/pdf/CV_ZhijunCao.pdf?v=202609291444\">英文简历</a>。",
   "contact.email": "<img src=\"assets/img/icon/email.png\" alt=\"\" width=\"15\" height=\"15\">邮箱",
   "contact.scholar": "<img src=\"assets/img/icon/googlescholar.png\" alt=\"\" width=\"15\" height=\"15\">谷歌学术",
+  "mail.label": "邮箱地址",
+  "mail.copy": "复制",
   "contact.cv": "<img src=\"assets/img/icon/cv.png\" alt=\"\" width=\"15\" height=\"15\">英文简历",
   "avatar.replay": "点击重播去噪动画",
   "avatar.name": "Aaron Zhijun Cao",

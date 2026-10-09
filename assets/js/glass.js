@@ -958,10 +958,13 @@
     var w = document.documentElement.clientWidth;
     if (w !== lastW) { lastW = w; recapture(); }
   });
-  // 页面内容的增删改（展开 News、地图载入等）。导航自身、入场动画加的类、行内样式都不算
+  // 页面内容的增删改（展开 News、地图载入等）。导航自身、入场动画加的类、行内样式都不算；
+  // 不进截图的部分（data-lg-skip，如邮箱浮层里按钮文字的变化）也不算
   new MutationObserver(function (list) {
     for (var j = 0; j < list.length; j++) {
-      if (!nav.contains(list[j].target)) { recapture(); return; }
+      var mt = list[j].target;
+      if (mt.nodeType !== 1) mt = mt.parentNode;
+      if (mt && !nav.contains(mt) && !(mt.closest && mt.closest('[data-lg-skip]'))) { recapture(); return; }
     }
   }).observe(document.body, { subtree: true, childList: true, characterData: true,
                               attributes: true, attributeFilter: ['hidden', 'src', 'open'] });
