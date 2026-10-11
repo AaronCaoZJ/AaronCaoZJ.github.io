@@ -301,6 +301,8 @@ img { max-width: 100%; }
   /* 玻璃是透明的，背后可能是深色照片，加一层淡描边保证可读 */
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
 }
+/* 正文的几个锚点不加粗，只有首页与相册两个页面入口是粗体：一眼分出"换页"和"本页内跳转" */
+.nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { font-weight: 400; }
 .nav a.language-pair {
   /* 入口至少 100px 宽，短的几个等宽；中英两种文字叠在同一格里，切换语言时宽度不变。
      宽度按内容算、100px 只作下限：写成 flex-basis: 100px 的话，Safari 量胶囊宽度时
@@ -613,8 +615,10 @@ strong { font-weight: 700; }
 .shx span:nth-child(2) { color: var(--sl-green); }
 .shx span:nth-child(3) { color: var(--sl-red); }
 .shx span:nth-child(4) { color: var(--sl-orange); }
+/* 资助说明：和作者、venue 同一档字号，斜体灰字；经历条目里的资助说明用 <em>，是同一个样子。
+   以前是 13px，在卡片里比别的行小一号，像条脚注 */
 .note {
-  font-size: var(--fs-xs); color: var(--subtle); font-style: italic;
+  font-size: var(--fs-sm); color: var(--subtle); font-style: italic;
   margin: 0 0 8px;
 }
 
@@ -691,10 +695,10 @@ strong { font-weight: 700; }
 .item .plist > .prow + .prow { margin-top: 7px; }
 .item .plist > .pitem + .pitem { margin-top: 11px; }
 .item .plist .row .t { font-size: var(--fs-sm); font-weight: 600; }
-/* 产品状态标签：次要色、小一号、正体，跟在产品名后面，
-   靠颜色和字号而不是斜体与产品名区分 */
+/* 产品状态标签：次要色、斜体，字号随所在行，跟在产品名后面，
+   靠颜色和斜体而不是字号与产品名区分 */
 .item .pst {
-  font-family: var(--sans); font-size: var(--fs-xs); color: var(--subtle);
+  font-family: var(--sans); font-style: italic; color: var(--subtle);
   white-space: nowrap;
 }
 .item .t a { color: inherit; }
