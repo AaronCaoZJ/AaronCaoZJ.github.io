@@ -8,14 +8,17 @@
 
 ```
 .
-├── index.html          主页：About / Research / News / Publications / Projects / Experience / Education / Awards
+├── index.html          主页：Biography / News / Publications / Writing & Media / Internship / Education
 ├── gallery/index.html  相册页，URL 为 /gallery/
 ├── CNAME               GitHub Pages 自定义域名，内容为 caozhijun.top
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
 ├── caozhijun.top.png   域名证书，本地保留、不进 git
+├── docs/               部署手册（DEPLOY.md）与访客地图部署手册（VISITOR-MAP.md）
+├── worker/             访客地图的后端（Cloudflare Worker）
 └── assets/
     ├── css/style.css   全站样式，配色沿用简历 LaTeX 的莫兰迪色板
-    ├── fonts/          自托管字体（Inter + Newsreader 可变字体，167 KB）
+    ├── js/             中英文切换、导航与液态玻璃、入场动画、访客地图、GitHub star 数
+    ├── fonts/          自托管字体（Charis 三个静态文件，约 44 KB；Inter 留着但未使用）
     ├── img/
     │   ├── avatar.jpg      头像（640×640）
     │   ├── pub/            论文配图，宽 900px
@@ -32,22 +35,14 @@
 
 ## 字体
 
-标题 **Inter**、正文 **Newsreader**，均为**自托管**可变字体（`assets/fonts/`，合计 167 KB）。
+全站统一用衬线体 **Charis**，**自托管**三个静态文件（`assets/fonts/`：400、400 斜体、700，合计约 44 KB）。
+粗体只有 700 这一档，样式表里写的 600、650 实际都落在它上面。
+
+`Inter-normal.woff2` 和它的 `@font-face` 还留着，但目前没有用到：样式表里 `--sans` 直接指向了 `--serif`。
+要恢复无衬线标题，见 `style.css` 里 `--sans` 上方的注释。
 
 不使用 Google Fonts CDN —— `fonts.googleapis.com` 在中国大陆不可达，
 会阻塞整个页面的渲染。自托管后全球访客看到同一套排版。
-
-Newsreader 原本带 `opsz`（光学尺寸）轴，页面只在 14–16.5px 的正文用它，
-因此用 fontTools 把该轴固定为 16，体积从 273 KB 降到 120 KB：
-
-```bash
-python3 -c "
-from fontTools.ttLib import TTFont
-from fontTools.varLib import instancer
-f = TTFont('Newsreader-normal.woff2')
-instancer.instantiateVariableFont(f, {'opsz': 16}, inplace=True)
-f.flavor = 'woff2'; f.save('Newsreader-normal.woff2')"
-```
 
 中文版使用系统中文字体：苹果设备落到苹方，Windows 落到微软雅黑。
 无需额外下载大型中文字体文件；中文模式下同时调整正文行距和标题字距。
@@ -87,7 +82,7 @@ clip = pymupdf.Rect(min(x[0] for x in top), min(x[1] for x in top),
                     max(x[2] for x in top), max(x[3] for x in top))
 page.get_pixmap(matrix=pymupdf.Matrix(2.6, 2.6), clip=clip).save("out.png")
 PY
-magick out.png -resize 900x -quality 86 assets/img/pub-xxx.jpg
+magick out.png -resize 900x -quality 86 assets/img/pub/pub-xxx.jpg
 ```
 
 ### 简历与文章 PDF：原样发布，不压缩
@@ -157,11 +152,6 @@ git add -A && git commit -m "update" && git push
 ```
 
 浏览器有缓存，看不到变化时用无痕窗口验证。
-
-## 待补内容
-
-- `index.html` 里 Google Scholar 链接是占位符 `YOUR_SCHOLAR_ID`，需替换
-- 论文作者列表目前写的是 `et al.`，需补全合作者姓名
 
 ## 中英文切换
 

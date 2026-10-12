@@ -5,7 +5,7 @@
    之前用 SVG 位移滤镜（backdrop-filter: url(#…)）做折射，Chrome 的 feDisplacementMap 按最近邻
    取样，弯边一放大就出锯齿、条纹、斜纹，调参数治不好；而且只有 Chromium 支持。
 
-   截图：克隆页面（去掉导航本身），图片、字体、样式表内联成 data URL，视频和地图画布换成当前画面，
+   截图：克隆页面（导航本身设成不可见），图片、字体、样式表内联成 data URL，视频和地图画布换成当前画面，
    入场动画统一按"已浮现"处理，再交给浏览器经 SVG foreignObject 自己画出来 —— 字体、排版和页面一致。
    页面内容变了（切换语言、展开 News、地图载入、改变窗口大小）就重截一次。
    截不到图或没有 WebGL（极少数环境）时什么也不做，导航保持 CSS 的模糊玻璃。 */
@@ -77,7 +77,7 @@
     // 同一处折行（字体晚一步生效、各家手机浏览器对字号的处理不同……），多折一行，它下面的内容
     // 就全低一行，一路累加，玻璃里的背景越往下滚错得越远。钉住之后，折行不同只影响那一块内部。
     // 普通的块容器不动：给它写死高度，它最后一个子元素的下边距就不再穿出去与外面合并，
-    // 后面的内容反而会上移。SVG（地图）、跑马灯里的照片本来就有固定尺寸，跳过
+    // 后面的内容反而会上移。非 HTML 元素（如 SVG）、导航、跑马灯里的照片跳过
     var oAll = document.body.querySelectorAll('*'), cAll = body.querySelectorAll('*'), boxes = new Map(), q, el;
     for (q = 0; q < oAll.length; q++) {
       el = oAll[q];
@@ -102,7 +102,7 @@
       // 而它们的子元素边距本来就不往外合并，写死高度没有上面说的副作用
       if (/flex|grid/.test(bx.d) || (hasInline && !hasBlock)) cAll[q].style.height = bx.h;
     }
-    // 再配对处理图片、视频、画布，最后删掉导航等
+    // 再配对处理图片、视频、画布，最后删掉脚本和标了 data-lg-skip 的部分，把导航和实时内容设成不可见
     var sel = 'img, video, canvas', oList = document.body.querySelectorAll(sel), cList = body.querySelectorAll(sel);
     for (var i = 0; i < oList.length; i++) (function (o, c) {
       if (nav.contains(o) || o.hasAttribute('data-lg-skip')) return;   // 纯装饰的动画画布（如头像的去噪动效）不截
@@ -114,7 +114,7 @@
         var cs = getComputedStyle(o);
         if (cs.display !== 'none' && cs.width !== 'auto') { c.style.width = cs.width; c.style.height = cs.height; }
         o._lgBox = cs.width + ' ' + cs.height;        // 记下这次钉的尺寸：图片晚到时尺寸没变就不必重截
-        // 跑马灯里的照片在截图里本来就是隐藏的（render() 每帧按实时位置画），不必内联成
+        // 跑马灯里的照片在截图里本来就是隐藏的（由 renderGroup() 按实时位置画），不必内联成
         // data URL —— 否则每次截图都要把整个相册读一遍、编码进 SVG，懒加载也形同虚设
         if (o.closest('[data-lg-live]')) { c.removeAttribute('src'); return; }
         var src = o.currentSrc || o.src;
@@ -142,7 +142,8 @@
     // 用 opacity 而不是 visibility：入口里的双语标签自己写了 visibility: visible，会盖过父级的
     // hidden，导航文字就被截进背景、再被玻璃折射出来，在空白底色上看得一清二楚
     [].forEach.call(body.querySelectorAll('.nav'), function (n) { n.setAttribute('style', 'opacity:0!important'); });
-    // 一直在动的内容（如相册的跑马灯）不进静态截图，由 render() 每帧按实时位置画上去
+    // data-lg-live 轨道里的照片（相册的跑马灯 / 列表）不进静态截图，由 renderGroup() 画：
+    // 在动的每帧按实时位置画，不动的烘进底图
     [].forEach.call(body.querySelectorAll('[data-lg-live] > *'), function (n) {
       n.setAttribute('style', (n.getAttribute('style') || '') + ';opacity:0!important');
     });
@@ -164,7 +165,8 @@
 
   /* ---------- WebGL ---------- */
 
-  /* 着色器：ybouane/liquidglass 的 FS_GLASS，逐行照搬，只改了坐标的来源 ——
+  /* 着色器：以 ybouane/liquidglass 的 FS_GLASS 为底，折射、色散、菲涅耳、描边照搬。改了三处：坐标的来源、
+     写死的像素数按屏幕密度折算（见 dp）、另加本站的光照（明暗与轮廓高光，原库没有）。坐标的来源 ——
      原库把玻璃画在整页大小的画布上，这里一张画布上画一块或几块玻璃（u_at 是这一块在画布里的位置），
      背景取自一张已经备好的纹理：u_org 是这块玻璃左上角在纹理里的位置，u_k 是每个画布像素合几个
      纹理像素，u_tsize 是纹理尺寸。
@@ -246,7 +248,7 @@
     '}'
   ].join('\n');
 
-  /* 参数取原库默认值，两处按尺寸调整：
+  /* 参数取原库默认值，三处不同：
      - 弯边深度：原库 40px 是给大面板的。放在 50px 高的胶囊上，比半高还深，上下两段圆弧
        在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
        小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
@@ -359,7 +361,7 @@
      host：画布放进这个元素。只有一块玻璃、而且它自己就是 host 时（放大镜），画布铺满它、随它一起
      被 CSS 缩放；否则画布垫在几块玻璃下面，各块按自己当前的包围盒（含悬停缩放）画进去。
      opt.mag：放大倍数（取样范围缩小为玻璃的 1/mag，底图按相应的分辨率画 —— 放大的内容是清楚的）；
-     opt.frost：背景模糊 σ（物理像素）；opt.band：底图在取样范围之外多画多宽（CSS 像素），
+     opt.frost：背景模糊 σ（2 倍屏上的物理像素，别的屏幕按密度折算）；opt.band：底图在取样范围之外多画多宽（CSS 像素），
      ahead 是滚动方向上的那一侧。 */
   var groups = [], views = [];
   function addGroup(host, opt) {
@@ -389,8 +391,6 @@
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
-  /* 一直在动的内容：标了 data-lg-live 的容器（相册的跑马灯轨道），其子元素每帧按实时位置画。
-     原库对这类内容（data-dynamic）是每帧重新栅格化；这里只画图片和圆角底色，便宜得多 */
   /* 放大镜下的照片：<img data-lg-hi="大图地址"> 被放大时改画大图，否则 2 倍放大就是把原图拉伸 2 倍。
      大图只在第一次被放大镜扫到时才下载，解码好之前先画原图，好了再让各块玻璃重画一次。
      只留最近用过的 6 张：放大镜一次最多压着两三张照片，跑马灯却会把整个相册送过来，
@@ -465,6 +465,9 @@
     vd.addEventListener('play', function () { views.forEach(function (v) { v.rescan = true; }); schedule(); });
   });
 
+  /* 标了 data-lg-live 的容器（相册的照片轨道）：里面的照片不进静态截图，由 renderGroup 画（见 drawPhoto）。
+     跑马灯每帧按实时位置画；列表进场中（enter）按实时位置和透明度画；不动了（still）烘进底图。
+     原库对这类内容（data-dynamic）是每帧重新栅格化；这里只画图片和圆角底色，便宜得多 */
   /* sceneVer：页面截图换了；liveVer：烘进底图的照片变了（排版变了、照片的小图备好了）；
      layoutVer：元素的排版位置要重新量 */
   var sceneVer = 0, liveVer = 0, layoutVer = 0, liveTracks = [].slice.call(document.querySelectorAll('[data-lg-live]'));
@@ -500,21 +503,19 @@
     live = true;
     groups.forEach(function (g) { g.host.insertBefore(g.cv, g.host.firstChild); });
     views.forEach(function (v) { v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = 'none'; });
-    nav.classList.add('lg-webgl');
     if (loupe) loupe.ready();
   }
   function giveUp() {                       // 截图不可用（如画布被污染）：退回 CSS 模糊
     live = false; scene = null;
     groups.forEach(function (g) { if (g.cv.parentNode) g.cv.parentNode.removeChild(g.cv); });
     views.forEach(function (v) { v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = ''; });
-    nav.classList.remove('lg-webgl');
   }
 
   /* 渲染。玻璃拖慢滚动，慢的不是脚本，是显卡进程：每帧往显卡送的东西越少越好。
      - 底图：页面截图（SVG）里玻璃下面那一条，连同列表模式下不动的照片，栅格化成一张 2D 画布，
        上传成纹理、在显卡里模糊好。它比玻璃的取样范围大一圈，滚动方向上多留得最多（导航 900px）。
        滚动时每帧只改着色器里取样的位置，不拷贝、不模糊、不上传；滚出这一圈才往前补画一条。
-       带磨砂的玻璃，底图只按一半分辨率存：反正要模糊，看不出差别，像素少四分之三。
+       带磨砂的玻璃，底图只按一半分辨率存（1 倍屏上模糊太小，存原样）：反正要模糊，看不出差别，像素少四分之三。
      - 压在下面、正在动的内容（在播的视频、跑马灯的照片、正在悬停放大的照片）没法预先备好：
        这样的帧把底图里对应的一块拷出来，把它们按实时位置画上去，再上传、模糊。
      - 玻璃没动、下面也没有在动的内容，这一帧就不画；只有内容在动时按 30fps 画：跑马灯一帧才走
@@ -617,7 +618,7 @@
       var mx = g.band.x + guard, up = (g.dir > 0 ? g.band.behind : g.band.ahead) + guard,
           dn = (g.dir > 0 ? g.band.ahead : g.band.behind) + guard;
       var SW = Math.ceil((bx1 - bx0 + 2 * mx) * s) + 1, SH = Math.ceil((by1 - by0 + up + dn) * s) + 1, sc = st.c;
-      // 带磨砂的（半分辨率）：左上角对齐到纹理像素的整数格，每次重画都落在同一套格子上，结果与怎么
+      // 带磨砂的：左上角对齐到纹理像素的整数格，每次重画都落在同一套格子上，结果与怎么
       // 滚过来的无关。不磨砂的（放大镜）照取样范围原样起算：刚画好时一个纹理像素正对一个屏幕像素，字是利的
       var snap = function (n) { return g.frost ? Math.floor(n * s) / s : n; }, nx0 = snap(bx0 - mx);
       // 只是滚出去了（内容、宽度都没变）：整张往滚动方向挪半圈，还用得上的部分原样留着，只补画新露出来
@@ -796,7 +797,7 @@
   ['transitionend', 'transitioncancel'].forEach(function (n) {
     nav.addEventListener(n, function (e) { if (panes.indexOf(e.target) >= 0) easeEnd(e.target); });
   });
-  /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（如贴着底边的按钮、放大镜）会跟着视口
+  /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（放大镜）会跟着视口
      挪位置，页面却没有滚动、也不发 scroll 事件，收放完才来一个 resize —— 玻璃里的背景停在旧位置，
      等下一次滚动才突然跳过去。所以滚动、触摸、视口变化之后再连着看半秒：位置没变的帧只是读一下
      包围盒、不重画；视口一变也马上重画，不等下一次滚动 */
@@ -947,12 +948,13 @@
   // 首次：字体就绪、页面加载完（图片尺寸定下来）之后
   var start = function () { (document.fonts && document.fonts.ready || Promise.resolve()).then(function () { recapture(0); }); };
   if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
-  // 切换语言、窗口变宽变窄
+  // 切换语言
   document.addEventListener('languagechange', function () { recapture(60); });
   // 页面自己换了排版（相册切换滚动 / 列表）：照片位置重新量、先按新位置画，背景随后重截
   document.addEventListener('lg:relayout', function () { remeasure(); schedule(); recapture(60); });
   // 排版没变，只是哪些照片算「不动的」变了（相册列表的进场动画落完）：照片位置重新量、底图重画，不必重截
   document.addEventListener('lg:relive', function () { remeasure(); schedule(); });
+  // 窗口变宽变窄（只变高不重截）
   var lastW = document.documentElement.clientWidth;
   window.addEventListener('resize', function () {
     var w = document.documentElement.clientWidth;

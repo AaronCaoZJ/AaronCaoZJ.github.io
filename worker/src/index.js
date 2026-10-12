@@ -6,7 +6,9 @@
 
    隐私取舍：只落库到「城市 + 国家」这一级，经纬度取整到 0.1 度
    （约 11 公里），不存 IP、不存 User-Agent、不种 cookie，
-   也不保留逐条访问日志 —— 表里每个城市只有一行累计计数。 */
+   也不保留逐条访问日志 —— 表里每个城市只有一行累计计数。
+
+   另有 /api/stars：代理并缓存 GitHub star 数（配合 assets/js/ghstars.js），与访客数据无关。 */
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 
@@ -67,7 +69,8 @@ export default {
          FROM visits ORDER BY n DESC LIMIT 300`
       ).all();
 
-      // 边缘缓存 5 分钟：地图不需要实时，这样也顺带挡住了刷接口
+      // 只让访客自己的浏览器缓存 5 分钟（地图不需要实时）。这不是边缘缓存：Worker 的响应不会
+      // 自动进 CDN 缓存（见下面 stars 的做法），所以挡不住刷接口
       return json(results, { 'cache-control': 'public, max-age=300' });
     }
 

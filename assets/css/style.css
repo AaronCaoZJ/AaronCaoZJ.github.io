@@ -2,14 +2,13 @@
    Zhijun Cao — personal site
    配色沿用简历 (LaTeX) 中的莫兰迪色板，保持视觉同源。
    全站仅浅色一套主题。
-   字体使用系统栈：不引用 Google Fonts，避免中国大陆访客
-   因 fonts.googleapis.com 不可达而阻塞渲染。
    ============================================================ */
 
 /* ---------- 自托管字体 ----------
    不用 Google Fonts CDN：fonts.googleapis.com 在中国大陆不可达，
    会阻塞渲染。字体文件随站点一起发布，全球访客看到同一套排版。
-   三个文件均为可变字体，单个文件覆盖整段字重。 */
+   Charis 是三个静态文件（400、400 斜体、700），所以粗体只有 700 一档，样式里写的
+   600 / 650 实际都落在它上面。Inter 是可变字体，目前没有用到（见 --sans）。 */
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -42,7 +41,7 @@
 :root {
   --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 */
   --heading: #34526b;  /* 比 accent 深一档：章节标题、News 描边 */
-  --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 数字/强调 */
+  --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 已发表的 venue、作者星号 */
 
   /* Show Lab logo 四色 —— 见 .shx 与页首求职句 */
   --sl-blue:   #669ED3;
@@ -71,8 +70,8 @@
 
   /* 字号只有五档。原先散落着 17 种，13 / 13.2 / 13.5 / 13.8 / 14 / 14.8 这类
      只差零点几像素，肉眼分不出层级，只显得乱。新增样式请从这五档里选。 */
-  --fs-xs: 13px;   /* 小标签、方括号链接、状态、页脚 */
-  --fs-sm: 15px;   /* 作者、职位、列表、venue、日期、导航、胶囊按钮 */
+  --fs-xs: 13px;   /* News 展开按钮、相册标题旁的中文小字、地图提示、页脚 */
+  --fs-sm: 15px;   /* 作者、职位、列表、venue、日期、方括号链接、资助说明、导航、胶囊按钮 */
   --fs-md: 17px;   /* 正文、News 条目、论文与经历标题 */
   --fs-lg: 20px;   /* 章节标题 */
   --fs-xl: 34px;   /* 名字 */
@@ -92,10 +91,10 @@
   --text-halo: rgba(255, 255, 255, .85);
 
   /* 液态玻璃 —— 只用于导航，构造说明见「顶部导航」一节。
-     取值对照 liquid-dom（github.com/AndrewPrifer/liquid-dom）的默认值 */
+     折射在 glass.js 里，移植自 ybouane/liquidglass；下面三个值是本站自己调的（阴影只沿用了它的构造） */
   --lg-tint:        rgba(255, 255, 255, .1);    /* 只叠一成白：压在深色照片上略微发白，浅色底上看不出 */
   --lg-spring:      cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：液体感 */
-  /* 原库默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度只留原值的一小部分：
+  /* ybouane/liquidglass 默认阴影的构造（一层高斯外影加一层贴边的接触阴影），浓度只留原值的一小部分：
      原值（0.3）在浅色页面上显得重 */
   --lg-shadow: 0 3px 16px rgba(0, 0, 0, .07), 0 0 1px rgba(0, 0, 0, .04);
 }
@@ -144,7 +143,7 @@ img { max-width: 100%; }
    悬浮胶囊：四周都有背景可透，玻璃的边缘构造才读得出来。
 
    液态玻璃移植自 ybouane/liquidglass：glass.js 把玻璃背后的页面截成图，在 WebGL 里用它的
-   片元着色器渲染（参数取其默认值；小块玻璃的弯边收窄、加原库胶囊按钮的磨砂）。自下而上：
+   片元着色器渲染（参数取其默认值，只有弯边深度、磨砂、色散三处不同，见 glass.js）。自下而上：
    1. 折射层 .lg-refract（WebGL 画布）：双凸玻璃的折射、色散、菲涅耳反射、内描边与边缘光
       都在着色器里；纹理按双线性插值取样，放大、压缩处平滑。另加正上方来的光照：
       弯边轻微的上亮下暗，以及只在轮廓最外缘的一道细高光（上沿最亮、下沿较弱的反光）。
@@ -152,7 +151,7 @@ img { max-width: 100%; }
       截不到图或没有 WebGL 时不出现，胶囊保持自己的 backdrop-filter 模糊。
    2. 本体 ::after：叠一层很淡的白（--lg-tint），压在深色内容上时玻璃略微发白，不至于整块发暗。
    3. 交互：悬停水滴 .nav-lens 在入口间滑动，光斑 .lg-glow 随光标。
-   投影同原库默认（不透明度 0.3、扩散 10px、下移 1px）。 */
+   投影见 --lg-shadow。 */
 .nav {
   /* top 与初始上边距一致，开始滚动时不会先向上挪动 2px 再吸顶。 */
   position: sticky; top: 14px; z-index: 50;
@@ -288,7 +287,6 @@ img { max-width: 100%; }
   54%      { transform: rotate(-11deg) scale(1.24); }
   74%      { transform: rotate(7deg) scale(1.12); }
 }
-}
 .language-toggle:focus-visible, .nav-loupe:focus-visible, .nav a:focus-visible {
   outline: 2px solid var(--accent); outline-offset: -3px;
 }
@@ -331,14 +329,14 @@ img { max-width: 100%; }
 }
 .nav.lg-live .wrap a:hover { background: none; box-shadow: none; }
 
-/* 系统开了"降低透明度"：玻璃改成近乎实心，折射也不挂（nav.js 同样会跳过） */
+/* 系统开了"降低透明度"：玻璃改成近乎实心，折射也不挂（glass.js 同样会跳过） */
 @media (prefers-reduced-transparency: reduce) {
   .nav .wrap, .language-toggle, .nav-loupe { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .nav .wrap::after, .language-toggle::after, .nav-loupe::after { background: rgba(255, 255, 255, .95); }
 }
 
-/* 窄屏：整条胶囊约 614px，加两侧 14px 边距要 642px 才放得下（中英文等宽，
-   见 i18n.js 的 language-pair）。再窄就只留首页与相册两个入口（中间仍是分隔线），
+/* 窄屏：整条导航约 600px（胶囊 540 + 间距 10 + 语言按钮 50），加两侧 14px 边距要 628px
+   才放得下（中英文等宽，见 i18n.js 的 language-pair）。再窄就只留首页与相册两个入口（中间仍是分隔线），
    整组靠到右上角，语言按钮在最右；正文的几个锚点在窄屏上往下滚就到。
    最窄的 320px 手机：胶囊 233 + 间距 8 + 语言按钮 50 = 291，放得进两侧各留 14px 后的 292。
    页面缩放、iPad 分屏都会缩小视口宽度，同一个断点一并覆盖。 */
@@ -368,13 +366,13 @@ img { max-width: 100%; }
   font-size: var(--fs-md); line-height: 1.5; color: var(--accent);
   font-weight: 600; margin: 12px 0 2px;
 }
-/* 机构行与 Biography 正文同款：同字体、同字号、同字重，只是颜色略淡 */
+/* 机构行与 Biography 正文同款：同字体、同字号、同字重、同颜色 */
 .hero .affil {
   font-size: var(--fs-md); line-height: 1.5; color: var(--fg);
   margin: 0 0 20px;
 }
 .hero p { margin: 0 0 9px; font-size: var(--fs-md); }
-/* 头像容器：去噪视频覆盖在图片之上，播完隐藏 */
+/* 头像容器：去噪动画的画布覆盖在图片之上，播完隐藏 */
 .avatar-wrap {
   position: relative; width: 230px; height: 230px;
   cursor: pointer; justify-self: end;
@@ -404,7 +402,7 @@ img { max-width: 100%; }
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 11px; border-radius: 999px;
   background: var(--glass-fill);   /* 只留半透明：液态玻璃仅用于导航 */
-  /* 原本用 --glass-edge（近白）作高光边，在米白底上等于没有轮廓；
+  /* 原本用 --glass-edge（近白）作高光边，在浅色底上等于没有轮廓；
      改用 --rule 让每个入口成为看得见的独立块 */
   border: 1px solid var(--rule);
   box-shadow: 0 2px 8px var(--glass-cast);
@@ -469,7 +467,7 @@ img { max-width: 100%; }
 /* ---------- 章节 ---------- */
 section { padding-top: 34px; }
 /* 章节标题要压得住下面的卡片：Charis 最粗只有 700，已经用到顶，
-   所以分量从别处来 —— 字号 15 → 19px；字距 .13em → .08em（拉得太开的
+   所以分量从别处来 —— 字号 15 → 20px；字距 .13em → .08em（拉得太开的
    大写字母读起来是轻的、散的）；颜色比 --accent 再深一档。 */
 h2 {
   font-family: var(--sans);
@@ -497,18 +495,17 @@ h2 .zh {
 }
 section > p:first-of-type { margin-top: 14px; }
 
-.hl { color: var(--high); font-weight: 600; }
 strong { font-weight: 700; }
 
 /* ---------- News 时间线 ---------- */
 .news { margin: 14px 0 0; padding: 0; list-style: none; }
 .news li {
   /* 每个 li 各自是一个 grid，auto 列只按自己这行的日期收缩 ——
-     "2026.09.08:" 比 "2026.07:" 宽，正文起点就参差不齐。
+     各条日期宽度不同，正文起点就参差不齐。
      真正的对齐交给下面的 subgrid，这里 70px 只是不支持时的兜底。 */
   display: grid; grid-template-columns: 70px 1fr;
   gap: 11px; padding: 5px 0; font-size: var(--fs-md);
-  /* 按基线对齐：日期是 13px 无衬线、正文是 15px 衬线，
+  /* 按基线对齐：日期 15px、正文 17px，
      顶对齐会让日期看上去矮半行，只有基线才是两种字号的共同参照 */
   align-items: baseline;
 }
@@ -526,8 +523,8 @@ strong { font-weight: 700; }
 .news time {
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: 600;
   color: var(--accent); white-space: nowrap;
-  /* Inter 默认是比例数字，1 比 0 窄一截，"2026.09.08" 和 "2026.07.16"
-     的像素宽度并不相同，冒号就参差不齐。tabular-nums 让每个数字等宽。 */
+  /* 数字默认是比例宽度，1 比 0 窄一截，不同日期的像素宽度并不相同。
+     tabular-nums 让每个数字等宽。 */
   font-variant-numeric: tabular-nums;
 }
 .news-more {
@@ -546,8 +543,8 @@ strong { font-weight: 700; }
   transition: border-color .22s ease, box-shadow .22s ease;
 }
 .item:last-child, .pub:last-child { margin-bottom: 0; }
-/* 页面与卡片同为纯白，静止时给一层极淡投影托一下，
-   否则分界只剩那条 1px 边框 */
+/* 页面底色只比卡片的白深一点，静止时给一层极淡投影托一下，
+   否则分界几乎只剩那条 1px 边框 */
 .item, .pub { box-shadow: 0 1px 2px rgba(35, 52, 70, .05); }
 /* 悬停只动描边和投影，不做位移 */
 .item:hover, .pub:hover {
@@ -600,7 +597,7 @@ strong { font-weight: 700; }
 .pub .venue {
   font-size: var(--fs-sm); color: var(--fg); font-style: italic;
 }
-/* 未定稿状态（Under Review、Preprint in preparation）走默认的斜体灰；
+/* 未定稿状态（Under Review、Preprint in preparation）走默认的斜体；
    已发表的会议 / 期刊名反过来 —— 正体 + 暖赤陶高亮，直立的字形在一片
    斜体里反而更跳。em 也一并接住，避免以后写错标签就失效。 */
 .pub .venue b,
@@ -707,7 +704,7 @@ strong { font-weight: 700; }
 .item li { margin-bottom: 3px; }
 .item li::marker { color: var(--accent); }
 
-/* ---------- 机会信息块 ---------- */
+/* ---------- 信息块（News）---------- */
 .info-block {
   position: relative;
   margin-top: 46px; padding: 24px 26px;
@@ -723,7 +720,7 @@ strong { font-weight: 700; }
 
 .info-block p:last-child { margin-bottom: 0; }
 /* section > p:first-of-type 给章节首段留了 14px 上边距（正文排版需要），
-   但玻璃卡片自己有 24px padding，两者相加就比底部多出 14px。
+   但这张卡片自己有 24px padding，两者相加就比底部多出 14px。
    这里把它清零，卡片内的上下留白由 padding 单独决定。 */
 .info-block > p:first-of-type { margin-top: 0; }
 

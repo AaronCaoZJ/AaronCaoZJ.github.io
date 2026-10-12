@@ -49,11 +49,10 @@ function liquidLens(box, pick, cls) {
     if (el && e.target.matches(':focus-visible')) to(el);
   });
   box.addEventListener('focusout', off);
-  return { lens: lens, off: off };
 }
 
 /* ---------- 液态玻璃的交互层 ----------
-   折射与高光由 glass.js 用 WebGL 渲染；这里只管悬停水滴与随光标的光斑（所有浏览器）。
+   折射与高光由 glass.js 用 WebGL 渲染；这里只管悬停水滴与随光标的光斑。
    样式的分层说明见 style.css「顶部导航」。 */
 (function () {
   var nav = document.querySelector('.nav');

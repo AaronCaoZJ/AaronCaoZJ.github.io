@@ -305,7 +305,7 @@ Google Sites 本身的地址（`sites.google.com/view/caozhijun`）无法从这�
 
 ```html
 <link rel="stylesheet" href="assets/css/style.css?v=20260907">
-<script src="assets/js/theme.js?v=20260907"></script>
+<script src="assets/js/i18n.js?v=20260907"></script>
 ```
 
 **改完样式或脚本，把所有 `?v=` 后面的时间戳一起换成当前时刻**，再提交推送。
@@ -319,11 +319,14 @@ Google Sites 本身的地址（`sites.google.com/view/caozhijun`）无法从这�
 版本串把它变成了非问题：URL 变了，浏览器和边缘都没有对应的旧副本可用，必然回源取新的。
 不改的时候仍然享受 4 小时缓存。
 
-一条命令全部撞号：
+现在的做法是只换改过的那个文件的版本串，并带一个说明性的后缀（如 `style.css?v=20261012focus`）。
+下面这条命令会把两个页面里所有 `?v=` 一起换掉，连相册每张照片的也在内，回访者会把整个相册重新下载一遍，
+只在确实需要全部刷新时用：
 
 ```bash
 sed -i '' "s/?v=[0-9]\{8,\}/?v=$(date +%Y%m%d%H%M)/g" index.html gallery/index.html
 ```
 
-简历 PDF 的两处链接同样带 `?v=`，上面那条 sed 会一起撞号。**换简历时务必也跑一次**：
+简历 PDF 的链接同样带 `?v=`（`index.html` 两处、`assets/js/i18n.js` 一处，后者上面那条 sed 改不到）。
+**换简历时务必把这三处一起换掉**：
 PDF 属于静态资源，同样被缓存 4 小时，不撞号的话访客会继续下到旧简历。
