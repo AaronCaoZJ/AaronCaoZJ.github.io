@@ -248,15 +248,20 @@
     '}'
   ].join('\n');
 
-  /* 参数取原库默认值，三处不同：
+  /* 参数取原库默认值，四处不同：
      - 弯边深度：原库 40px 是给大面板的。放在 50px 高的胶囊上，比半高还深，上下两段圆弧
        在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
        小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
+       再深也不会让边缘显得更厚，只会让上下两条弯边各拽一份背景，胶囊看起来被切成几层。
+     - 折射强度：原库 0.69。弯边是一段圆弧，坡度几乎全挤在最外面几个像素里，0.69 时边上那圈被拉弯、
+       映出别处内容的带子只有 5 像素左右宽，几乎看不出。导航取 1.0，这条带子约 7 像素：轮廓内侧多出一道
+       清楚的细线（Apple 的演示里也是这样，玻璃中央的颜色被拽到轮廓上）。取 1.4 时上下两条弯边各拽一份
+       背景、连成两长条，胶囊看起来分成好几层。放大镜仍用原库值：它是用来看清照片的，边缘的折射带越窄越好。
      - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素 —— 指 2 倍屏上，即 1.55 个
        CSS 像素；别的屏幕按密度折算，看到的模糊程度一样）；
        Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
      - 色散：原库默认 0.05，这里取 0.08 —— 弯边上的彩色镶边再明显一点。 */
-  var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
+  var G = { refraction: .69, navRefraction: 1, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
             frost: 3.1, loupeMag: 2, loupeZ: 24,
             shade: .015, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
@@ -361,7 +366,7 @@
      host：画布放进这个元素。只有一块玻璃、而且它自己就是 host 时（放大镜），画布铺满它、随它一起
      被 CSS 缩放；否则画布垫在几块玻璃下面，各块按自己当前的包围盒（含悬停缩放）画进去。
      opt.mag：放大倍数（取样范围缩小为玻璃的 1/mag，底图按相应的分辨率画 —— 放大的内容是清楚的）；
-     opt.frost：背景模糊 σ（2 倍屏上的物理像素，别的屏幕按密度折算）；opt.band：底图在取样范围之外多画多宽（CSS 像素），
+     opt.frost：背景模糊 σ（2 倍屏上的物理像素，别的屏幕按密度折算）；opt.refraction：折射强度（缺省用 G.refraction）；opt.band：底图在取样范围之外多画多宽（CSS 像素），
      ahead 是滚动方向上的那一侧。 */
   var groups = [], views = [];
   function addGroup(host, opt) {
@@ -372,6 +377,7 @@
     if (!ctx) return null;
     var raw = document.createElement('canvas'), band = document.createElement('canvas');
     var g = { host: host, cv: cv, gl: ctx.gl, ctx: ctx, views: [], mag: opt.mag || 1, frost: opt.frost || 0, band: opt.band,
+              refraction: opt.refraction || G.refraction,
               raw: raw, r2: raw.getContext('2d'), st: { cv: band, c: band.getContext('2d') }, dir: 1 };
     groups.push(g);
     return g;
@@ -385,7 +391,7 @@
   // 导航的两块，加上页面里标了 data-lg-pane 的（相册页导航里的放大镜开关）
   var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
     .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
-  var navGroup = addGroup(nav, { frost: G.frost, band: { x: 8, ahead: 900, behind: 300 } });
+  var navGroup = addGroup(nav, { frost: G.frost, refraction: G.navRefraction, band: { x: 8, ahead: 900, behind: 300 } });
   if (!navGroup) return;                                    // 没有 WebGL：保持 CSS 模糊玻璃
   panes.forEach(function (p) { addView(navGroup, p); });
 
@@ -704,7 +710,7 @@
     gl.uniform1i(u.u_tex, 0);
     gl.uniform2f(u.u_tsize, TW, TH);
     gl.uniform1f(u.u_k, s / (fx * mag));
-    gl.uniform1f(u.u_refract, G.refraction);
+    gl.uniform1f(u.u_refract, g.refraction);
     gl.uniform1f(u.u_chroma, G.chroma);
     gl.uniform1f(u.u_edgeHL, G.edgeHL);
     gl.uniform1f(u.u_fresnel, G.fresnel);
