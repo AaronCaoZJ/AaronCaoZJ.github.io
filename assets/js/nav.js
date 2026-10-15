@@ -63,6 +63,11 @@ function liquidLens(box, pick, cls) {
     .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
   nav.classList.add('lg-live');
 
+  // 滚动之后导航才压到内容上，这时再开 CSS 的兜底模糊（见 style.css「顶部导航」）
+  function scrolled() { nav.classList.toggle('scrolled', window.scrollY > 0); }
+  scrolled();
+  window.addEventListener('scroll', scrolled, { passive: true });
+
   function layer(pane, cls) {
     var n = document.createElement('span');
     n.className = cls;

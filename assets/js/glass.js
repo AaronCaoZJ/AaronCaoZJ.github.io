@@ -8,8 +8,9 @@
    截图：克隆页面（导航本身设成不可见），图片、字体、样式表内联成 data URL，视频和地图画布换成当前画面，
    入场动画统一按"已浮现"处理，再交给浏览器经 SVG foreignObject 自己画出来 —— 字体、排版和页面一致。
    页面内容变了（切换语言、展开 News、地图载入、改变窗口大小）就重截一次。
-   截不到图或没有 WebGL（极少数环境）时什么也不做，导航保持 CSS 的模糊玻璃。 */
-(function () {
+   截不到图或没有 WebGL（极少数环境）时什么也不做，导航保持 CSS 的模糊玻璃。
+   什么时候启动见文件末尾。 */
+function liquidGlass() {
   var nav = document.querySelector('.nav');
   var wrap = nav && nav.querySelector('.wrap');
   if (!wrap || !window.Promise || !window.fetch) return;
@@ -1000,4 +1001,20 @@
     }).observe(document.body);
   }
 
+}
+
+/* 启动时机：首屏让给进场动画。创建 WebGL 环境、编译着色器是同步的，弱设备上会占住主线程几百毫秒；
+   以前脚本一加载就做，而带 defer 的脚本排在 DOMContentLoaded 之前，进场动画（reveal.js 等的正是
+   DOMContentLoaded）只能等它做完才开始，紧接着的截图又和动画抢同一段时间。现在等首屏那批入场动画
+   走完（reveal.js 发出 rise:settled），再趁主线程空闲启动；在这之前导航先用 CSS 的兜底（见 style.css「顶部导航」）。
+   reveal.js 没能加载之类的情况，最多等 4 秒也照常启动。 */
+(function () {
+  var started = false;
+  function boot() {
+    if (started) return;
+    started = true;
+    (window.requestIdleCallback || function (f) { return setTimeout(f, 1); })(liquidGlass, { timeout: 1000 });
+  }
+  if (window.__riseSettled) boot(); else document.addEventListener('rise:settled', boot);
+  setTimeout(boot, 4000);
 })();

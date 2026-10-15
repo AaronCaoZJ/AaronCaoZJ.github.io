@@ -164,10 +164,15 @@ img { max-width: 100%; }
   position: relative; isolation: isolate;   /* 各层的 z-index 关在玻璃内部 */
   overflow: hidden; overflow: clip;         /* 圆角之外的画布裁掉；clip 不会变成滚动容器 */
   border: 0; border-radius: 999px; background: none;
-  /* WebGL 画布就绪前、以及截不到图时的兜底；画布接手后 glass.js 把它清掉 */
+  box-shadow: var(--lg-shadow);
+}
+/* WebGL 画布就绪前、以及截不到图时的兜底模糊；画布接手后 glass.js 把它清掉。
+   页面滚动之后才开（nav.js 给导航加 .scrolled）：在顶部时导航下面只有纯色底，模糊一片纯色看不出
+   区别，却要 GPU 在首屏每一帧多做一遍 —— 弱设备上实测第一帧因此慢了约半秒。
+   默认关、由脚本打开，而不是反过来：首屏可能在 nav.js 运行之前就画出来 */
+.nav.scrolled .wrap, .nav.scrolled .language-toggle, .nav.scrolled .nav-loupe {
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
-  box-shadow: var(--lg-shadow);
 }
 .lg-refract {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;
