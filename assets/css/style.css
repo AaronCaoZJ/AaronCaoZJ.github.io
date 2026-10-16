@@ -78,6 +78,10 @@
 
   --w: 920px;
 
+  /* 悬停转动的整体力度：最大转角与放大比例。相册的照片和首页的头像都用这一组，各自再乘一个倍数 --hover-k */
+  --hover-tilt: 6deg;
+  --hover-zoom: .02;
+
   /* 明确声明只支持浅色：阻止浏览器或系统的“强制深色模式”
      擅自反转配色（那种自动反转的效果通常很糟）。 */
   color-scheme: light;
@@ -377,10 +381,23 @@ img { max-width: 100%; }
   margin: 0 0 20px;
 }
 .hero p { margin: 0 0 9px; font-size: var(--fs-md); }
-/* 头像容器：去噪动画的画布覆盖在图片之上，播完隐藏 */
+/* 头像容器：去噪动画的画布覆盖在图片之上，播完隐藏。
+   悬停时朝指针的方向小幅转动、稍微放大，和相册跑马灯的照片同一套力度（--hover-tilt / --hover-zoom，
+   倍数同为 1.3）；指针位置由 index.html 页尾的脚本写进 --tx / --ty。
+   离开时走这里的 transition：比进入时慢，起步缓、收尾长，平滑地转回原位 */
 .avatar-wrap {
   position: relative; width: 230px; height: 230px;
   cursor: pointer; justify-self: end;
+  border-radius: 12px; --hover-k: 1.3;
+  transition: transform .6s cubic-bezier(.33,0,.2,1), box-shadow .6s cubic-bezier(.33,0,.2,1);
+}
+.avatar-wrap:hover {
+  transform: perspective(800px)
+             rotateX(calc(var(--hover-tilt) * var(--hover-k) * var(--ty, 0) * -1))
+             rotateY(calc(var(--hover-tilt) * var(--hover-k) * var(--tx, 0)))
+             scale(calc(1 + var(--hover-zoom) * var(--hover-k)));
+  box-shadow: 0 4px 14px rgba(45,42,41,.14);
+  transition: transform .34s cubic-bezier(.32,.72,0,1), box-shadow .34s cubic-bezier(.32,.72,0,1);
 }
 .avatar-fx {
   position: absolute; inset: 0;

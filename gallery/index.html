@@ -13,7 +13,7 @@
 <meta http-equiv="content-language" content="en, zh-CN">
 <link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
-<link rel="stylesheet" href="/assets/css/style.css?v=20261015blur">
+<link rel="stylesheet" href="/assets/css/style.css?v=20261016tilt">
 <script src="/assets/js/reveal.js?v=20261015paint"></script>
 
 
@@ -43,9 +43,10 @@
   .track figure {
     flex: 0 0 auto; margin: 0;
     height: 236px; border-radius: 10px; overflow: hidden;
-    background: var(--chip);
-    transition: transform .34s cubic-bezier(.32,.72,0,1),
-                box-shadow .34s cubic-bezier(.32,.72,0,1);
+    background: var(--chip); z-index: 0;
+    /* 离开悬停（以及切换显示模式时的挪位）走这一条：比进入时慢，起步缓、收尾长，平滑地回到原位；
+       层级等复位走完才降回来，免得还没缩回去就被旁边那张盖住 */
+    transition: transform .6s cubic-bezier(.33,0,.2,1), box-shadow .6s cubic-bezier(.33,0,.2,1), z-index 0s .6s;
   }
   .track img { display: block; height: 100%; width: auto; }
 
@@ -58,11 +59,24 @@
   .track figure.h3 { height: 226px; --y: 14px; }
   .track figure.h4 { height: 246px; --y: 34px; }
 
-  /* 悬停：在原位略微放大，不上浮；投影只淡淡一圈，免得读成"浮起来"。
-     位移写在 --y 里，放大接在它后面，窄屏换了错落值也照样在原位放大 */
-  .track figure:hover {
-    transform: translateY(var(--y, 0px)) scale(1.045);
+  /* 悬停：在原位朝指针的方向小幅转动（三维），稍微放大一点，不上浮；投影只淡淡一圈，免得读成"浮起来"。
+     列表模式不转，只轻微放大（见「列表模式」）。
+     力度用 style.css 里的整体基准（--hover-tilt 最大转角、--hover-zoom 放大比例，首页头像也用这一组），
+     这里再乘一个倍数 --hover-k：跑马灯的照片大、间距宽，取 1.3。
+     有鼠标时悬停由页尾脚本接管（见「悬停转动」）：它给指针下的那张加 .hov、把指针在上面的相对位置
+     （-1 到 1）写进 --tx / --ty，并在 <html> 上标 js-tilt，此时不再用 :hover —— 跑马灯在走、鼠标
+     不动时，照片从指针下面滑过去，:hover 不一定跟着换。触屏、减少动态效果时没有接管，照旧用 :hover，
+     只放大不转；放大镜打开时也只放大。位移写在 --y 里，转动和放大接在它后面，
+     窄屏换了错落值也照样在原位转。
+     进入和跟着指针转用一条快的曲线；离开时的平滑复位见上面 .track figure 的 transition */
+  .track { --hover-k: 1.3; }
+  html:not(.js-tilt) .track figure:hover, .track figure.hov {
+    transform: translateY(var(--y, 0px)) perspective(800px)
+               rotateX(calc(var(--hover-tilt) * var(--hover-k) * var(--ty, 0) * -1))
+               rotateY(calc(var(--hover-tilt) * var(--hover-k) * var(--tx, 0)))
+               scale(calc(1 + var(--hover-zoom) * var(--hover-k)));
     box-shadow: 0 4px 14px rgba(45,42,41,.14); z-index: 3;
+    transition: transform .34s cubic-bezier(.32,.72,0,1), box-shadow .34s cubic-bezier(.32,.72,0,1), z-index 0s;
   }
 
 
@@ -125,6 +139,7 @@
   }
   main.list .track {
     --gap: 10px;
+    --hover-k: .6;   /* 悬停的力度（见「悬停」）：照片之间只隔 10px，只放大 1.2%，不压到旁边那张 */
     width: auto; flex-wrap: wrap; gap: var(--gap); padding-right: 0;
     animation: none; transform: none;
   }
@@ -135,6 +150,10 @@
   }
   main.list .track figure[aria-hidden="true"] { display: none; }
   main.list .track img { width: 100%; height: 100%; object-fit: cover; }
+  /* 列表里悬停不转，只按力度轻微放大（投影同跑马灯）；页尾脚本在列表模式下也不写转角 */
+  main.list .track figure.hov, html:not(.js-tilt) main.list .track figure:hover {
+    transform: scale(calc(1 + var(--hover-zoom) * var(--hover-k)));
+  }
   @media (max-width: 700px) { main.list .track { --gap: 6px; } }
   /* 列表的进场：每一栏的照片从左上到右下依次落下 —— 先悬在半空（略大、带投影、还看不见），再落到
      页面上。页尾脚本给每张写 --dl（按它离这一栏左上角的远近），这一栏滚进视口才开始（之前挂着 .wait，
@@ -429,6 +448,87 @@
     tr.setAttribute('data-lg-live', 'still');
     document.dispatchEvent(new CustomEvent('lg:relive'));
   });
+})();
+
+
+/* ---------- 悬停转动：照片朝指针的方向小幅转动 ----------
+   有鼠标时悬停由这里接管：看指针下是哪张照片，给它加 .hov，把指针在它上面的相对位置（-1 到 1）
+   写进 --tx / --ty，转多少度由样式按力度换算（见「悬停」）；指针所在的那一角往里压。
+   不光指针移动时算：跑马灯在走、鼠标不动，照片自己从指针下面滑过，也要跟着转、换到下一张，
+   所以指针在跑马灯上时一直在看（鼠标不动时每 50ms 一次）；列表模式照片不动，只在指针移动和页面
+   滚动时看，而且列表里只放大不转，只换 .hov、不写转角。
+   相对位置按照片转动之前的方框算 —— 它在轨道里的排版位置，加上轨道此刻的平移和错落的 --y ——
+   不用转动后的外框，免得转角反过来改变位置、来回抖。
+   放大镜打开时只放大不转：玻璃是按包围盒把照片当平面画进去的，转了会和放大镜里看到的对不上。
+   触屏和减少动态效果时不接管，退回样式里的 :hover（只放大） */
+(function () {
+  if (!window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.documentElement.classList.add('js-tilt');
+  var main = document.querySelector('main'), loupe = null;
+  var px = 0, py = 0, inside = false, moved = false, last = 0, cur = null, raf = 0, scrolling = 0;
+  function untilt(f) { f.style.removeProperty('--tx'); f.style.removeProperty('--ty'); f._tx = f._ty = NaN; }
+  function pick(f) {
+    if (f === cur) return false;
+    if (cur) { cur.classList.remove('hov'); untilt(cur); }
+    cur = f;
+    if (f) f.classList.add('hov');
+    return true;
+  }
+  function tick(now) {
+    raf = 0;
+    if (scrolling) return;                  // 滚动期间不看，停下来时再看一次（见下面的 scroll）
+    // 鼠标没动、只有照片在走时，每 50ms（约每秒 20 次）看一次就够：跑马灯一帧只走一两个像素，
+    // 中间的变化交给过渡抹平。指针一动就立刻按帧算
+    if (!moved && now - last < 50) { raf = requestAnimationFrame(tick); return; }
+    moved = false; last = now;
+    // 先把这一帧要的位置全读完，再写：这时样式和布局都还是现成的，读取不会逼浏览器提前重算
+    var hit = inside ? document.elementFromPoint(px, py) : null;
+    var f = hit && hit.closest && hit.closest('.track figure'), tx = 0, ty = 0;
+    // 放大镜打开时、列表模式下都只放大不转：只要知道是哪张，转角用的位置不必读
+    loupe = loupe || document.querySelector('.lg-loupe');
+    var flat = main.classList.contains('list') || (loupe && loupe.classList.contains('on'));
+    if (f && !flat) {
+      var tr = f.parentNode, b = tr.getBoundingClientRect();
+      var dx = f.offsetParent === tr ? f.offsetLeft : f.offsetLeft - tr.offsetLeft;
+      var dy = f.offsetParent === tr ? f.offsetTop : f.offsetTop - tr.offsetTop;
+      if (f !== cur) f._lgY = parseFloat(getComputedStyle(f).getPropertyValue('--y')) || 0;   // 错落的位移，换到这张时读一次
+      var x0 = b.left + dx, y0 = b.top + dy + f._lgY;
+      tx = Math.max(-1, Math.min(1, (px - x0) / f.offsetWidth * 2 - 1));    // 右半边：右边往里退
+      ty = Math.max(-1, Math.min(1, (py - y0) / f.offsetHeight * 2 - 1));   // 下半边：下边往里退
+    }
+    var fresh = pick(f || null);
+    if (f) {
+      if (flat) { if (f.style.getPropertyValue('--tx')) untilt(f); }
+      // 变化不到 0.03（约 0.2°）就不写。每写一次，进行中的过渡就要作废重开、发两个事件，glass.js 也会被
+      // 唤醒去量一次位置；相邻两次之间的差别由过渡自己抹平，看不出台阶
+      else if (fresh || !(Math.abs(tx - f._tx) < .03 && Math.abs(ty - f._ty) < .03)) {
+        f._tx = tx; f._ty = ty;
+        f.style.setProperty('--tx', tx.toFixed(3));
+        f.style.setProperty('--ty', ty.toFixed(3));
+      }
+    }
+    // 指针在跑马灯上（照片上，或照片之间的空隙里）就下一帧接着看：鼠标不动，照片也在走
+    if (hit && hit.closest && hit.closest('.marquee') && !main.classList.contains('list')) raf = requestAnimationFrame(tick);
+  }
+  function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+  document.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch') return;
+    px = e.clientX; py = e.clientY; inside = true;
+    // 指针不在跑马灯里、手上也没有悬停中的照片：不用看（省掉每帧一次的命中检测）
+    if (!cur && !(e.target.closest && e.target.closest('.marquee'))) return;
+    moved = true;
+    kick();
+  }, { passive: true });
+  document.addEventListener('pointerout', function (e) { if (!e.relatedTarget) { inside = false; moved = true; kick(); } });   // 指针离开了窗口
+  // 滚动时照片也会从指针下面经过，但滚动期间不跟：浏览器自己的 :hover 也是滚动时不更新、停下才换。
+  // 一张张照片滑过时逐张悬停、转动，既看不清，又要逐张起过渡、唤醒 glass.js，白白拖慢滚动。
+  // 停下约 0.12 秒后看一次指针下是哪张
+  window.addEventListener('scroll', function () {
+    if (!inside) return;
+    clearTimeout(scrolling);
+    scrolling = setTimeout(function () { scrolling = 0; moved = true; kick(); }, 120);
+  }, { passive: true });
 })();
 
 

@@ -22,7 +22,7 @@
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
-<link rel="stylesheet" href="assets/css/style.css?v=20261015blur">
+<link rel="stylesheet" href="assets/css/style.css?v=20261016tilt">
 <script src="assets/js/reveal.js?v=20261015paint"></script>
 
 
@@ -709,6 +709,37 @@
   if (img.complete) play();
   else img.addEventListener('load', play);
   wrap.addEventListener('click', play);
+})();
+
+/* 头像悬停：朝指针的方向小幅转动（样式见 style.css「头像容器」），和相册的照片同一套力度。
+   头像自己不动，是否悬停交给 :hover 就够了，这里只把指针在头像上的相对位置（-1 到 1）写进
+   --tx / --ty；移开时去掉，由过渡平滑地转回原位。写的是行内样式，glass.js 的变化监听不把它算作
+   页面内容变了，不会因此重截背景。位置用 offsetX / offsetY（头像转动之前的坐标）算，转角不会
+   反过来改变位置；变化不到 0.03 不写，免得过渡一直作废重开。触屏和减少动态效果时只放大不转 */
+(function () {
+  var el = document.getElementById('avatarFx');
+  if (!el || !window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var raf = 0, tx = 0, ty = 0, lx = NaN, ly = NaN;
+  function apply() {
+    raf = 0;
+    if (Math.abs(tx - lx) < .03 && Math.abs(ty - ly) < .03) return;
+    lx = tx; ly = ty;
+    el.style.setProperty('--tx', tx.toFixed(3));   // 右半边：右边往里退
+    el.style.setProperty('--ty', ty.toFixed(3));   // 下半边：下边往里退
+  }
+  el.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch') return;
+    var t = e.target;                               // 指针下的是头像图片（去噪画布不接鼠标）
+    tx = Math.max(-1, Math.min(1, e.offsetX / t.offsetWidth * 2 - 1));
+    ty = Math.max(-1, Math.min(1, e.offsetY / t.offsetHeight * 2 - 1));
+    if (!raf) raf = requestAnimationFrame(apply);
+  }, { passive: true });
+  el.addEventListener('pointerleave', function () {
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    lx = ly = NaN;
+    el.style.removeProperty('--tx'); el.style.removeProperty('--ty');
+  });
 })();
 </script>
 
