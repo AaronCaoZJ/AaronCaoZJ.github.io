@@ -3,22 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-i18n="home.title">Cao Zhijun Aaron · 曹植竣</title>
-<meta name="description" content="Cao Zhijun Aaron (曹植竣), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
-<meta name="author" content="Cao Zhijun Aaron">
+<title data-i18n="home.title">Aaron Zhijun Cao</title>
+<meta name="description" content="Aaron Zhijun Cao (曹植竣, caozhijun), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
+<meta name="author" content="Aaron Zhijun Cao">
+<!-- 语言：主语言英文（<html lang>），同时声明面向中文读者 —— Bing 参考 content-language 判断
+     页面语言与受众（Google 不看它）。正文里夹着的中文片段另用 lang="zh-CN" 标出。 -->
+<meta http-equiv="content-language" content="en, zh-CN">
 
 <!-- Open Graph：分享到社交平台时的预览卡片 -->
 <meta property="og:type" content="profile">
-<meta property="og:title" content="Cao Zhijun Aaron · 曹植竣" data-i18n-content="home.title">
-<meta property="og:description" content="M.Sc. Electrical Engineering, Show Lab, National University of Singapore. Diffusion Models, VLA Models, World Models." data-i18n-content="home.description">
+<meta property="og:title" content="Aaron Zhijun Cao" data-i18n-content="home.title">
+<meta property="og:description" content="Aaron Zhijun Cao (曹植竣, caozhijun), M.Sc. student at Show Lab, NUS, working on VLA models, world models and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
 <meta property="og:url" content="https://caozhijun.top/">
 <meta property="og:image" content="https://caozhijun.top/assets/img/avatar.jpg">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="zh_CN">
 
 <link rel="canonical" href="https://caozhijun.top/">
-<link rel="icon" href="/assets/img/favicon.png" type="image/png">
-<link rel="apple-touch-icon" href="/assets/img/favicon.png">
-<link rel="stylesheet" href="assets/css/style.css?v=20260930nav-divider-gap">
-<script src="assets/js/reveal.js?v=202609291444"></script>
+<link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
+<link rel="stylesheet" href="assets/css/style.css?v=20261016tilt">
+<script src="assets/js/reveal.js?v=20261015paint"></script>
 
 
 <!-- 预加载正文与标题字体：减少 FOUT（字体加载完成前后的样式跳变） -->
@@ -27,7 +32,7 @@
 <!-- 结构化数据：WebSite 给出站点名称（Google 据此显示搜索结果里的站名），
      ProfilePage 声明这一页以一个人为主体，Person 是那个人本身。
      sameAs 把 Scholar / GitHub / LinkedIn 等身份关联到同一实体；
-     alternateName 里的中文名让「曹植竣」的搜索也能对上这个人。 -->
+     alternateName 保留中文名、拼音和曾用排列，帮助搜索引擎关联同一人的不同姓名。 -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -36,22 +41,24 @@
       "@type": "WebSite",
       "@id": "https://caozhijun.top/#website",
       "url": "https://caozhijun.top/",
-      "name": "Cao Zhijun Aaron",
-      "alternateName": ["曹植竣", "Zhijun Cao", "caozhijun.top"]
+      "name": "Aaron Zhijun Cao",
+      "alternateName": ["曹植竣", "caozhijun", "Zhijun Cao", "Aaron Cao", "Cao Zhijun Aaron", "caozhijun.top"],
+      "inLanguage": ["en", "zh-CN"]
     },
     {
       "@type": "ProfilePage",
       "@id": "https://caozhijun.top/#profile",
       "url": "https://caozhijun.top/",
-      "name": "Cao Zhijun Aaron · 曹植竣",
+      "name": "Aaron Zhijun Cao",
+      "inLanguage": ["en", "zh-CN"],
       "isPartOf": { "@id": "https://caozhijun.top/#website" },
       "mainEntity": { "@id": "https://caozhijun.top/#person" }
     },
     {
       "@type": "Person",
       "@id": "https://caozhijun.top/#person",
-      "name": "Cao Zhijun Aaron",
-      "alternateName": ["曹植竣", "Zhijun Cao", "Aaron Cao"],
+      "name": "Aaron Zhijun Cao",
+      "alternateName": ["曹植竣", "caozhijun", "Zhijun Cao", "Aaron Cao", "Cao Zhijun Aaron"],
       "url": "https://caozhijun.top/",
       "image": "https://caozhijun.top/assets/img/avatar.jpg",
       "email": "mailto:aaroncaozj@gmail.com",
@@ -84,7 +91,9 @@
   ]
 }
 </script>
-<script src="assets/js/i18n.js?v=20260930nav-five-icons" defer></script>
+<script src="assets/js/i18n.js?v=20261011xinmiao" defer></script>
+<script src="assets/js/nav.js?v=20261015blur" defer></script>
+<script src="assets/js/glass.js?v=20261015late" defer></script>
 </head>
 <body>
 
@@ -105,15 +114,25 @@
   <!-- ============ 头部名片 ============ -->
   <header class="hero">
     <div>
-      <h1 class="rise" data-i18n="hero.name">Cao Zhijun Aaron <span class="cn">曹植竣</span></h1>
+      <h1 class="rise" data-i18n="hero.name">Aaron Zhijun Cao <span class="cn" lang="zh-CN">曹植竣</span></h1>
       <div class="role rise" data-i18n="hero.role">M.Sc. Student at Show Lab, NUS</div>
-      <p class="affil rise" data-i18n="hero.opportunities">Currently seeking <strong>Researcher / Algorithm Engineer</strong> roles in <strong>Embodied Foundation Models / Generative AI</strong>, and open to <strong>PhD Opportunities</strong>. See my <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202609291444">CV</a> for details.</p>
+      <p class="affil rise" data-i18n="hero.opportunities">Currently seeking <strong>Researcher / Algorithm Engineer</strong> roles in <strong>Embodied Foundation Models / Generative AI</strong>, and open to <strong>PhD Opportunities</strong>. See my <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202610111601">CV</a> for details.</p>
 
 
       <div class="links rise">
-        <a href="mailto:aaroncaozj@gmail.com" data-i18n="contact.email">
-          <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
-        </a>
+        <!-- 邮箱：鼠标悬停时下面弹出一个小浮层，样子和这一排入口一样，显示地址、可以一键复制；
+             点击仍是 mailto。.copy-tip 是指向入口的小尖角，也垫住入口与浮层之间那条缝。
+             两者都标了 data-lg-skip：不进导航玻璃的截图，里面的文字变了也不触发重截 -->
+        <span class="mailbox">
+          <a href="mailto:aaroncaozj@gmail.com" data-i18n="contact.email">
+            <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
+          </a>
+          <span class="copy-tip" aria-hidden="true" data-lg-skip></span>
+          <span class="copy-pop" role="group" aria-label="Email address" data-i18n-aria-label="mail.label" data-lg-skip>
+            <span class="addr">aaroncaozj@gmail.com</span>
+            <button type="button" data-copy data-i18n="mail.copy">Copy</button>
+          </span>
+        </span>
         <a href="https://scholar.google.com/citations?hl=en&amp;user=HPWngY4AAAAJ" data-i18n="contact.scholar">
           <img src="assets/img/icon/googlescholar.png" alt="" width="15" height="15">Google Scholar
         </a>
@@ -133,7 +152,7 @@
           <img src="assets/img/icon/instagram.png" alt="" width="15" height="15">Instagram
         </a>
         -->
-        <a href="assets/pdf/CV_ZhijunCao.pdf?v=202609291444" data-i18n="contact.cv">
+        <a href="assets/pdf/CV_ZhijunCao.pdf?v=202610111601" data-i18n="contact.cv">
           <img src="assets/img/icon/cv.png" alt="" width="15" height="15">
           CV (EN)
         </a>
@@ -141,8 +160,8 @@
     </div>
 
     <div class="avatar-wrap" id="avatarFx" title="Click to re-run the denoising" data-i18n-title="avatar.replay">
-      <img class="avatar" src="assets/img/avatar.jpg" alt="Cao Zhijun Aaron" width="230" height="230" data-i18n-alt="avatar.name">
-      <canvas class="avatar-fx" width="460" height="460" aria-hidden="true"></canvas>
+      <img class="avatar" src="assets/img/avatar.jpg" alt="Aaron Zhijun Cao" width="230" height="230" data-i18n-alt="avatar.name">
+      <canvas class="avatar-fx" width="460" height="460" aria-hidden="true" data-lg-skip></canvas>
     </div>
   </header>
 
@@ -150,7 +169,7 @@
   <section id="biography">
     <h2 class="rise" data-i18n="section.biography">Biography</h2>
     <p class="rise" data-i18n="bio.current">I am an M.Sc. student in Electrical Engineering at the National University of Singapore, working on <strong>Robot Learning</strong> at <a href="https://github.com/showlab">Show Lab</a> under the supervision of <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>. My research interests include <strong>Vision-Language-Action Models</strong>, <strong>World Models</strong>, and <strong>Diffusion Models</strong>.</p>
-    <p class="rise" data-i18n="bio.previous">Previously, I received my B.Eng. in Automation from Zhejiang University, where my early research focused on robot control.</p>
+    <p class="rise" data-i18n="bio.previous">Previously, I received my B.Eng. in Automation from Zhejiang University, where my early research focused on control in robot systems.</p>
   </section>
 
   <!-- ============ News ============ -->
@@ -168,7 +187,7 @@
         <p data-i18n="news.item3">📸 Joined <strong>Show Lab @ NUS</strong> as an M.Sc. student.</p>
       </div></li>
       <li><time datetime="2024-11" data-i18n="news.date3">Nov. 2024</time><div>
-        <p data-i18n="news.item4"><em>🎉 Imitation Learning Based Manipulator Skill Training for Home Environment</em> presented <strong>@ CAC 2024</strong>.</p>
+        <p data-i18n="news.item4">🎉 <em>Imitation Learning Based Manipulator Skill Training for Home Environment</em> presented <strong>@ CAC 2024</strong>.</p>
       </div></li>
       <li class="news-hidden" hidden><time datetime="2024-06" data-i18n="news.date4">Jun. 2024</time><div>
         <p data-i18n="news.item5">🎓 Graduated from <strong>Zhejiang University</strong> with a bachelor's degree in Automation.</p>
@@ -214,7 +233,7 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-papav.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-papav.jpg" width="900" height="375" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title1">Survey on Multimodal Embodied Agents: A Unified Capability-centric Perspective from Computer-Use to Robot-Use</h3>
         <p class="authors">
@@ -239,7 +258,7 @@
           -->
           Mike Zheng Shou<span class="star">†</span>
         </p>
-        <p class="venue" data-i18n="paper.venue1">TEchRxiv Preprint <span class="dot">·</span> 2026.09</p>
+        <p class="venue" data-i18n="paper.venue1">TechRxiv Preprint <span class="dot">·</span> 2026.09</p>
         <div class="tags">
           <a href="https://doi.org/10.6084/m9.figshare.33529048" data-i18n="link.paper">Paper</a>
           <a href="https://showlab.github.io/Awesome-Multimodal-Embodied-Agent" data-i18n="link.page">Page</a>
@@ -249,7 +268,7 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-dls.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-dls.jpg" width="900" height="374" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title2">Where Success Breaks: Failure-Boundary Learning for Robust Vision-Language-Action Models</h3>
         <p class="authors">Yanzhe Chen<span class="star">*</span>,
@@ -264,7 +283,7 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" width="900" height="447" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title3">Supervise What Survives: Geometry-Guided VLA Adaptation from Synthetic Robot Videos</h3>
         <p class="authors">
@@ -279,7 +298,7 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-face.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-face.jpg" width="900" height="456" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title4">When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>        <p class="venue" data-i18n="paper.venue4">CCF-A Conference Under Review <span class="dot">·</span> 2026.05</p>
         <div class="tags"><span data-i18n="paper.pending">Paper link to be updated</span></div>
@@ -287,10 +306,10 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-llmgrade.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-llmgrade.jpg" width="720" height="405" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title5">Intelligent Review System for Embedded Microprocessor Lab Reports Powered by Large Language Models</h3>
-        <p class="authors"><!-- <a href="https://xplorestaging.ieee.org/author/37085709926"> -->Lingxia Lu<!-- </a> -->, Zile Feng, <span class="me">Zhijun Cao</span>, Bao Zhejing, <!-- <a href="https://xplorestaging.ieee.org/author/37534419800"> -->Miao Yu<!-- </a> --><span class="star">†</span></p>
+        <p class="authors"><!-- <a href="https://xplorestaging.ieee.org/author/37085709926"> -->Lingxia Lu<!-- </a> -->, Zile Feng, <span class="me">Zhijun Cao</span>, Zhejing Bao, <!-- <a href="https://xplorestaging.ieee.org/author/37534419800"> -->Miao Yu<!-- </a> --><span class="star">†</span></p>
         <p class="venue" data-i18n="paper.venue5"><b>Research and Exploration in Laboratory</b> <span class="dot">·</span> 2026.02</p>
         <div class="tags">
           <a href="https://kns.cnki.net/kcms2/article/abstract?v=lLcTIqQqO-1HFlwhazrYORVIuJ6f29rxJu-NYQ1_NQq7W4PP2ng1B5AhxyGgdGkoSR_0pil0U1Rf5kFld7U63LA2w33ohXoNSeqNrLe5iPhvzZ2vzHViHFEmvX66rM07WMbHwbi_QYKm2EsfPc9itQ12nhAjd3w7&amp;uniplatform=NZKPT" data-i18n="link.paper">Paper</a>
@@ -299,7 +318,7 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/pub/pub-cac.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-cac.jpg" width="900" height="508" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title6">Imitation Learning Based Manipulator Skill Training for Home Environment</h3>
         <p class="authors"><span class="me">Zhijun Cao</span>, <!-- <a href="https://ieeexplore.ieee.org/author/37288328000"> -->Yan He<!-- </a> --></p>
@@ -317,7 +336,7 @@
     <h2 class="rise" data-i18n="section.writing">Writing &amp; Media</h2>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/write/write-juliadiffusion.jpg" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/write/write-juliadiffusion.jpg" width="900" height="450" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="writing.diffusion">Julia Implementation of Continuous-time Diffusion Models: A Blog for NUS EE5311</h3>
         <p class="authors"><span class="me">Zhijun Cao</span>, Pinhong Chen, Zifeng Huang, Shuzhe Rui, Xiao Wang</p>
@@ -330,7 +349,7 @@
     </article>
 
     <article class="pub rise">
-      <div class="thumb"><img src="assets/img/write/write-bgtree.jpg?v=202609291444" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/write/write-bgtree.jpg?v=202609291444" width="1280" height="854" alt="" loading="lazy"></div>
       <div>
         <h3 data-i18n="writing.tree">报告树：“BG Tree” — A Documentary Report on the Historic Cedar at ZJU Yuquan Campus Gate</h3>
         <p class="authors">Yuxuan Ouyang, <span class="me">Zhijun Cao</span>, Yiying Zhou</p>
@@ -347,13 +366,13 @@
     <h2 class="rise" data-i18n="section.internship">Internship</h2>
 
     <div class="item rise">
-      <div class="ilogo"><img src="assets/img/logo/mikomiko.png" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/mikomiko.png" width="160" height="23" alt="" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="internship.mikomiko">Mikomiko Pte. Ltd, Singapore</span>
-        <span class="d" data-i18n="internship.dates">2025.08 – 2026.02 · 2026.06 – present</span>
+        <span class="d" data-i18n="internship.dates">2025.08&nbsp;–&nbsp;2026.02 · 2026.06&nbsp;–&nbsp;present</span>
       </div>
-      <div class="s" data-i18n="internship.ai">AI Engineer Intern</div>
+      <div class="s" data-i18n="internship.ai">AIGC Algorithm Engineer</div>
       </div>
       <div class="irest">
       <div class="plist">
@@ -369,13 +388,13 @@
     </div>
 
     <div class="item rise">
-      <div class="ilogo"><img src="assets/img/logo/innomotion.png" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/innomotion.png" width="160" height="58" alt="" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="internship.innomotion">InnoMotion Co. Ltd, Shanghai — R&amp;D Department</span>
         <span class="d">2023.07 – 2023.09</span>
       </div>
-      <div class="s" data-i18n="internship.ml">ML Engineer Intern</div>
+      <div class="s" data-i18n="internship.ml">ML Algorithm Engineer</div>
       </div>
     </div>
   </section>
@@ -385,7 +404,7 @@
     <h2 class="rise" data-i18n="section.education">Education</h2>
 
     <div class="item rise">
-      <div class="ilogo"><img src="assets/img/logo/nus.png" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/nus.png" width="125" height="160" alt="" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="education.title0">National University of Singapore</span>
@@ -396,7 +415,7 @@
     </div>
 
     <div class="item rise">
-      <div class="ilogo"><img src="assets/img/logo/zju.png" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/zju.png" width="160" height="160" alt="" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="education.title1">Zhejiang University</span>
@@ -406,24 +425,35 @@
       </div>
       <div class="irest">
       <div class="plist">
-        <div class="row">
-          <span class="t" data-i18n="education.title2">Zhejiang Key Lab of Electrical Technology and System on Renewable Energy</span>
-          <span class="d">2024.06 – 2025.07</span>
+        <div class="pitem">
+          <div class="row">
+            <span class="t" data-i18n="education.title2">Zhejiang Key Lab of Electrical Technology and System on Renewable Energy</span>
+            <span class="d">2024.06 – 2025.07</span>
+          </div>
+          <div class="s" data-i18n="education.detail2">Research Assistant · Advised by Prof. Miao Yu</div>
         </div>
-        <div class="s" data-i18n="education.detail2">Research Assistant · Advised by Prof. Miao Yu</div>
-        <div class="row">
-          <span class="t" data-i18n="education.title3">Student Press Corps, Convergence Media Center</span>
-          <span class="d">2021.10 – 2025.07</span>
+        <div class="pitem">
+          <div class="row">
+            <span class="t" data-i18n="education.title4">Design of Coffee-Brewing Robot Based on Mitsubishi RV-4FRL-D Manipulator</span>
+            <span class="d">2022.04 – 2023.05</span>
+          </div>
+          <div class="s" data-i18n="education.detail5">Project Lead · <em>Supported by the Xinmiao Talent Plan under Grant No. 2022R401035</em></div>
         </div>
-        <div class="s" data-i18n="education.detail3">Vice-minister &amp; Consultant</div>
-        <div class="s" data-i18n="education.detail4"><strong>2023 Excellent Campus News Award</strong> (People's Daily Online)
-          · <strong>Good News Award</strong> (ZJU 2023; CMIC 2025)</div>
+        <div class="pitem">
+          <div class="row">
+            <span class="t" data-i18n="education.title3">Student Press Corps, Convergence Media Center</span>
+            <span class="d">2021.10 – 2025.07</span>
+          </div>
+          <div class="s" data-i18n="education.detail3">Vice-minister &amp; Consultant</div>
+          <div class="s" data-i18n="education.detail4"><strong>Excellent Campus News Award</strong> (People's Daily Online 2023)
+            · <strong>Good News Award</strong> (ZJU 2023; CMIC 2025)</div>
+        </div>
       </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ Projects ============ -->
+  <!-- ============ Projects（暂时隐藏；咖啡冲煮机器人项目已列在 Education 的浙大条目下）============ -->
   <!-- <section id="projects">
     <h2 class="rise">Projects</h2>
 
@@ -433,15 +463,6 @@
         <span class="d">2025.09 – 2026.04</span>
       </div>
       <div class="s">Individual Project for NUS EE5003</div>
-    </div>
-
-    <div class="item rise">
-      <div class="row">
-        <span class="t">Design of Coffee Brewing Robot Based on Mitsubishi RV-4FRL-D Manipulator</span>
-        <span class="d">2022.04 – 2023.05</span>
-      </div>
-      <div class="s">Project Leader</div>
-      <p class="note">Supported by the Xinmiao Talent Plan of Zhejiang under Grant No. 2022R401035</p>
     </div>
   </section> -->
 
@@ -464,7 +485,7 @@
 </main>
 
 <footer class="wrap">
-  <span data-i18n="footer.copyright">Copyright © Cao Zhijun. All Rights Reserved.</span>
+  <span data-i18n="footer.copyright">Copyright © Aaron Zhijun Cao. All Rights Reserved.</span>
   <span data-i18n="footer.updated">Last Update: Sep. 2026</span>
 </footer>
 
@@ -485,7 +506,8 @@
 
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.play().catch(function () {}); }
+      // 浏览器不许自动播放时（如 iPhone 开着低电量模式）给出播放控件，至少能手动点开
+      if (e.isIntersecting) { e.target.play().catch(function (err) { if (err && err.name === 'NotAllowedError') e.target.controls = true; }); }
       else { e.target.pause(); }
     });
   }, { threshold: 0.25 });
@@ -495,6 +517,59 @@
 </script>
 
 <script>
+/* 邮箱入口：鼠标悬停（或键盘聚焦）时在下面弹出小浮层，里面是地址和「复制」按钮；点击入口本身
+   仍是原来的 mailto。鼠标一离开就收起，不停留 —— 入口和浮层之间那条缝由 .copy-tip 垫着（它和浮层
+   一样宽，只在打开时接鼠标），所以从入口往下划到浮层上不算离开。
+   复制成功后按钮变成「已复制」，过一会儿变回来。按 Esc 也收起。
+   没有悬停的设备（手机）不弹：点一下就是写邮件，长按链接系统自带复制 */
+(function () {
+  var box = document.querySelector('.mailbox');
+  if (!box || !window.matchMedia || !matchMedia('(hover: hover)').matches) return;
+  var link = box.querySelector('a'), pop = box.querySelector('.copy-pop'), copy = pop.querySelector('[data-copy]');
+  var addr = pop.querySelector('.addr').textContent.trim(), doneT = 0;
+  function zh() { return document.documentElement.lang === 'zh-CN'; }
+  function reset() {
+    clearTimeout(doneT);
+    copy.classList.remove('done');
+    copy.textContent = zh() ? '复制' : 'Copy';
+  }
+  function show() {
+    // 浮层与入口左右居中对齐；窗口窄、左边放不下时贴着窗口左缘留 8px，尖角仍对准入口正中。
+    // 垫缝的那一条（.copy-tip）与浮层同宽、同位置
+    var half = link.offsetWidth / 2, left = half - pop.offsetWidth / 2;
+    left = Math.max(left, 8 - box.getBoundingClientRect().left);
+    box.style.setProperty('--px', left + 'px');
+    box.style.setProperty('--pw', pop.offsetWidth + 'px');
+    box.style.setProperty('--ax', half - left + 'px');
+    box.classList.add('open'); pop.classList.add('on');
+  }
+  function hide() { box.classList.remove('open'); pop.classList.remove('on'); reset(); }
+  function copied() {
+    copy.classList.add('done');
+    copy.textContent = zh() ? '已复制 ✓' : 'Copied ✓';
+    clearTimeout(doneT);
+    doneT = setTimeout(reset, 1600);
+  }
+  function legacyCopy() {                       // 没有剪贴板接口的旧浏览器
+    var t = document.createElement('textarea');
+    t.value = addr; t.setAttribute('readonly', '');
+    t.style.cssText = 'position:fixed;left:-99px;top:0;opacity:0';
+    document.body.appendChild(t); t.select();
+    try { if (document.execCommand('copy')) copied(); } catch (e) {}
+    document.body.removeChild(t);
+  }
+  box.addEventListener('mouseenter', show);
+  box.addEventListener('mouseleave', hide);
+  box.addEventListener('focusin', show);
+  box.addEventListener('focusout', function (e) { if (!box.contains(e.relatedTarget)) hide(); });
+  copy.addEventListener('click', function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(addr).then(copied, legacyCopy);
+    else legacyCopy();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+  document.addEventListener('languagechange', function () { if (!copy.classList.contains('done')) reset(); });
+})();
+
 // News 展开
 (function () {
   var btn = document.getElementById('newsMore');
@@ -635,9 +710,40 @@
   else img.addEventListener('load', play);
   wrap.addEventListener('click', play);
 })();
+
+/* 头像悬停：朝指针的方向小幅转动（样式见 style.css「头像容器」），和相册的照片同一套力度。
+   头像自己不动，是否悬停交给 :hover 就够了，这里只把指针在头像上的相对位置（-1 到 1）写进
+   --tx / --ty；移开时去掉，由过渡平滑地转回原位。写的是行内样式，glass.js 的变化监听不把它算作
+   页面内容变了，不会因此重截背景。位置用 offsetX / offsetY（头像转动之前的坐标）算，转角不会
+   反过来改变位置；变化不到 0.03 不写，免得过渡一直作废重开。触屏和减少动态效果时只放大不转 */
+(function () {
+  var el = document.getElementById('avatarFx');
+  if (!el || !window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var raf = 0, tx = 0, ty = 0, lx = NaN, ly = NaN;
+  function apply() {
+    raf = 0;
+    if (Math.abs(tx - lx) < .03 && Math.abs(ty - ly) < .03) return;
+    lx = tx; ly = ty;
+    el.style.setProperty('--tx', tx.toFixed(3));   // 右半边：右边往里退
+    el.style.setProperty('--ty', ty.toFixed(3));   // 下半边：下边往里退
+  }
+  el.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch') return;
+    var t = e.target;                               // 指针下的是头像图片（去噪画布不接鼠标）
+    tx = Math.max(-1, Math.min(1, e.offsetX / t.offsetWidth * 2 - 1));
+    ty = Math.max(-1, Math.min(1, e.offsetY / t.offsetHeight * 2 - 1));
+    if (!raf) raf = requestAnimationFrame(apply);
+  }, { passive: true });
+  el.addEventListener('pointerleave', function () {
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    lx = ly = NaN;
+    el.style.removeProperty('--tx'); el.style.removeProperty('--ty');
+  });
+})();
 </script>
 
-<script src="assets/js/worldmap.js?v=20260929zh1"></script>
+<script src="assets/js/worldmap.js?v=20261001pin-blue"></script>
 <script src="assets/js/ghstars.js?v=20260929zh1" defer></script>
 
 </body>

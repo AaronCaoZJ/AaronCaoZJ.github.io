@@ -5,3 +5,6 @@ ref/
 
 # 未压缩的原始素材，只留本地，不参与发布
 assets/**/src/
+
+# 域名证书，只留本地，不参与发布
+caozhijun.top.png

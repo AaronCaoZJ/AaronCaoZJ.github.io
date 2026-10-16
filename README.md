@@ -8,19 +8,24 @@
 
 ```
 .
-├── index.html          主页：About / Research / News / Publications / Projects / Experience / Education / Awards
+├── index.html          主页：Biography / News / Publications / Writing & Media / Internship / Education
 ├── gallery/index.html  相册页，URL 为 /gallery/
 ├── CNAME               GitHub Pages 自定义域名，内容为 caozhijun.top
 ├── .nojekyll           告诉 GitHub Pages 不要跑 Jekyll，直接发布原始文件
+├── caozhijun.top.png   域名证书，本地保留、不进 git
+├── docs/               部署手册（DEPLOY.md）与访客地图部署手册（VISITOR-MAP.md）
+├── worker/             访客地图的后端（Cloudflare Worker）
 └── assets/
     ├── css/style.css   全站样式，配色沿用简历 LaTeX 的莫兰迪色板
-    ├── fonts/          自托管字体（Inter + Newsreader 可变字体，167 KB）
+    ├── js/             中英文切换、导航与液态玻璃、入场动画、访客地图、GitHub star 数
+    ├── fonts/          自托管字体（Charis 三个静态文件，约 44 KB；Inter 留着但未使用）
     ├── img/
     │   ├── avatar.jpg      头像（640×640）
     │   ├── pub/            论文配图，宽 900px
     │   ├── write/          Writing & Media 配图，宽 900px（bgtree 用原图）
     │   ├── icon/           联系方式图标，64×64 透明 PNG
-    │   ├── gallery/        相册图片目录（当前为空）
+    │   ├── gallery/        相册：560/ 跑马灯用（高 560px），1120/ 放大镜用（高 1120px），
+    │   │                   src/ 原图（原文件名，本地保留、不进 git），campus-01.jpg 这类是指向原图的符号链接
     │   └── src/            未压缩源素材，本地保留、不进 git
     └── pdf/
         ├── CV_ZhijunCao.pdf            英文简历，原件（288 KB）
@@ -30,22 +35,14 @@
 
 ## 字体
 
-标题 **Inter**、正文 **Newsreader**，均为**自托管**可变字体（`assets/fonts/`，合计 167 KB）。
+全站统一用衬线体 **Charis**，**自托管**三个静态文件（`assets/fonts/`：400、400 斜体、700，合计约 44 KB）。
+粗体只有 700 这一档，样式表里写的 600、650 实际都落在它上面。
+
+`Inter-normal.woff2` 和它的 `@font-face` 还留着，但目前没有用到：样式表里 `--sans` 直接指向了 `--serif`。
+要恢复无衬线标题，见 `style.css` 里 `--sans` 上方的注释。
 
 不使用 Google Fonts CDN —— `fonts.googleapis.com` 在中国大陆不可达，
 会阻塞整个页面的渲染。自托管后全球访客看到同一套排版。
-
-Newsreader 原本带 `opsz`（光学尺寸）轴，页面只在 14–16.5px 的正文用它，
-因此用 fontTools 把该轴固定为 16，体积从 273 KB 降到 120 KB：
-
-```bash
-python3 -c "
-from fontTools.ttLib import TTFont
-from fontTools.varLib import instancer
-f = TTFont('Newsreader-normal.woff2')
-instancer.instantiateVariableFont(f, {'opsz': 16}, inplace=True)
-f.flavor = 'woff2'; f.save('Newsreader-normal.woff2')"
-```
 
 中文版使用系统中文字体：苹果设备落到苹方，Windows 落到微软雅黑。
 无需额外下载大型中文字体文件；中文模式下同时调整正文行距和标题字距。
@@ -85,7 +82,7 @@ clip = pymupdf.Rect(min(x[0] for x in top), min(x[1] for x in top),
                     max(x[2] for x in top), max(x[3] for x in top))
 page.get_pixmap(matrix=pymupdf.Matrix(2.6, 2.6), clip=clip).save("out.png")
 PY
-magick out.png -resize 900x -quality 86 assets/img/pub-xxx.jpg
+magick out.png -resize 900x -quality 86 assets/img/pub/pub-xxx.jpg
 ```
 
 ### 简历与文章 PDF：原样发布，不压缩
@@ -102,15 +99,40 @@ cmp 原始简历.pdf assets/pdf/CV_ZhijunCao.pdf   # 无输出即一致
 `assets/img/write/write-bgtree.jpg` 同理，用原图，不缩不压。
 替换后照常更新 `?v=` 版本串，避免浏览器和 Cloudflare 继续给旧文件。
 
-### 添加相册图片
+### 相册图片
 
-图片放进 `assets/img/gallery/`，压到长边 1600px 以内：
+每张照片导出两档 WebP。原图以原文件名放在 `assets/img/gallery/src/`，再用一个按页面命名的符号链接指向它
+（如 `lake-13.jpg -> 20250330-_ARC2114.jpg`），`ls -l src` 就是完整的对照表。
+链接名的扩展名跟着原图走（如 `campus-02.png -> 250116_ARC copy.png`，那张星轨是 Photoshop 导出的 PNG）。
+
+导出两档：
+
+- `560/`：跑马灯显示用，高 560px（最高的照片框 262px，悬停放大后在 2 倍屏上约 548px）
+- `1120/`：放大镜用，高 1120px，只在打开放大镜、且扫到这张照片时才下载
 
 ```bash
-magick input.jpg -resize 1600x1600\> -quality 82 assets/img/gallery/name.jpg
+cd assets/img/gallery/src
+for f in campus-* lake-* more-*; do n=${f%.*}
+  magick "$f" -auto-orient -colorspace sRGB -depth 8 -alpha off -strip -write mpr:o +delete \
+    \( mpr:o -resize 'x1120>' -quality 86 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../1120/$n.webp +delete \) \
+    \( mpr:o -resize 'x560>'  -quality 85 -define webp:method=6 -define webp:use-sharp-yuv=true -write ../560/$n.webp  +delete \) null:
+done
 ```
 
-然后在 `gallery/index.html` 里删掉 `.empty` 占位块、取消 `.grid` 的注释，逐条加 `<figure>`。
+- 不要加 `-define jpeg:size=…` 提速：ImageMagick 7 会按这个提示把小于它的图**放大**解码。
+- `-strip` 会去掉 EXIF（含 GPS 定位）；在它之前先 `-auto-orient`，否则竖拍的照片会躺倒。
+
+然后在 `gallery/index.html` 对应的轨道里加一条 `<figure>`，`data-lg-hi` 指向大图：
+
+```html
+<figure><img src="/assets/img/gallery/560/lake-17.webp?v=20261002order" data-lg-hi="/assets/img/gallery/1120/lake-17.webp?v=20261002order" alt="" loading="lazy"></figure>
+```
+
+错落的高度由脚本按序号自动标，照片数不必凑 4 的倍数。增减照片后按比例调整该栏的 `--dur`，保持滚动速度不变。
+同名文件换了内容（重新导出、重排编号）时，把页面里这些地址的 `?v=` 版本串统一换掉，
+否则看过旧页面的访客会拿到缓存的旧图，跑马灯和放大镜还可能对不上同一张照片。
+换原图时把新文件放进 `src/`，改链接指向它（`ln -sf 新原图.jpg lake-13.jpg`），重新导出即可；
+宽高比变了的话，顺手按比例微调该栏的 `--dur`。
 
 ## 搜索引擎收录
 
@@ -130,11 +152,6 @@ git add -A && git commit -m "update" && git push
 ```
 
 浏览器有缓存，看不到变化时用无痕窗口验证。
-
-## 待补内容
-
-- `index.html` 里 Google Scholar 链接是占位符 `YOUR_SCHOLAR_ID`，需替换
-- 论文作者列表目前写的是 `et al.`，需补全合作者姓名
 
 ## 中英文切换
 

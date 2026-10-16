@@ -1,7 +1,7 @@
 # 访客地图部署手册
 
-首页底部那张点阵世界地图。前端已经在仓库里跑着（默认用假数据），
-这份文档只讲怎么把后端接上、让数字变成真的。
+首页底部那张点阵世界地图。前端和后端都已上线（`worldmap.js` 里 `USE_MOCK` 为 `false`，显示的是真实数据），
+这份文档记录后端是怎么接上的，重建或换账号时照着做。
 
 ```
 浏览器 ──→ Cloudflare 边缘 ──┬─ /api/visit     POST  记一次访问
@@ -192,8 +192,9 @@ npx wrangler d1 execute visitors --remote --command "DELETE FROM visits"
 
 - **免费额度**：Workers 每天十万次请求量级，D1 的读写额度也够个人主页用。
   具体数字 Cloudflare 会调整，部署前去官方文档核一下当前值。
-- **`/api/visitors` 在边缘缓存 5 分钟**，所以刚记的访问不会立刻出现在地图上。
-  这也顺带挡住了刷接口。想改就动 Worker 里的 `max-age`。
+- **`/api/visitors` 让访客的浏览器缓存 5 分钟**（`max-age=300`），所以同一个人刚记的访问不会立刻出现在地图上。
+  这不是边缘缓存，挡不住刷接口：Worker 的响应不会自动进 Cloudflare 的缓存，要像 `/api/stars` 那样自己存取才行。
+  想改时长就动 Worker 里的 `max-age`。
 - **同一浏览器 24 小时内只记一次**，靠 `localStorage` 判断。这个判断在客户端、
   能被绕过，但对个人主页足够。
 - **`worker/` 目录会被 GitHub Pages 公开**（仓库根目录整个作为站点发布），
