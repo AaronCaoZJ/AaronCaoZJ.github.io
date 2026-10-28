@@ -11,9 +11,11 @@
    截不到图或没有 WebGL（极少数环境）时什么也不做，导航保持 CSS 的模糊玻璃。
    什么时候启动见文件末尾。 */
 function liquidGlass() {
+  // 导航已经不是玻璃（见 style.css「顶部导航」），液态玻璃只剩相册页的放大镜；没有放大镜的页面什么也不做。
+  // 导航仍要知道：截图时把它设成不可见、它里面的变化不算页面内容变了
   var nav = document.querySelector('.nav');
-  var wrap = nav && nav.querySelector('.wrap');
-  if (!wrap || !window.Promise || !window.fetch) return;
+  var loupeBtn = document.querySelector('[data-lg-loupe-toggle]');
+  if (!nav || !loupeBtn || !window.Promise || !window.fetch) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-transparency: reduce)').matches) return;
 
   /* ---------- 截图 ---------- */
@@ -255,15 +257,15 @@ function liquidGlass() {
        小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
        再深也不会让边缘显得更厚，只会让上下两条弯边各拽一份背景，胶囊看起来被切成几层。
      - 折射强度：原库 0.69。弯边是一段圆弧，坡度几乎全挤在最外面几个像素里，0.69 时边上那圈被拉弯、
-       映出别处内容的带子只有 5 像素左右宽，几乎看不出。导航取 1.0，这条带子约 7 像素：轮廓内侧多出一道
+       映出别处内容的带子只有 5 像素左右宽，几乎看不出。以前导航的玻璃取 1.0，这条带子约 7 像素：轮廓内侧多出一道
        清楚的细线（Apple 的演示里也是这样，玻璃中央的颜色被拽到轮廓上）。取 1.4 时上下两条弯边各拽一份
        背景、连成两长条，胶囊看起来分成好几层。放大镜仍用原库值：它是用来看清照片的，边缘的折射带越窄越好。
-     - 磨砂：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素 —— 指 2 倍屏上，即 1.55 个
+     - 磨砂（以前导航的玻璃用，放大镜不磨砂）：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素 —— 指 2 倍屏上，即 1.55 个
        CSS 像素；别的屏幕按密度折算，看到的模糊程度一样）；
        Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
      - 色散：原库默认 0.05，这里取 0.08 —— 弯边上的彩色镶边再明显一点。 */
-  var G = { refraction: .69, navRefraction: 1, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
-            frost: 3.1, loupeMag: 2, loupeZ: 24,
+  var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
+            loupeMag: 2, loupeZ: 24,
             shade: .015, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
 
   /* 磨砂：对背景纹理做一次高斯模糊（横、竖各一趟）。只在纹理换了内容时做，不是每帧 ——
@@ -389,12 +391,8 @@ function liquidGlass() {
     g.views.push(v); views.push(v);
     return v;
   }
-  // 导航的两块，加上页面里标了 data-lg-pane 的（相册页导航里的放大镜开关）
-  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
-    .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
-  var navGroup = addGroup(nav, { frost: G.frost, refraction: G.navRefraction, band: { x: 8, ahead: 900, behind: 300 } });
-  if (!navGroup) return;                                    // 没有 WebGL：保持 CSS 模糊玻璃
-  panes.forEach(function (p) { addView(navGroup, p); });
+  var loupe = makeLoupe(loupeBtn);                          // 见下文「放大镜」
+  if (!loupe) return;                                       // 没有 WebGL：放大镜开关一直收着
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
@@ -609,7 +607,7 @@ function liquidGlass() {
     g.anim = animating;
 
     // 底图还够不够用：内容没变，取样范围（模糊时再留出模糊半径）也还在里面
-    // 磨砂的 σ 也按看到的大小算：G.frost 是 2 倍屏上的物理像素，折成 CSS 像素是它的一半（fr）。
+    // 磨砂的 σ 也按看到的大小算：g.frost 是 2 倍屏上的物理像素，折成 CSS 像素是它的一半（fr）。
     // 模糊够大（折成这块屏的物理像素不小于 2.4）底图才存一半分辨率；1 倍屏上模糊只有一个多像素，存原样
     var fr = g.frost / 2, st = g.st, s = mag * d * (fr * d >= 2.4 ? .5 : 1), ver = sceneVer + ':' + liveVer + ':' + s;
     var guard = g.frost ? (BLUR_R + 1) / s : 0;
@@ -763,8 +761,7 @@ function liquidGlass() {
      放大，切换显示模式时也要挪一下位置，都带一小段过渡 —— 这样的照片记进 hot，改为实时画，
      过渡期间逐帧重画，玻璃里的照片跟着变。逐帧重画只管挨着玻璃的照片（放宽 60px，盖住放大与错落
      的位移），别处的照片悬停不必重画。过渡事件每个属性各发一次，开始与结束（或取消）成对，数着就
-     知道还有没有在走的；结束时不论远近都再看一次收尾。万一漏了结束事件，2 秒后不再等。
-     导航里的玻璃自己也会变（圆钮悬停放大、放大镜开关展开 / 收起），同样在过渡期间逐帧重画 */
+     知道还有没有在走的；结束时不论远近都再看一次收尾。万一漏了结束事件，2 秒后不再等 */
   function nearGlass(el) {
     var r = el.getBoundingClientRect(), m = 60;
     return views.some(function (v) {
@@ -800,10 +797,6 @@ function liquidGlass() {
       });
     });
   });
-  nav.addEventListener('transitionrun', function (e) { if (panes.indexOf(e.target) >= 0) easeStart(e.target); });
-  ['transitionend', 'transitioncancel'].forEach(function (n) {
-    nav.addEventListener(n, function (e) { if (panes.indexOf(e.target) >= 0) easeEnd(e.target); });
-  });
   /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（放大镜）会跟着视口
      挪位置，页面却没有滚动、也不发 scroll 事件，收放完才来一个 resize —— 玻璃里的背景停在旧位置，
      等下一次滚动才突然跳过去。所以滚动、触摸、视口变化之后再连着看半秒：位置没变的帧只是读一下
@@ -819,7 +812,6 @@ function liquidGlass() {
   }
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(schedule);
-    ro.observe(nav);
     views.forEach(function (v) { ro.observe(v.pane); });
   }
 
@@ -828,9 +820,6 @@ function liquidGlass() {
      画，不是把纹理拉大，所以是清楚的）。由导航里的开关（data-lg-loupe-toggle）打开，打开后常驻：
      鼠标 / 触控板下跟着光标走（带一点滞后，pointer-events: none 不挡点击）；
      触屏上没有光标，改为用手指拖动。每次打开页面都是关闭的，不记住上次的状态。 */
-  var loupe = null;
-  var loupeBtn = document.querySelector('[data-lg-loupe-toggle]');
-  if (loupeBtn) loupe = makeLoupe(loupeBtn);
   function makeLoupe(btn) {
     var el = document.createElement('div');
     el.className = 'lg-loupe';
@@ -901,7 +890,7 @@ function liquidGlass() {
 
     return {
       // 玻璃就绪：露出开关。再提示一下这里有个放大镜 —— 打开页面满 1 秒后（至少等圆钮展开完），
-      // 图标晃两下、外圈亮暗一次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
+      // 图标晃两下、底色浮起淡去一次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
       ready: function () {
         btn.hidden = false; sync();
         if (hinted) return;

@@ -198,35 +198,16 @@
     { city: 'Nairobi',       cc: 'KE', lat:  -1.29, lon:   36.82, n:   8, ago: 9000 }
   ];
 
-  var view = document.createElement('div');     // 裁切窗口：放大后超出的部分藏在里面
   var cvs  = document.createElement('canvas');
   var pins = document.createElement('div');
   var tip  = document.createElement('div');
-  var out  = document.createElement('button');  // 放大后出现：缩回全图
-  view.className = 'vmap-view';
   cvs.className = 'vmap-land';
   pins.className = 'vmap-pins';
   tip.className = 'vmap-tip';
-  out.className = 'vmap-out';
-  out.type = 'button';
-  out.textContent = '\u2212';
-  out.setAttribute('aria-label', 'Zoom out');
   tip.hidden = true;
-  out.hidden = true;
-  view.appendChild(cvs); view.appendChild(pins);
-  el.appendChild(view); el.appendChild(tip); el.appendChild(out);
+  el.appendChild(cvs); el.appendChild(pins); el.appendChild(tip);
 
-  /* 视图：z 是放大倍数，(ux, uy) 是视窗中心在整张图上的相对位置（0–1）。
-     z = 1 即全图。点阵和访客点都经 toX / toY 换算，两者永远对得上。 */
-  var ZOOM = 3, z = 1, ux = 0.5, uy = 0.5, w = 0, h = 0, sizedFor = 0;
-  var zt = 1;   // 目标倍数。判断点击该放大还是缩回要看它，而不是动画中途的 z ——
-                // 否则在 0.38 秒的过渡里连点两下，会按一个半截的倍数做决定
-  function toX(u) { return (u - ux) * w * z + w / 2; }
-  function toY(v) { return (v - uy) * h * z + h / 2; }
-  function clampCenter(zz, u, v) {             // 视窗不许拖出地图边界
-    var m = 0.5 / zz;
-    return [Math.min(1 - m, Math.max(m, u)), Math.min(1 - m, Math.max(m, v))];
-  }
+  var w = 0, h = 0;
 
   /* 取第 gy 行第 gx 格的位。一个十六进制字符压四格，
      所以先定位到 gx>>2 那个字符，再取它的第 gx&3 位。 */
@@ -252,106 +233,58 @@
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, w, h);
     g.fillStyle = getComputedStyle(el).getPropertyValue('--vmap-dot').trim() || '#cec9c6';
-    var r = Math.max(0.55, cw * 0.30) * z;   // 放大时点阵跟着变大，像拿放大镜看
+    var r = Math.max(0.55, cw * 0.30);
     for (var gy = 0; gy < H; gy++) {
       var off = (gy & 1) ? 0.5 : 0;   // 奇数行右移半格
-      var y = toY((gy + 0.5) / H);
-      if (y < -r || y > h + r) continue;
       for (var gx = 0; gx < W; gx++) {
         if (!bitAt(gx, gy)) continue;
-        var x = toX((gx + 0.5 + off) / W);
-        if (x < -r || x > w + r) continue;
         g.beginPath();
-        g.arc(x, y, r, 0, 6.2832);
+        g.arc((gx + 0.5 + off) * cw, (gy + 0.5) * ch, r, 0, 6.2832);
         g.fill();
       }
     }
 
-    /* 访客点跟同一个视图走，但本身大小不变 —— 放大后，
-       原先挤成一团的点（东亚、美东）才会被拉开、各自看清。 */
-    /* 点的大小参照 chenyanzhe.page：半径 = 3 + min(4, 2.4·log10(n+1))，按 900 宽的坐标算，
-       访问量到 ~45 次封顶 —— 对数而非开方，一个热门城市不会大到压住周围。
-       换算比例随地图宽度：620px（对方地图的最大宽度）时直径 5–9.6px，更窄时等比缩小，
-       手机上的点才不会相对地图大出一倍、挤成一团。只在宽度变化时重设 */
-    if (w !== sizedFor) {
-      sizedFor = w;
-      var k = Math.min(w, 620) / 900;
-      [].forEach.call(pins.children, function (b) {
-        var r = 3 + Math.min(4, 2.4 * Math.log(b._n + 1) / Math.LN10);
-        b.style.setProperty('--s', Math.max(3, 2 * r * k).toFixed(1) + 'px');
-      });
-    }
+    /* 点的大小随地图宽度变，哪些点互相压住也跟着变，所以每次重画都重新合并 */
+    regroup();
     [].forEach.call(pins.children, function (b) {
-      var x = toX(b._u), y = toY(b._v);
-      b.style.left = x + 'px';
-      b.style.top  = y + 'px';
-      b.hidden = x < -12 || y < -12 || x > w + 12 || y > h + 12;
+      b._x = b._u * w; b._y = b._v * h;
+      b.style.left = b._x + 'px';
+      b.style.top  = b._y + 'px';
     });
-    if (!tip.hidden && tip._pin) {
-      tip.style.left = tip._pin.style.left;
-      tip.style.top  = tip._pin.style.top;
-    }
   }
 
-  /* 缩放动画：用 easeOutCubic 在 380ms 内过渡倍数与中心点。
-     开了"减少动态效果"时直接跳到终点。 */
-  var anim = 0;
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function zoomTo(z1, u1, v1) {
-    var c = clampCenter(z1, u1, v1), z0 = z, u0 = ux, v0 = uy, t0 = null, D = reduce ? 0 : 380;
-    zt = z1;
-    cancelAnimationFrame(anim);
-    function step(t) {
-      if (t0 === null) t0 = t;
-      var k = D ? Math.min(1, (t - t0) / D) : 1, e = 1 - Math.pow(1 - k, 3);
-      z = z0 + (z1 - z0) * e; ux = u0 + (c[0] - u0) * e; uy = v0 + (c[1] - v0) * e;
-      draw();
-      if (k < 1) anim = requestAnimationFrame(step);
-    }
-    anim = requestAnimationFrame(step);
-    el.classList.toggle('zoomed', z1 > 1);
-    out.hidden = z1 === 1;
-    tip.hidden = true;
+  /* 点的直径（px）参照 chenyanzhe.page：半径 = 3 + min(4, 2.4·log10(n+1))，按 900 宽的坐标算，
+     访问量到 ~45 次封顶 —— 对数而非开方，一个热门城市不会大到压住周围。
+     换算比例随地图宽度：620px（对方地图的最大宽度）时直径 5–9.6px，更窄时等比缩小，
+     手机上的点才不会相对地图大出一倍、挤成一团。 */
+  function sizeOf(n) {
+    var r = 3 + Math.min(4, 2.4 * Math.log(n + 1) / Math.LN10);
+    return Math.max(3, 2 * r * Math.min(w, 620) / 900);
   }
 
-  /* 交互：点一下以该处为中心放大；放大后拖动平移，再点一下或按"−"、Esc 缩回。
-     不用滚轮缩放 —— 地图嵌在长页面里，滚轮一经过地图就被劫持，页面反而滚不动。
-     拖动不足 4px 当作点击，否则手一抖就会误触发缩放。 */
-  var down = null, panned = false;
-  view.addEventListener('pointerdown', function (e) {
-    down = { x: e.clientX, y: e.clientY, u: ux, v: uy };
-    panned = false;
-  });
-  view.addEventListener('pointermove', function (e) {
-    if (!down || zt === 1) return;
-    var dx = e.clientX - down.x, dy = e.clientY - down.y;
-    if (!panned && Math.abs(dx) + Math.abs(dy) < 4) return;
-    if (!panned) {
-      panned = true;
-      el.classList.add('panning');
-      tip.hidden = true;
-      try { view.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-    var c = clampCenter(z, down.u - dx / (w * z), down.v - dy / (h * z));
-    ux = c[0]; uy = c[1];
-    draw();
-  });
-  function endPointer() { down = null; panned = false; el.classList.remove('panning'); }
-  view.addEventListener('pointerup', function (e) {
-    if (!down) return;
-    var wasPan = panned;
-    endPointer();
-    if (wasPan) return;
-    if (zt > 1) { zoomTo(1, 0.5, 0.5); return; }
-    var r = view.getBoundingClientRect();
-    zoomTo(ZOOM, ux + (e.clientX - r.left - w / 2) / (w * z),
-                 uy + (e.clientY - r.top  - h / 2) / (h * z));
-  });
-  view.addEventListener('pointercancel', endPointer);
-  out.addEventListener('click', function () { zoomTo(1, 0.5, 0.5); });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && zt > 1) zoomTo(1, 0.5, 0.5);
-  });
+  /* 合并互相压住的点。接口按城市计数，同一片地方会有好几个名字（香港、东涌、上水；
+     深圳的宝安、固戍），1° 之内挤着五六个点，在地图上还不到 2px，鼠标只摸得到最上面那个。
+     所以按屏幕距离分组：两点间距小于半径之和再加 2px 就并成一个点，
+     大小按合计次数，悬停时列出组里每个城市。
+     贪心：按访问量从多到少，只和每组的第一个点（种子）比距离，点就落在种子上 ——
+     不会 A 挨 B、B 挨 C 地连成一长串，也不会把点挪到两座城市中间的空地上。 */
+  var POINTS = [];
+  function regroup() {
+    var groups = [];
+    POINTS.forEach(function (p) {
+      for (var i = 0; i < groups.length; i++) {
+        var g = groups[i];
+        if (Math.hypot((p.u - g.u) * w, (p.v - g.v) * h) < (sizeOf(g.n) + sizeOf(p.d.n)) / 2 + 2) {
+          g.n += p.d.n; g.list.push(p.d);
+          return;
+        }
+      }
+      groups.push({ u: p.u, v: p.v, n: p.d.n, list: [p.d] });
+    });
+    pins.textContent = '';
+    tip.hidden = true; tip._pin = null;
+    groups.forEach(function (g) { pins.appendChild(makePin(g)); });
+  }
 
   /* 按"多久前访问"着色：本周内是页面的主蓝，一个月淡成浅蓝，此后渐隐，半年及以上完全透明。
      三个锚点把刻度分成两臂，每臂内部按对数插值 —— 一周到一个月、
@@ -385,53 +318,136 @@
     return Math.round(h / 720) + ' mo ago';
   }
 
+  /* 中文页面上的城市名。接口给的是 Cloudflare 的英文城市名，没有译名可查，只能列在这里：
+     线上已出现过的城市全部收录，另补一批常见城市；不在表里的照旧显示英文。
+     国家/地区名不用列，交给浏览器自带的 Intl.DisplayNames（CLDR 简称：CN → 中国）。 */
+  var CITY_ZH = {
+    // 线上已出现过的
+    'Singapore': '新加坡', 'Shanghai': '上海', 'Hangzhou': '杭州',
+    'Jiaxing': '嘉兴', 'Nanjing': '南京', 'Hefei': '合肥', 'Beijing': '北京', 'Tianjin': '天津',
+    'Taiyuan': '太原', 'Zhengzhou': '郑州', 'Shijiazhuang': '石家庄', 'Hohhot': '呼和浩特',
+    'Wuhan': '武汉', 'Guangzhou': '广州', 'Dongguan': '东莞', 'Hong Kong': '香港',
+    'Taichung': '台中', 'Hsinchu': '新竹', 'Tokyo': '东京', 'Seoul': '首尔',
+    'Hanoi': '河内', 'Bangkok': '曼谷', 'Phagwāra': '帕格瓦拉',
+    'Paris': '巴黎', 'Lille': '里尔', 'Nuremberg': '纽伦堡', 'Copenhagen': '哥本哈根',
+    'Malmö': '马尔默', 'Sogndal': '松达尔', 'Kaunas': '考纳斯', 'İzmir': '伊兹密尔',
+    'New York City': '纽约', 'Washington': '华盛顿', 'Ashburn': '阿什本', 'Boydton': '博伊德顿',
+    'Arlington': '阿灵顿', 'Malden': '莫尔登', 'Chicago': '芝加哥', 'DeKalb': '迪卡尔布',
+    'Ann Arbor': '安娜堡', 'Fitchburg': '菲奇堡', 'Dallas': '达拉斯', 'Oklahoma City': '俄克拉何马城',
+    'Tulsa': '塔尔萨', 'Omaha': '奥马哈', 'Council Bluffs': '康瑟尔布拉夫斯',
+    'Springfield': '斯普林菲尔德', 'Huntsville': '亨茨维尔', 'Avon Park': '埃文帕克',
+    'Phoenix': '菲尼克斯', 'San Diego': '圣迭戈', 'Los Angeles': '洛杉矶', 'San Jose': '圣何塞',
+    'Santa Clara': '圣克拉拉', 'Palo Alto': '帕洛阿尔托', 'Moses Lake': '摩西湖',
+    'Montréal': '蒙特利尔', 'Beauharnois': '博阿尔努瓦',
+    'Caracas': '加拉加斯', 'Ciudad Guayana': '圭亚那城', 'Managua': '马那瓜', 'Cali': '卡利',
+    // 常见城市，备着
+    'Shenzhen': '深圳', 'Foshan': '佛山', 'Zhuhai': '珠海', 'Macau': '澳门', 'Macao': '澳门',
+    'Suzhou': '苏州', 'Wuxi': '无锡', 'Ningbo': '宁波', 'Shaoxing': '绍兴', 'Wenzhou': '温州',
+    'Chengdu': '成都', 'Chongqing': '重庆', "Xi'an": '西安', 'Changsha': '长沙', 'Xiamen': '厦门',
+    'Fuzhou': '福州', 'Jinan': '济南', 'Qingdao': '青岛', 'Dalian': '大连', 'Shenyang': '沈阳',
+    'Harbin': '哈尔滨', 'Changchun': '长春', 'Kunming': '昆明', 'Nanchang': '南昌',
+    'Taiwan': '台湾', 'Taipei': '台北', 'Kaohsiung': '高雄', 'Tainan': '台南', 'Taoyuan': '桃园',
+    'Osaka': '大阪', 'Kyoto': '京都', 'Busan': '釜山', 'Daejeon': '大田',
+    'Kuala Lumpur': '吉隆坡', 'Jakarta': '雅加达', 'Ho Chi Minh City': '胡志明市',
+    'Bengaluru': '班加罗尔', 'Mumbai': '孟买', 'New Delhi': '新德里', 'Hyderabad': '海得拉巴',
+    'Dubai': '迪拜', 'Tel Aviv': '特拉维夫', 'Istanbul': '伊斯坦布尔', 'Moscow': '莫斯科',
+    'London': '伦敦', 'Cambridge': '剑桥', 'Oxford': '牛津', 'Edinburgh': '爱丁堡',
+    'Berlin': '柏林', 'Munich': '慕尼黑', 'Frankfurt am Main': '法兰克福', 'Zurich': '苏黎世',
+    'Geneva': '日内瓦', 'Amsterdam': '阿姆斯特丹', 'Vienna': '维也纳', 'Madrid': '马德里',
+    'Barcelona': '巴塞罗那', 'Milan': '米兰', 'Rome': '罗马', 'Dublin': '都柏林',
+    'Stockholm': '斯德哥尔摩', 'Helsinki': '赫尔辛基', 'Oslo': '奥斯陆', 'Warsaw': '华沙',
+    'Prague': '布拉格', 'Toronto': '多伦多', 'Vancouver': '温哥华',
+    'San Francisco': '旧金山', 'Berkeley': '伯克利', 'Mountain View': '山景城',
+    'Sunnyvale': '桑尼维尔', 'Seattle': '西雅图', 'Boston': '波士顿', 'Pittsburgh': '匹兹堡',
+    'Philadelphia': '费城', 'Princeton': '普林斯顿', 'Austin': '奥斯汀', 'Houston': '休斯敦',
+    'Atlanta': '亚特兰大', 'Denver': '丹佛', 'Miami': '迈阿密',
+    'Sydney': '悉尼', 'Melbourne': '墨尔本', 'Brisbane': '布里斯班', 'Auckland': '奥克兰',
+    'São Paulo': '圣保罗', 'Mexico City': '墨西哥城'
+  };
+  var REGION_ZH = null;
+  try { REGION_ZH = new Intl.DisplayNames(['zh-CN'], { type: 'region', style: 'short' }); } catch (e) {}
+
+  /* 港澳台和内地一样写成中国：英文 "Hong Kong, CN"、"Taipei, CN"，中文「香港，中国」「台北，中国」。
+     不能像其他国家那样写 HK、TW 或「香港」「台湾」，读起来像是与中国并列的国家。
+     只改显示：Cloudflare 报的原始代码照旧用来并区（见下面的 WHOLE） */
+  var IN_CN = { HK: 1, MO: 1, TW: 1 };
+  /* 中文写成「广州，中国」，英文 "Guangzhou, CN"；城市与国家同名时只写一次（新加坡） */
+  function placeName(d, chinese) {
+    var city = chinese ? CITY_ZH[d.city] || d.city : d.city, sep = chinese ? '，' : ', ';
+    var cc = IN_CN[d.cc] ? 'CN' : d.cc;
+    if (!chinese) return city + sep + cc;
+    var region = cc;
+    try { if (REGION_ZH) region = REGION_ZH.of(cc) || cc; } catch (e) {}
+    return city === region ? city : city + sep + region;
+  }
   function visitLabel(d) {
     var chinese = document.documentElement.lang === 'zh-CN';
-    return d.city + ', ' + d.cc + ' \u00b7 ' + d.n + (chinese ? ' 次访问' : ' visits') +
+    return placeName(d, chinese) + ' \u00b7 ' + d.n + (chinese ? ' 次访问' : d.n === 1 ? ' visit' : ' visits') +
       (typeof d.ago === 'number' ? ' \u00b7 ' + agoText(d.ago) : '');
   }
+  function agoOf(d) { return typeof d.ago === 'number' ? d.ago : Infinity; }   // 旧版接口没有 ago，排到最后
+  /* 一组点的说明：每个城市一行，最近来过的排在最前；超过 8 个只列最近的 7 个 */
+  function groupLabel(g, sep) {
+    var all = g.list.slice().sort(function (a, b) { return agoOf(a) < agoOf(b) ? -1 : agoOf(a) > agoOf(b) ? 1 : 0; });
+    var list = all.length > 8 ? all.slice(0, 7) : all;
+    var lines = list.map(visitLabel), rest = all.length - list.length;
+    if (rest) lines.push(document.documentElement.lang === 'zh-CN' ? '另有 ' + rest + ' 处' : '+' + rest + ' more');
+    return lines.join(sep);
+  }
   function updateLanguage() {
-    out.setAttribute('aria-label', document.documentElement.lang === 'zh-CN' ? '缩回全图' : 'Zoom out');
     pins.querySelectorAll('.vmap-pin').forEach(function (pin) {
-      pin.setAttribute('aria-label', visitLabel(pin._visit));
+      pin.setAttribute('aria-label', groupLabel(pin._group, '; '));
     });
-    if (tip._pin) tip.textContent = visitLabel(tip._pin._visit);
+    if (tip._pin && !tip.hidden) showTip(tip._pin);
   }
   document.addEventListener('languagechange', updateLanguage);
   updateLanguage();
 
-  function showTip(pin, d) {
-    tip.textContent = visitLabel(d);
+  /* 提示框以点为中心，但左右不出地图：多行的提示比单个城市宽得多，
+     落在美西、东亚边上的点会把它顶出纸面 */
+  function placeTip() {
+    var p = tip._pin, half = tip.offsetWidth / 2;
+    tip.style.left = Math.max(half, Math.min(w - half, p._x)) + 'px';
+    tip.style.top  = p._y + 'px';
+  }
+  function showTip(pin) {
+    tip.textContent = groupLabel(pin._group, '\n');
     tip._pin = pin;
-    tip.style.left = pin.style.left;
-    tip.style.top  = pin.style.top;
     tip.hidden = false;
+    placeTip();
+  }
+
+  function makePin(g) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'vmap-pin';
+    b._u = g.u;                  // 在整张图上的相对位置；像素坐标由 draw() 按视图换算
+    b._v = g.v;
+    b._group = g;
+    b.style.setProperty('--s', sizeOf(g.n).toFixed(1) + 'px');
+    b.setAttribute('aria-label', groupLabel(g, '; '));
+    // 按组里最近的一次访问着色；旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
+    var ago = Math.min.apply(null, g.list.map(agoOf));
+    if (ago < Infinity) {
+      var t = heat(ago);
+      b.style.color = heatColor(t);               // 圆点取 currentColor
+      b.style.setProperty('--fade', fadeOf(t).toFixed(3));
+    }
+    b.addEventListener('mouseenter', function () { showTip(b); });
+    b.addEventListener('focus',      function () { showTip(b); });
+    b.addEventListener('mouseleave', function () { tip.hidden = true; });
+    b.addEventListener('blur',       function () { tip.hidden = true; });
+    return b;
   }
 
   function build() {
-    DATA.forEach(function (d) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'vmap-pin';
+    /* 淡到看不见的点（半年以上没来过）直接不画：既不该是一个摸得到的按钮，
+       也不能被并进附近的点里，把它的城市名带进别人的提示 */
+    POINTS = DATA.filter(function (d) {
+      return typeof d.ago !== 'number' || fadeOf(heat(d.ago)) >= 0.03;
+    }).sort(function (a, b) { return b.n - a.n; }).map(function (d) {
       var pt = place(d.lat, d.lon);
-      b._u = pt.x;                 // 在整张图上的相对位置；像素坐标由 draw() 按视图换算
-      b._v = pt.y;
-      b._n = d.n;                  // 点的大小随地图宽度变，由 draw() 设定
-      b._visit = d;
-      b.setAttribute('aria-label', visitLabel(d));
-      // 旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
-      if (typeof d.ago === 'number') {
-        var t = heat(d.ago), fade = fadeOf(t);
-        b.style.color = heatColor(t);               // 圆点取 currentColor
-        b.style.setProperty('--fade', fade.toFixed(3));
-        // 淡到看不见的点不能还是一个摸得到的按钮：不响应指针，也不进 Tab 顺序
-        if (fade < 0.03) { b.style.pointerEvents = 'none'; b.tabIndex = -1; b.setAttribute('aria-hidden', 'true'); }
-      }
-      b.addEventListener('mouseenter', function () { showTip(b, d); });
-      b.addEventListener('focus',      function () { showTip(b, d); });
-      b.addEventListener('mouseleave', function () { tip.hidden = true; });
-      b.addEventListener('blur',       function () { tip.hidden = true; });
-      pins.appendChild(b);
+      return { u: pt.x, v: pt.y, d: d };
     });
 
     el.classList.add('is-ready');
@@ -439,9 +455,31 @@
     if (sec) sec.removeAttribute('hidden');
   }
 
+  /* 同一座城市会被拆成好几个名字：Cloudflare 按 IP 库定位，有的 IP 只精确到城市（Hong Kong），
+     有的精确到区（东涌、上水；深圳的宝安、固戍）。显示前并回所属城市 ——
+     次数相加，取最近一次访问，位置放在次数最多的那个区上。数据库里的原始记录不动。
+     香港、澳门整个就是一座城，报的是哪个区都并成一个；台湾也整个并成一个点，不再分台中、新竹这些城市 */
+  var WHOLE = { HK: 'Hong Kong', MO: 'Macau', TW: 'Taiwan' };
+  var PARENT = {
+    "Bao'an|CN": 'Shenzhen', 'Gushu|CN': 'Shenzhen', 'Nanshan|CN': 'Shenzhen', 'Futian|CN': 'Shenzhen',
+    'Longgang|CN': 'Shenzhen', 'Longhua|CN': 'Shenzhen', 'Luohu|CN': 'Shenzhen',
+    'Jurong West|SG': 'Singapore', 'Stodůlky|CZ': 'Prague'
+  };
+  function mergeDistricts(rows) {
+    var byKey = {}, merged = [];
+    rows.forEach(function (d) {
+      var city = WHOLE[d.cc] || PARENT[d.city + '|' + d.cc] || d.city, k = city + '|' + d.cc, m = byKey[k];
+      if (!m) { m = byKey[k] = { city: city, cc: d.cc, lat: d.lat, lon: d.lon, n: 0, top: 0 }; merged.push(m); }
+      if (d.n > m.top) { m.top = d.n; m.lat = d.lat; m.lon = d.lon; }
+      m.n += d.n;
+      if (typeof d.ago === 'number') m.ago = typeof m.ago === 'number' ? Math.min(m.ago, d.ago) : d.ago;
+    });
+    return merged;
+  }
+
   function start(rows) {
     if (!rows || !rows.length) return;     // 没数据就整块不出现
-    DATA = rows;
+    DATA = mergeDistricts(rows);
     build();
     draw();
 

@@ -2,7 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- 排版宽度跟着窗口走（学 Zechen 的 jemdoc 主页）：窗口窄了纸面跟着收、文字重新换行，不出横向滚动。
+     收到 700px（= style.css 的 --page-min）为止 —— 再窄头像和左边的文字就挤不下了，于是按 700px 排好、
+     整体缩到窗口宽（手机竖屏、iPad 分屏的窄的一侧）。看的是窗口宽而不是屏幕宽：iPad 分屏、台前调度时
+     窗口只占屏幕的一部分。头一次量时 viewport 还是 device-width，布局宽就是窗口宽；之后（转屏、拖分屏）
+     用「可视区宽 × 缩放比」—— 不管当前按多宽排、用户有没有双指放大，乘出来都是窗口宽。
+     电脑上浏览器不理 viewport，只靠样式表里的 min-width。脚本没跑时停在 device-width：手机上要横向拖，但不缺内容 -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+(function () {
+  var MIN = 700, m = document.querySelector('meta[name="viewport"]'), vv = window.visualViewport;
+  function fit(w) {
+    var c = Math.round(w) >= MIN ? 'width=device-width, initial-scale=1' : 'width=' + MIN;
+    if (m.getAttribute('content') !== c) m.setAttribute('content', c);
+  }
+  fit(document.documentElement.clientWidth);
+  if (vv) vv.addEventListener('resize', function () { fit(vv.width * vv.scale); });
+})();
+</script>
 <title data-i18n="gallery.title">Gallery · Aaron Zhijun Cao</title>
 <meta name="description" content="Photography by Aaron Zhijun Cao (曹植竣, caozhijun) — Zhejiang University campus, West Lake, and travels. 曹植竣的摄影记录：浙江大学校园、西湖与旅途中的风景。" data-i18n-content="gallery.description">
 <!-- 同一份内容在 /gallery/ 和 /gallery/index.html 两个 URL 上都可达，
@@ -13,12 +30,17 @@
 <meta http-equiv="content-language" content="en, zh-CN">
 <link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
-<link rel="stylesheet" href="/assets/css/style.css?v=20261016tilt">
-<script src="/assets/js/reveal.js?v=20261015paint"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=20261028graylens">
+<!-- 预加载正文字体：不预加载的话要等 CSS 解析完才开始下载，首屏会先用 Georgia 画一遍再换成 Gelasio -->
+<link rel="preload" href="/assets/fonts/Gelasio-var.woff2" as="font" type="font/woff2" crossorigin>
+<script src="/assets/js/reveal.js?v=20261027any"></script>
 
-
-<link rel="preload" href="/assets/fonts/Charis-400.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* 这一页没有首页那张白纸，照片和文字直接排在页面上，所以整页用纸的白色（首页的灰只是白纸外面的衬底）。
+     导航下面渐变模糊的那层底色也取 --bg，跟着变白。试过让页眉留一截首页的灰、往下渐隐成白，
+     灰白之间那段过渡像一块污渍，不好看，没有用 */
+  :root { --bg: var(--card); }
+
   /* ============ 轮播 ============
      两份相同的图片首尾相接，轨道匀速平移到 -50% 时正好回到起点，
      于是循环处没有接缝。终点与步数由页尾脚本按物理像素取整（见「整像素」）。 */
@@ -42,7 +64,7 @@
 
   .track figure {
     flex: 0 0 auto; margin: 0;
-    height: 236px; border-radius: 10px; overflow: hidden;
+    height: 236px; border-radius: var(--radius); overflow: hidden;
     background: var(--chip); z-index: 0;
     /* 离开悬停（以及切换显示模式时的挪位）走这一条：比进入时慢，起步缓、收尾长，平滑地回到原位；
        层级等复位走完才降回来，免得还没缩回去就被旁边那张盖住 */
@@ -66,8 +88,7 @@
      有鼠标时悬停由页尾脚本接管（见「悬停转动」）：它给指针下的那张加 .hov、把指针在上面的相对位置
      （-1 到 1）写进 --tx / --ty，并在 <html> 上标 js-tilt，此时不再用 :hover —— 跑马灯在走、鼠标
      不动时，照片从指针下面滑过去，:hover 不一定跟着换。触屏、减少动态效果时没有接管，照旧用 :hover，
-     只放大不转；放大镜打开时也只放大。位移写在 --y 里，转动和放大接在它后面，
-     窄屏换了错落值也照样在原位转。
+     只放大不转；放大镜打开时也只放大。位移写在 --y 里，转动和放大接在它后面，照样在原位转。
      进入和跟着指针转用一条快的曲线；离开时的平滑复位见上面 .track figure 的 transition */
   .track { --hover-k: 1.3; }
   html:not(.js-tilt) .track figure:hover, .track figure.hov {
@@ -81,50 +102,29 @@
 
 
   .gsec { padding-top: 46px; }
-  .gsec h2 { border-bottom: 3px solid var(--accent); }
   .intro h2 {
-    font-size: var(--fs-xl); letter-spacing: .02em; text-transform: none;
+    font-size: var(--fs-xl); letter-spacing: .02em;
     color: var(--fg); border-bottom: 0; padding-bottom: 0;
   }
   .gsec .zh {
     font-family: var(--serif); font-size: var(--fs-sm); font-weight: 400;
     letter-spacing: .08em; color: var(--subtle);
-    margin-left: 10px; text-transform: none;
+    margin-left: 10px;
   }
   .gsec .where { font-size: var(--fs-sm); color: var(--subtle); margin: 10px 0 0; }
   .intro p { margin: 0 0 10px; }
 
   .sign { text-align: center; padding: 58px 0 8px; }
-  .sign img { width: 170px; opacity: .55; }
+  .sign img { width: 170px; height: auto; opacity: .55; }
 
 
-  /* 轮播需要横向铺满视口，故整段脱离 .wrap 的宽度限制 */
-  .bleed { width: 100vw; margin-left: calc(50% - 50vw); }
+  /* 轮播需要横向铺满页面，故整段脱离 .wrap 的宽度限制。页面最窄 --page-min（窗口更窄时横向滚动），
+     所以宽度取视口与它中较大的那个 */
+  .bleed { width: max(100vw, var(--page-min)); margin-left: calc(50% - max(50vw, var(--page-min) / 2)); }
   /* 100vw 把竖向滚动条的宽度也算进去了：滚动条占位的系统（如 Windows）上会多出十几像素，
      顶出一条横向滚动条。在 main 这一层裁掉（clip 不会变成滚动容器，不影响吸顶的导航） */
   main { overflow-x: clip; }
 
-  @media (max-width: 700px) {
-    .track figure { height: 180px !important; }
-    .track figure.h2, .track figure.h4 { --y: 18px; }
-    .track figure.h1, .track figure.h3 { --y: 0px; }
-  }
-
-  /* 这一页的导航比首页多一颗放大镜圆钮（60px），宽度要重新算：
-     - 完整的胶囊 540 + 两颗圆钮与间距 120 = 660，加两侧边距要 688px。所以收成「首页 | 相册」
-       两个入口的断点从首页的 660 提到 720（下面两条与 style.css 窄屏导航那两条相同）；
-     - 收起后是 233 + 8 + 50 + 8 + 50 = 349，两侧各留 14px 需要 377px 的视口；
-       不超过 400px 的手机上收紧间距、边距与胶囊的内边距，336 放得进 360px 宽的屏；
-     - 再窄（不超过 350px）放不下三样东西，放大镜在这么小的屏上用处也不大，不显示 */
-  @media (max-width: 720px) {
-    .nav { margin: 14px 14px 0 auto; --nav-gap: 8px; }
-    .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { display: none; }
-  }
-  @media (max-width: 400px) {
-    .nav { --nav-gap: 6px; margin-right: 10px; max-width: calc(100% - 20px); }
-    .nav .wrap { padding: 0 4px; }
-  }
-  @media (max-width: 350px) { .nav .nav-loupe { display: none !important; } }
 
   /* ============ 列表模式 ============
      简介下面的开关给 <main> 加上 .list：跑马灯停下，照片改排成一行行等高、两端对齐的列表，
@@ -132,7 +132,7 @@
      分行由页尾脚本算好（见「显示模式」），写在每张照片上：--ar 是它的宽高比，--units 是它
      所在那一行的宽高比之和，--k 是那一行的间距数。基准宽度 = 去掉间距后的行宽 × --ar / --units，
      一行正好排满，下一张放不下就折行；flex-grow 也按宽高比给，同一行各张高度相同。
-     一行大约三张横图，窄屏也是这个分法，照片跟着缩小，只把间距收窄。 */
+     一行大约三张横图。 */
   main.list .marquee {
     width: auto; max-width: var(--w); margin: 0 auto; padding: 18px 22px 6px;
     overflow: visible; -webkit-mask-image: none; mask-image: none;
@@ -154,7 +154,6 @@
   main.list .track figure.hov, html:not(.js-tilt) main.list .track figure:hover {
     transform: scale(calc(1 + var(--hover-zoom) * var(--hover-k)));
   }
-  @media (max-width: 700px) { main.list .track { --gap: 6px; } }
   /* 列表的进场：每一栏的照片从左上到右下依次落下 —— 先悬在半空（略大、带投影、还看不见），再落到
      页面上。页尾脚本给每张写 --dl（按它离这一栏左上角的远近），这一栏滚进视口才开始（之前挂着 .wait，
      照片不显示）；落完去掉 .deal，悬停放大照旧 */
@@ -197,13 +196,14 @@
     }
   }
 </style>
-<script src="/assets/js/i18n.js?v=20261011xinmiao" defer></script>
-<script src="/assets/js/nav.js?v=20261015blur" defer></script>
-<script src="/assets/js/glass.js?v=20261015late" defer></script>
+<script src="/assets/js/i18n.js?v=20261028title" defer></script>
+<script src="/assets/js/nav.js?v=20261027lens3" defer></script>
+<script src="/assets/js/glass.js?v=20261028lens" defer></script>
 </head>
 <body>
 
 <nav class="nav" aria-label="Main navigation" data-i18n-aria-label="nav.label">
+  <span class="nav-edge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
   <div class="wrap">
     <a href="/" data-i18n="nav.home">🏠 Home</a>
     <a href="/#biography" data-i18n="nav.biography">Biography</a>
@@ -212,11 +212,12 @@
     <span class="nav-divider" aria-hidden="true"></span>
     <a href="/gallery/" data-i18n="nav.gallery">🖼️ Gallery</a>
   </div>
-  <!-- 放大镜开关：玻璃就绪后由 glass.js 露出；data-lg-pane 让它和导航的另外两块一样被画成液态玻璃 -->
+  <!-- 放大镜开关：放大镜就绪后由 glass.js 露出 -->
   <button class="nav-loupe" type="button" aria-pressed="false" aria-label="Magnifier" title="Magnifier"
           data-i18n-aria-label="gallery.loupe" data-i18n-title="gallery.loupe"
-          data-lg-loupe-toggle data-lg-pane hidden><span class="ico">🔍</span></button>
-  <button class="language-toggle" type="button" aria-label="切换到中文" title="切换到中文" lang="zh-CN" hidden>中</button>
+          data-lg-loupe-toggle hidden><span class="ico">🔍</span></button>
+  <!-- 语言按钮：「文A」翻译图标（Google Material Icons 的 translate，Apache License 2.0）；切到哪种语言写在提示里 -->
+  <button class="language-toggle" type="button" aria-label="切换到中文" title="切换到中文" lang="zh-CN" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg></button>
 </nav>
 
 <main>
@@ -309,7 +310,7 @@
   </section>
 
   <div class="sign rise">
-    <img src="/assets/img/gallery/signature.png" alt="Aaron Zhijun Cao" data-i18n-alt="avatar.name">
+    <img src="/assets/img/gallery/signature.png" width="340" height="136" alt="Aaron Zhijun Cao" data-i18n-alt="avatar.name">
   </div>
 
   <!-- <section class="gsec wrap" id="back">
@@ -320,7 +321,7 @@
 
 <footer class="wrap">
   <span data-i18n="footer.copyright">Copyright © Aaron Zhijun Cao. All Rights Reserved.</span>
-  <span data-i18n="footer.updated">Last Update: Sep. 2026</span>
+  <span data-i18n="footer.updated">Last Update: Oct. 2026</span>
 </footer>
 
 
@@ -426,7 +427,7 @@
   });
 
   /* 列表的进场动画（样式见「列表的进场」）。延迟按照片离这一栏左上角的远近给：往下一行比往右一张
-     晚得多，看上去是一行行从左到右、整体由左上铺向右下；按栏宽折算，手机和桌面是同一个节奏。
+     晚得多，看上去是一行行从左到右、整体由左上铺向右下；按栏宽折算，栏宽变了节奏也一样。
      栏目进了视口才开始。一栏全部落完，告诉 glass.js 这些照片不动了（lg:relive：重新量位置） */
   var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
     es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); deal(e.target); } });

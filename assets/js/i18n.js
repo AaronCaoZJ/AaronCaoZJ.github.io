@@ -8,12 +8,12 @@
   "nav.experiences": "经历",
   "nav.gallery": "🖼️ 相册",
   "footer.copyright": "Copyright © Aaron Zhijun Cao. All Rights Reserved.",
-  "footer.updated": "最后更新：2026 年 9 月",
-  "home.title": "Aaron Zhijun Cao",
-  "home.description": "Aaron Zhijun Cao（曹植竣，caozhijun）— 新加坡国立大学电气工程硕士生，Show Lab。研究方向：扩散模型、视觉–语言–动作模型与世界模型。浙江大学本科。",
+  "footer.updated": "最后更新：2026 年 10 月",
+  "home.title": "曹植竣 Aaron Zhijun Cao",
+  "home.description": "Aaron Zhijun Cao（曹植竣，caozhijun）— 新加坡国立大学电气工程硕士生，Show Lab。研究方向：扩散模型、视觉–语言–动作模型与具身智能体。浙江大学本科。",
   "hero.name": "曹植竣 <span class=\"cn\" lang=\"en\">Aaron Zhijun Cao</span>",
   "hero.role": "新加坡国立大学 Show Lab · 硕士研究生",
-  "hero.opportunities": "正在寻找<strong>具身基础模型 / 生成式 AI</strong> 方向的<strong>研究员 / 算法工程师</strong>岗位，同时关注<strong>博士机会</strong>。详情请见我的<a href=\"/assets/pdf/CV_ZhijunCao.pdf?v=202610111601\">英文简历</a>。",
+  "hero.opportunities": "正在寻找<strong>具身基础模型 / 生成式 AI</strong> 方向的<strong>研究员 / 算法工程师</strong>岗位，同时关注<strong>博士机会</strong>。详情请见我的<a href=\"/assets/pdf/CV_ZhijunCao.pdf?v=202610241143\">英文简历</a>。",
   "contact.email": "<img src=\"assets/img/icon/email.png\" alt=\"\" width=\"15\" height=\"15\">邮箱",
   "contact.scholar": "<img src=\"assets/img/icon/googlescholar.png\" alt=\"\" width=\"15\" height=\"15\">谷歌学术",
   "mail.label": "邮箱地址",
@@ -22,19 +22,14 @@
   "avatar.replay": "点击重播去噪动画",
   "avatar.name": "Aaron Zhijun Cao",
   "section.biography": "个人简介",
-  "bio.current": "我目前在新加坡国立大学攻读电气工程硕士学位，在 <a href=\"https://github.com/showlab\">Show Lab</a> 从事<strong>机器人学习</strong>研究，导师为 <a href=\"https://sites.google.com/view/showlab\">Mike Zheng Shou</a>。我的研究兴趣包括<strong>视觉–语言–动作模型（VLA）</strong>、<strong>世界模型</strong>和<strong>扩散模型</strong>。",
+  "bio.current": "我目前在新加坡国立大学攻读电气工程硕士学位，在 <a href=\"https://github.com/showlab\">Show Lab</a> 从事<strong>机器人学习</strong>研究，导师为 <a href=\"https://sites.google.com/view/showlab\">Mike Zheng Shou</a>。我的研究兴趣包括<strong>视觉–语言–动作模型（VLA）</strong>、<strong>具身智能体</strong>和<strong>扩散模型</strong>。",
   "bio.previous": "此前，我在浙江大学获得自动化专业工学学士学位，早期研究主要围绕机器人系统控制展开。",
   "section.news": "最新动态",
-  "news.date0": "2026 年 9 月",
-  "news.date1": "2026 年 6 月",
-  "news.date2": "2025 年 8 月",
-  "news.date3": "2024 年 11 月",
-  "news.date4": "2024 年 6 月",
-  "news.item0": "🦾 发布了 <strong><span class=\"shx\"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness</strong>［<a href=\"https://showlab.github.io/Show-Harness/\">项目主页</a>、<a href=\"https://github.com/showlab/Show-Harness\">代码</a>］，以及一篇关于机器人操作智能体的［<a href=\"https://github.com/showlab/Awesome-Multimodal-Embodied-Agent/blob/main/assets/SURVEY_Multimodal_Embodied_Agent.pdf\">综述</a>］。",
-  "news.item1": "🎉 两篇论文（<em>Where Success Breaks</em>、<em>Supervise What Survives</em>）被 <strong>CoRL 2026</strong> 接收。",
-  "news.item2": "🐈‍⬛ 再次加入新加坡 <strong>Mikomiko</strong>，专注于下一代图像生成模型。",
+  "news.item0": "🦾 发布了 <a href=\"https://showlab.github.io/Show-Harness/\">Show-Harness</a>，以及一篇关于机器人操作智能体的<a href=\"https://github.com/showlab/Awesome-Multimodal-Embodied-Agent/blob/main/assets/SURVEY_Multimodal_Embodied_Agent.pdf\">综述</a>。",
+  "news.item1": "🎉 两篇论文被 <strong>CoRL 2026</strong> 接收。",
+  "news.item2": "🐈‍⬛ 再次加入 <strong>Mikomiko AI</strong>，专注于下一代图像生成模型。",
   "news.item3": "📸 以硕士研究生身份加入<strong>新加坡国立大学 Show Lab</strong>。",
-  "news.item4": "🎉 在 <strong>CAC 2024</strong> 发表论文《<em>基于模仿学习的面向家庭环境机器人技能学习</em>》。",
+  "news.item4": "🎉 一篇论文在 <strong>CAC 2024</strong> 发表。",
   "news.item5": "🎓 从<strong>浙江大学</strong>毕业，获得自动化专业工学学士学位。",
   "section.publications": "学术论文 <span class=\"cofirst\">（共同第一作者<span class=\"star\">*</span>，通讯作者<span class=\"star\">†</span>）</span>",
   "video.demo": "Show-Harness 演示视频",
@@ -51,7 +46,7 @@
   "paper.venue3": "<b>2026 机器人学习会议（CoRL）</b><span class=\"dot\">·</span> 2026.05",
   "paper.venue4": "CCF-A 类会议审稿中 <span class=\"dot\">·</span> 2026.05",
   "paper.venue5": "<b>实验室研究与探索</b> <span class=\"dot\">·</span> 2026.02",
-  "paper.venue6": "<b>2024 中国自动化大会，EI</b> <span class=\"dot\">·</span> 2024.11",
+  "paper.venue6": "<b>2024 中国自动化大会（CAC），EI</b> <span class=\"dot\">·</span> 2024.11",
   "link.paper": "论文",
   "link.page": "项目主页",
   "link.models": "模型",
@@ -63,9 +58,9 @@
   "writing.diffusion": "基于 Julia 实现连续时间扩散模型：NUS EE5311 课程博客",
   "writing.tree": "报告树：浙大玉泉校门前老雪松的纪实报道",
   "writing.course": "NUS EE5311 课程博客 <span class=\"dot\">·</span> 2026.03",
-  "writing.magazine": "<b>《大学生》</b> <span class=\"dot\">·</span> 2025.06",
+  "writing.magazine": "<b>《大学生》</b><span class=\"dot\">·</span> 2025.06",
   "section.internship": "实习经历",
-  "internship.mikomiko": "Mikomiko Pte. Ltd · 新加坡",
+  "internship.mikomiko": "Mikomiko AI",
   "internship.innomotion": "InnoMotion Co. Ltd · 上海 · 研发部",
   "internship.dates": "2025.08\u00a0–\u00a02026.02 · 2026.06\u00a0–\u00a0至今",
   "internship.ai": "AIGC 算法工程师",
@@ -79,7 +74,7 @@
   "education.title3": "融媒体中心学生记者团",
   "education.title4": "基于三菱 RV-4FRL-D 机械臂的咖啡冲煮机器人设计",
   "education.current": "2025.08 – 至今",
-  "education.detail0": "电气工程硕士 · Show Lab · 导师：寿政助理教授",
+  "education.detail0": "电气工程硕士 · Show Lab · 导师：寿政副教授",
   "education.detail1": "自动化专业工学学士 · 电气工程学院",
   "education.detail2": "研究助理 · 导师：于淼教授",
   "education.detail3": "副部长、顾问",
@@ -117,8 +112,8 @@
     });
   });
 
-  // 两种文字共用一个网格单元，较长的一种撑开宽度；隐藏文字仍参与排版。
-  // 因此切换不会改变菜单、胶囊或右侧按钮的位置，也不必缓存字体测量结果。
+  // 两种文字共用一个网格单元，切换时原地交叉淡入淡出；不显示的那个由样式表移出排版，
+  // 入口宽度跟着当前语言（见 style.css「顶部导航」的 .language-label）。
   function pairedLabels(element, english, chinese) {
     element.textContent = '';
     ['en', 'zh-CN'].forEach(function (language) {
@@ -136,10 +131,6 @@
       pairedLabels(entry.element, entry.element.textContent, zh[entry.key]);
     }
   });
-  if (toggle) {
-    // 按钮显示目标语言，因此标签与页面语言相反。
-    pairedLabels(toggle, 'EN', '中');
-  }
 
   // 语言状态写进 URL，而不是永久保存在浏览器里：直接打开任何页面都默认英文，
   // 中文页面之间的跳转则通过 ?lang=zh-CN 明确传递状态，链接也可以直接分享。
@@ -184,9 +175,7 @@
       label.setAttribute('aria-hidden', String(label.lang !== root.lang));
     });
     if (toggle) {
-      toggle.querySelectorAll('.language-label').forEach(function (label) {
-        label.setAttribute('aria-hidden', String(label.lang === root.lang));
-      });
+      // 按钮本身只是一个翻译图标，要切到哪种语言写在提示和无障碍标签里（用目标语言写，lang 跟着它）
       toggle.lang = chinese ? 'en' : 'zh-CN';
       toggle.setAttribute('aria-label', chinese ? 'Switch to English' : '切换到中文');
       toggle.title = toggle.getAttribute('aria-label');

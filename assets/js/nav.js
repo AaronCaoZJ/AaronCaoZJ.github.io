@@ -1,20 +1,23 @@
 /* ---------- 悬停水滴 ----------
-   一颗玻璃水滴跟着指针在一组条目之间滑动：换位时沿移动方向先拉长、
+   一颗水滴跟着指针在一组条目之间滑动：换位时沿移动方向先拉长、
    横向压扁，再随 CSS 的回弹缓动落定，读起来像一滴液体被拖过去。
    拉伸按像素算并封顶 10%（100px 的菜单项是 1.1 x 0.9），换别的尺寸也不会失控。
 
-   box 须是定位元素（水滴绝对定位在里面），pick(target) 返回指针下的条目或 null。 */
+   box 须是定位元素（水滴绝对定位在里面），pick(target) 返回指针下的条目或 null。
+   指针离开所有条目（停在空白处）120ms 后水滴才消失：条目之间的窄缝一划而过，不会闪一下、
+   让水滴重新从原地浮起，而是接着滑到下一个条目上。 */
 function liquidLens(box, pick, cls) {
   var lens = document.createElement('span');
   lens.className = 'liquid-lens' + (cls ? ' ' + cls : '');
   lens.setAttribute('aria-hidden', 'true');
   box.appendChild(lens);   // 放在最后，不打乱条目原有的顺序
-  var cur = null, lx = 0, ly = 0, lw = 0, lh = 0, settle = 0;
+  var cur = null, lx = 0, ly = 0, lw = 0, lh = 0, settle = 0, leave = 0;
   function place(sx, sy) {
     lens.style.transform = 'translate(' + lx + 'px,' + ly + 'px) scale(' + sx + ',' + sy + ')';
   }
   function grow(px, size) { return Math.min(.1, px / size); }
   function to(el) {
+    clearTimeout(leave);
     var first = !cur, x = el.offsetLeft, y = el.offsetTop;
     var horiz = Math.abs(x - lx) >= Math.abs(y - ly);
     lx = x; ly = y; lw = el.offsetWidth; lh = el.offsetHeight;
@@ -35,9 +38,13 @@ function liquidLens(box, pick, cls) {
     cur = el;
     lens.classList.add('on');
   }
-  function off() { cur = null; lens.classList.remove('on'); }
+  function off() { clearTimeout(leave); cur = null; lens.classList.remove('on'); }
 
-  box.addEventListener('pointerover', function (e) { var el = pick(e.target); if (el) to(el); });
+  box.addEventListener('pointerover', function (e) {
+    var el = pick(e.target);
+    if (el) to(el);
+    else { clearTimeout(leave); leave = setTimeout(off, 120); }
+  });
   box.addEventListener('pointerleave', off);
   // 按下时鼓起一点
   box.addEventListener('pointerdown', function (e) {
@@ -51,44 +58,25 @@ function liquidLens(box, pick, cls) {
   box.addEventListener('focusout', off);
 }
 
-/* ---------- 液态玻璃的交互层 ----------
-   折射与高光由 glass.js 用 WebGL 渲染；这里只管悬停水滴与随光标的光斑。
-   样式的分层说明见 style.css「顶部导航」。 */
+/* ---------- 顶部导航 ----------
+   导航下面垫着整条的渐变模糊（样式见 style.css「顶部导航」）。页面在顶部时导航下面只有纯色底，
+   模糊看不出区别，却要 GPU 每帧多做几遍，所以滚动之后才打开：这里给导航加 / 去 .scrolled，
+   另外挂上入口之间的悬停水滴 */
 (function () {
   var nav = document.querySelector('.nav');
-  var wrap = nav && nav.querySelector('.wrap');
-  if (!wrap) return;
-  // 导航的两块，加上页面里标了 data-lg-pane 的玻璃钮（相册页导航里的放大镜开关）
-  var panes = [wrap, nav.querySelector('.language-toggle')].filter(Boolean)
-    .concat([].slice.call(document.querySelectorAll('[data-lg-pane]')));
-  nav.classList.add('lg-live');
-
-  // 滚动之后导航才压到内容上，这时再开 CSS 的兜底模糊（见 style.css「顶部导航」）
+  if (!nav) return;
   function scrolled() { nav.classList.toggle('scrolled', window.scrollY > 0); }
   scrolled();
   window.addEventListener('scroll', scrolled, { passive: true });
 
-  function layer(pane, cls) {
-    var n = document.createElement('span');
-    n.className = cls;
-    n.setAttribute('aria-hidden', 'true');
-    pane.appendChild(n);   // 放在最后，不打乱入口与按钮原有的顺序
-    return n;
-  }
-
-  /* 1. 悬停水滴（见文件开头的 liquidLens）。在玻璃内部，排在光斑之下 */
-  liquidLens(wrap, function (t) {
-    var a = t.closest && t.closest('a');
-    return a && a.parentNode === wrap ? a : null;
+  // 整条导航共用一颗悬停水滴（见文件开头的 liquidLens）：入口、相册页的放大镜开关、语言按钮之间都能滑过去；
+  // 有它时这些条目自己的悬停底色就不画了（.has-lens）
+  var wrap = nav.querySelector('.wrap');
+  if (!wrap) return;
+  liquidLens(nav, function (t) {
+    var el = t.closest && t.closest('a, button');
+    if (!el || !nav.contains(el)) return null;
+    return el.tagName === 'A' ? (el.parentNode === wrap ? el : null) : el;
   }, 'nav-lens');
-
-  /* 2. 光斑：只写两个变量，渐变由 CSS 画。放在水滴之后，叠在它上面 */
-  panes.forEach(function (pane) {
-    layer(pane, 'lg-glow');
-    pane.addEventListener('pointermove', function (e) {
-      var r = pane.getBoundingClientRect();
-      pane.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-      pane.style.setProperty('--my', (e.clientY - r.top) + 'px');
-    });
-  });
+  nav.classList.add('has-lens');
 })();

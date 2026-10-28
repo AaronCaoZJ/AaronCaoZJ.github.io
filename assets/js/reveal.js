@@ -66,7 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
           var dur = last ? parseFloat(getComputedStyle(last).transitionDuration) * 1000 || 0 : 0;
           setTimeout(riseSettled, last ? (batch.length - 1) * 80 + dur : 0);
         }
-      }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+      // 露出一点就算进入（阈值 0）：首页整张纸面是一个 .rise，手机上有好几千像素高，按比例算（以前是 8%），
+      // 矮屏幕上首屏露出的那一截够不着，纸面就一直不出来
+      }, { threshold: 0, rootMargin: '0px 0px -6% 0px' });
 
       items.forEach(function (el) { io.observe(el); });
     }
