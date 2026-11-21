@@ -1,16 +1,19 @@
-/* 入场动画：元素进入视口后逐个浮现。
+/* Entrance animation: elements come into focus one by one as they enter the viewport.
 
-   本文件同步加载于 <head>，第一件事是给根元素打上 js-rise ——
-   CSS 里 .rise 默认可见，只有这个标记存在时才转为待入场状态。
-   于是本文件一旦没能加载，页面只是没有动画，而不会把内容锁死在
-   透明状态。标记必须在样式生效前打上，否则会先显示再隐藏、闪一下。
+   Loaded synchronously in <head> and first adds js-rise to the root. .rise is visible by default in CSS
+   and only hidden while that class is present, so if this file fails to load the page just has no
+   animation instead of staying transparent. The class must land before styles apply, or content flashes.
 
-   观察本身用 IntersectionObserver 而非滚动监听 —— 后者每帧都要
-   算位置，前者由浏览器判断可见性，主线程零开销。同一批进入视口的
-   元素按文档顺序排序后再依次延迟，保证浮现顺序是视觉上的从上到下。
+   IntersectionObserver rather than scroll listeners: no per-frame layout work. Each batch is sorted by
+   document order before staggering, so elements appear top to bottom. On the homepage the sheet (<main>) is
+   one .rise whose first screen builds in pieces (style.css), and each section below News is a .rise of its
+   own, entering whole as it scrolls in.
 
-   首屏那一批走完时发出 rise:settled（并记在 window.__riseSettled 上）：
-   glass.js 这类开销大的初始化等它再开始，不和进场动画抢主线程。 */
+   Starts once the document is parsed and painted, not at DOMContentLoaded, which also waits for every deferred
+   script: on a cold load they share the connection with images and arrive late, and the sheet sat empty meanwhile.
+
+   When the first-screen batch finishes, fires rise:settled (and sets window.__riseSettled) so heavy
+   setup such as glass.js can wait instead of competing with the animation. */
 document.documentElement.className += ' js-rise';
 
 function riseSettled() {
@@ -19,22 +22,34 @@ function riseSettled() {
   document.dispatchEvent(new Event('rise:settled'));
 }
 
-/* 等页面第一次真正画到屏幕上再开始入场：第一帧要把整页栅格化（字体、图片），弱设备上要几百毫秒，
-   动画若和它重叠，开头那一段会卡住或直接跳过去。信号用浏览器报告的首次内容绘制（FCP）——
-   它在画面真正呈现之后才发出；requestAnimationFrame 只说明主线程开始了新的一帧，GPU 忙的时候
-   上一帧可能还没画完。不支持 Paint Timing 的老浏览器最多等 3 秒。 */
+/* Start only after the first real paint: rasterising the first frame (fonts, images) can take hundreds of
+   ms on weak devices, and an overlapping animation stutters or skips its start. FCP fires once pixels are
+   on screen; requestAnimationFrame only means a new frame began. Without Paint Timing, the frame after next
+   stands in; the timeout covers a first paint with nothing contentful in it, where FCP never fires. */
 function afterFirstPaint(fn) {
   var done = false;
   function go() { if (!done) { done = true; requestAnimationFrame(fn); } }
-  try {
-    new PerformanceObserver(function (list) {
-      if (list.getEntriesByName('first-contentful-paint').length) go();
-    }).observe({ type: 'paint', buffered: true });
-  } catch (e) {}
-  setTimeout(go, 3000);
+  var types = window.PerformanceObserver && PerformanceObserver.supportedEntryTypes || [];
+  if (types.indexOf('paint') < 0) return requestAnimationFrame(go);
+  new PerformanceObserver(function (list) {
+    if (list.getEntriesByName('first-contentful-paint').length) go();
+  }).observe({ type: 'paint', buffered: true });
+  setTimeout(go, 1000);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+/* Parsed: readyState turns 'interactive' before deferred scripts run. A Chinese page (?lang=zh-CN, read as
+   i18n.js reads it) waits for DOMContentLoaded instead: deferred i18n.js swaps the text in just before it,
+   and nothing should change language mid-entrance. */
+function whenParsed(fn) {
+  var zh = new URL(location.href).searchParams.get('lang') === 'zh-CN';
+  var type = zh ? 'DOMContentLoaded' : 'readystatechange';
+  document.addEventListener(type, function once() {
+    document.removeEventListener(type, once);
+    fn();
+  });
+}
+
+whenParsed(function () {
 
     var items = [].slice.call(document.querySelectorAll('.rise'));
     if (!items.length) return riseSettled();
@@ -46,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return riseSettled();
     }
 
+    var STEP = 120;   // ms between items of a batch: the spacing of the homepage's first-screen pieces (style.css)
     afterFirstPaint(start);
     function start() {
       var first = true;
@@ -54,20 +70,37 @@ document.addEventListener('DOMContentLoaded', function () {
         batch.sort(function (a, b) {
           return a.target.compareDocumentPosition(b.target) & 4 ? -1 : 1;
         });
+        // In the first batch of a page opened at its top, a .rise inside another entering one (a homepage section
+        // that a tall screen shows at load) waits for that host's first screen: its --nested-from (style.css).
+        // Opened further down (an #anchor), what is on screen enters at once.
+        var targets = batch.map(function (e) { return e.target; });
+        var top = first && (window.pageYOffset || 0) < window.innerHeight / 2;
+        var turns = batch.map(function (e, i) {
+          var host = top && e.target.parentNode.closest('.rise');
+          if (!host || targets.indexOf(host) < 0) return i * STEP;
+          return (parseFloat(getComputedStyle(host).getPropertyValue('--nested-from')) || 0) + i * STEP;
+        });
         batch.forEach(function (e, i) {
-          e.target.style.setProperty('--d', (i * 80) + 'ms');
+          e.target.style.setProperty('--d', turns[i] + 'ms');
           e.target.classList.add('in');
           io.unobserve(e.target);
         });
-        // 首屏这批：最后一个元素的延迟加上动画时长（读样式表里的值，不在这里重复写）之后算走完
+        // First batch is done when its latest item is: its turn plus the transition duration (read from CSS, not
+        // duplicated), or longer if the item builds its own pieces in after its turn: such an item states how long
+        // that takes, counted from its turn, as --settle (a gallery photo row: its ripple)
         if (first) {
           first = false;
-          var last = batch.length && batch[batch.length - 1].target;
-          var dur = last ? parseFloat(getComputedStyle(last).transitionDuration) * 1000 || 0 : 0;
-          setTimeout(riseSettled, last ? (batch.length - 1) * 80 + dur : 0);
+          var end = 0;
+          batch.forEach(function (e, i) {
+            var cs = getComputedStyle(e.target);
+            var dur = parseFloat(cs.transitionDuration) * 1000 || 0;
+            var settle = parseFloat(cs.getPropertyValue('--settle')) || 0;
+            end = Math.max(end, turns[i] + Math.max(dur, settle));
+          });
+          setTimeout(riseSettled, end);
         }
-      // 露出一点就算进入（阈值 0）：首页整张纸面是一个 .rise，手机上有好几千像素高，按比例算（以前是 8%），
-      // 矮屏幕上首屏露出的那一截够不着，纸面就一直不出来
+      // threshold 0: the home page sheet is one .rise thousands of px tall on phones, so any ratio
+      // threshold may never be reached on a short screen and the sheet would stay hidden
       }, { threshold: 0, rootMargin: '0px 0px -6% 0px' });
 
       items.forEach(function (el) { io.observe(el); });

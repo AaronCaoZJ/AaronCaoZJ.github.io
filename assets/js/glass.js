@@ -1,28 +1,21 @@
-/* ---------- 液态玻璃（WebGL） ----------
-   移植自 ybouane/liquidglass（github.com/ybouane/liquidglass，MIT）。它的效果靠两件事：
-   1. 把玻璃背后的页面栅格化成一张图；
-   2. 在 WebGL 里用它的片元着色器折射这张图 —— 纹理按双线性插值取样，放大、压缩处都是平滑的。
-   之前用 SVG 位移滤镜（backdrop-filter: url(#…)）做折射，Chrome 的 feDisplacementMap 按最近邻
-   取样，弯边一放大就出锯齿、条纹、斜纹，调参数治不好；而且只有 Chromium 支持。
-
-   截图：克隆页面（导航本身设成不可见），图片、字体、样式表内联成 data URL，视频和地图画布换成当前画面，
-   入场动画统一按"已浮现"处理，再交给浏览器经 SVG foreignObject 自己画出来 —— 字体、排版和页面一致。
-   页面内容变了（切换语言、展开 News、地图载入、改变窗口大小）就重截一次。
-   截不到图或没有 WebGL（极少数环境）时什么也不做，导航保持 CSS 的模糊玻璃。
-   什么时候启动见文件末尾。 */
+/* ---------- liquid glass (WebGL) ----------
+   Port of ybouane/liquidglass (github.com/ybouane/liquidglass, MIT): rasterize the page behind the
+   glass, then refract it in a fragment shader with bilinear sampling. Not an SVG displacement filter:
+   Chrome's feDisplacementMap samples nearest-neighbor (aliased bevels) and it is Chromium-only.
+   The capture is a page clone rendered via SVG foreignObject with assets inlined as data URLs, redone
+   when content changes. Without a capture or WebGL, do nothing (the loupe toggle stays hidden). */
 function liquidGlass() {
-  // 导航已经不是玻璃（见 style.css「顶部导航」），液态玻璃只剩相册页的放大镜；没有放大镜的页面什么也不做。
-  // 导航仍要知道：截图时把它设成不可见、它里面的变化不算页面内容变了
+  // Only the gallery loupe is glass now (the nav isn't; see `.nav` in style.css).
+  // The nav is still hidden in captures, and mutations inside it are ignored.
   var nav = document.querySelector('.nav');
   var loupeBtn = document.querySelector('[data-lg-loupe-toggle]');
   if (!nav || !loupeBtn || !window.Promise || !window.fetch) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-transparency: reduce)').matches) return;
 
-  /* ---------- 截图 ---------- */
+  /* ---------- capture ---------- */
 
   var CAPTURE_CSS =
-    // 导航的上边距不能穿出 body：真实页面里它被视口拦住，SVG 的 foreignObject 里（Safari）却会
-    // 一路合并出去，整张截图比页面高出 14px
+    // Stop the nav's top margin collapsing through <body> (Safari foreignObject makes the capture taller)
     '.lg-cap body{display:flow-root}' +
     '.lg-cap .rise{opacity:1!important;transform:none!important}' +
     '.lg-cap *,.lg-cap *::before,.lg-cap *::after{transition:none!important;animation:none!important}';
@@ -45,7 +38,21 @@ function liquidGlass() {
     return dataCache[url];
   }
 
-  /* 页面所有样式表的文本，url(...)（字体等）换成 data URL。只取一次 */
+  // Drop @font-face rules the page never loaded, so captures don't inline them. Run after document.fonts.ready.
+  function dropUnusedFaces(text) {
+    if (!document.fonts || !document.fonts.forEach) return text;
+    var loaded = {};
+    document.fonts.forEach(function (f) {
+      if (f.status === 'loaded') loaded[f.family.replace(/["']/g, '') + '|' + f.style] = 1;
+    });
+    return text.replace(/@font-face\s*\{[^}]*\}/g, function (rule) {
+      var fam = /font-family\s*:\s*["']?([^;"']+)/i.exec(rule), st = /font-style\s*:\s*(\w+)/i.exec(rule);
+      if (!fam || !/url\(/.test(rule)) return rule;          // local()-only faces cost nothing
+      return loaded[fam[1].trim() + '|' + (st ? st[1] : 'normal')] ? rule : '';
+    });
+  }
+
+  /* All stylesheet text with url(...) inlined as data URLs; fetched once */
   var cssPromise = null;
   function pageCss() {
     if (cssPromise) return cssPromise;
@@ -56,6 +63,7 @@ function liquidGlass() {
     });
     cssPromise = Promise.all(sheets).then(function (list) {
       return Promise.all(list.map(function (sh) {
+        sh.text = dropUnusedFaces(sh.text);
         var re = /url\(\s*(['"]?)([^'")]+)\1\s*\)/g, m, urls = [];
         while ((m = re.exec(sh.text))) if (!/^data:/.test(m[2]) && urls.indexOf(m[2]) < 0) urls.push(m[2]);
         return Promise.all(urls.map(function (u) {
@@ -70,17 +78,14 @@ function liquidGlass() {
     return cssPromise;
   }
 
-  /* 把整页画成一张 SVG 图（矢量，尚未栅格化）。返回 { img, W, H } */
+  /* The whole page as an SVG image: { img, W, H } */
   function capturePage() {
     var root = document.documentElement;
     var W = root.clientWidth, H = Math.max(root.scrollHeight, document.body.scrollHeight);
     var body = document.body.cloneNode(true), jobs = [];
-    // 原件与克隆按文档顺序一一对应。
-    // 先把直接装着文字的块（段落、标题、列表项……）的高度照原件钉死：截图里的字未必和页面在
-    // 同一处折行（字体晚一步生效、各家手机浏览器对字号的处理不同……），多折一行，它下面的内容
-    // 就全低一行，一路累加，玻璃里的背景越往下滚错得越远。钉住之后，折行不同只影响那一块内部。
-    // 普通的块容器不动：给它写死高度，它最后一个子元素的下边距就不再穿出去与外面合并，
-    // 后面的内容反而会上移。非 HTML 元素（如 SVG）、导航、跑马灯里的照片跳过
+    // Originals and clones match one-to-one in document order. Pin text blocks to their original height
+    // so a different line wrap in the capture (late fonts, mobile font sizing) can't push everything below
+    // down. Not plain block containers: a fixed height stops the last child's margin collapsing through.
     var oAll = document.body.querySelectorAll('*'), cAll = body.querySelectorAll('*'), boxes = new Map(), q, el;
     for (q = 0; q < oAll.length; q++) {
       el = oAll[q];
@@ -96,36 +101,32 @@ function liquidGlass() {
         if (kid.nodeType === 3) { if (/\S/.test(kid.nodeValue)) hasInline = true; continue; }
         if (kid.nodeType !== 1) continue;
         var kb = boxes.get(kid);
-        if (!kb) hasInline = true;                                   // 内嵌的 SVG 等：按行内替换元素算
+        if (!kb) hasInline = true;                                   // inline SVG etc.: counts as inline replaced
         else if (kb.d === 'none' || kb.d === 'contents' || kb.out) continue;
         else if (kb.d.indexOf('inline') === 0) hasInline = true;
         else hasBlock = true;
       }
-      // 弹性 / 网格容器也钉：里面的条目变宽了会多折一排（联系方式那排小胶囊），
-      // 而它们的子元素边距本来就不往外合并，写死高度没有上面说的副作用
+      // Flex/grid too: items may wrap to an extra row, and their children's margins never collapse out
       if (/flex|grid/.test(bx.d) || (hasInline && !hasBlock)) cAll[q].style.height = bx.h;
     }
-    // 再配对处理图片、视频、画布，最后删掉脚本和标了 data-lg-skip 的部分，把导航和实时内容设成不可见
+    // Images, videos and canvases, matched by index
     var sel = 'img, video, canvas', oList = document.body.querySelectorAll(sel), cList = body.querySelectorAll(sel);
     for (var i = 0; i < oList.length; i++) (function (o, c) {
-      if (nav.contains(o) || o.hasAttribute('data-lg-skip')) return;   // 纯装饰的动画画布（如头像的去噪动效）不截
+      if (nav.contains(o) || o.hasAttribute('data-lg-skip')) return;   // skip decorative animated canvases
       if (o.tagName === 'IMG') {
         c.removeAttribute('srcset'); c.removeAttribute('loading');
-        // 尺寸照原件钉死。截图是一张把图片都嵌进去的 SVG：手机上它定版的那一刻，嵌着的图片
-        // 往往还没解码完，没写宽高的 <img> 就按 0 高排版，下面的内容整体上移 —— 每过一张图
-        // 多错一截，玻璃里的背景越往下滚错得越远
+        // Pin size: on mobile the SVG may lay out before images decode, collapsing unsized <img> to 0 height
         var cs = getComputedStyle(o);
         if (cs.display !== 'none' && cs.width !== 'auto') { c.style.width = cs.width; c.style.height = cs.height; }
-        o._lgBox = cs.width + ' ' + cs.height;        // 记下这次钉的尺寸：图片晚到时尺寸没变就不必重截
-        // 跑马灯里的照片在截图里本来就是隐藏的（由 renderGroup() 按实时位置画），不必内联成
-        // data URL —— 否则每次截图都要把整个相册读一遍、编码进 SVG，懒加载也形同虚设
+        o._lgBox = cs.width + ' ' + cs.height;        // a late load at this size needs no recapture
+        // Live-track photos are drawn by renderGroup(); inlining them would encode the whole gallery
         if (o.closest('[data-lg-live]')) { c.removeAttribute('src'); return; }
         var src = o.currentSrc || o.src;
         if (!src) return;
         jobs.push(dataURL(src).then(function (d) { if (d) c.setAttribute('src', d); }));
         return;
       }
-      // 视频、画布：换成当前画面的静态图，尺寸照原件
+      // Videos/canvases: swap for a still of the current frame
       var img = document.createElement('img'), r = o.getBoundingClientRect();
       img.className = c.className;
       img.setAttribute('style', (c.getAttribute('style') || '') + ';width:' + r.width + 'px;height:' + r.height + 'px');
@@ -137,16 +138,14 @@ function liquidGlass() {
           cv.getContext('2d').drawImage(o, 0, 0);
           img.src = cv.toDataURL('image/jpeg', .85);
         } else if (o.poster) jobs.push(dataURL(o.poster).then(function (d) { img.src = d; }));
-      } catch (e) { /* 画面取不到就留空 */ }
+      } catch (e) { /* frame unavailable: leave blank */ }
       c.parentNode.replaceChild(img, c);
     })(oList[i], cList[i]);
     [].forEach.call(body.querySelectorAll('script, [data-lg-skip]'), function (n) { n.parentNode.removeChild(n); });
-    // 导航不能删：它是 sticky，在文档流里占着 64px，删了下面整页内容都会上移。只让它不可见 ——
-    // 用 opacity 而不是 visibility：入口里的双语标签自己写了 visibility: visible，会盖过父级的
-    // hidden，导航文字就被截进背景、再被玻璃折射出来，在空白底色上看得一清二楚
+    // Keep the sticky nav in flow (removing it shifts the page). Use opacity, not visibility: the
+    // bilingual labels set visibility: visible and would leak into the capture
     [].forEach.call(body.querySelectorAll('.nav'), function (n) { n.setAttribute('style', 'opacity:0!important'); });
-    // data-lg-live 轨道里的照片（相册的跑马灯 / 列表）不进静态截图，由 renderGroup() 画：
-    // 在动的每帧按实时位置画，不动的烘进底图
+    // Hide [data-lg-live] photos; renderGroup() draws them
     [].forEach.call(body.querySelectorAll('[data-lg-live] > *'), function (n) {
       n.setAttribute('style', (n.getAttribute('style') || '') + ';opacity:0!important');
     });
@@ -168,13 +167,9 @@ function liquidGlass() {
 
   /* ---------- WebGL ---------- */
 
-  /* 着色器：以 ybouane/liquidglass 的 FS_GLASS 为底，折射、色散、菲涅耳、描边照搬。改了三处：坐标的来源、
-     写死的像素数按屏幕密度折算（见 dp）、另加本站的光照（明暗与轮廓高光，原库没有）。坐标的来源 ——
-     原库把玻璃画在整页大小的画布上，这里一张画布上画一块或几块玻璃（u_at 是这一块在画布里的位置），
-     背景取自一张已经备好的纹理：u_org 是这块玻璃左上角在纹理里的位置，u_k 是每个画布像素合几个
-     纹理像素，u_tsize 是纹理尺寸。
-     所有长度都是物理像素（原库同样把尺寸、圆角、弯边深度乘 devicePixelRatio 传进来）；
-     着色器里写死的那几个像素数另按屏幕密度折算，见 dp。 */
+  /* FS_GLASS from ybouane/liquidglass, except: several panes per canvas sampling a prepared texture
+     (u_at: pane in canvas, u_org: pane in texture, u_k: texels per canvas px), density-scaled pixel
+     constants (dp), and added lighting. Lengths are device px. */
   var VS = 'attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }';
   var FS = [
     'precision highp float;',
@@ -193,7 +188,7 @@ function liquidGlass() {
     '}',
     'void main() {',
     '  vec2 half_ = u_size * 0.5;',
-    '  vec2 lp = vec2(gl_FragCoord.x - u_at.x - half_.x, u_at.y - gl_FragCoord.y - half_.y);',   // 以这块玻璃的中心为原点、y 向下
+    '  vec2 lp = vec2(gl_FragCoord.x - u_at.x - half_.x, u_at.y - gl_FragCoord.y - half_.y);',   // origin at the pane center, y down
     '  float r = min(u_radius, min(half_.x, half_.y));',
     '  float sdf = rrSDF(lp, half_, r);',
     '  if (sdf > 0.5) { gl_FragColor = vec4(0.0); return; }',
@@ -202,9 +197,7 @@ function liquidGlass() {
     '  float inside = -sdf;',
     '  float edge = smoothstep(maxD * 0.35, 0.0, inside);',
     '  float zR = u_zRadius;',
-    // 原库里凡是写死的像素数（位移、色散、描边、内发光）都是物理像素：同一块玻璃在 1 倍屏上折射得
-    // 厉害、在 3 倍屏手机上却很淡。这里统一乘 dp —— 以 2 倍屏为基准的屏幕密度比例，
-    // 各种屏幕上看到的弯折、色散、描边粗细就一样了；2 倍屏上 dp = 1，与原来分毫不差
+    // The original's pixel constants are device px (strong at 1x, faint at 3x); dp rescales them relative to 2x
     '  float dp = u_px * 0.5;',
     '  float e = 2.0 * dp;',
     '  float hC = bevelHeight(inside, zR);',
@@ -225,16 +218,14 @@ function liquidGlass() {
     '  vec2 base = (u_org + (lp + half_ + refrPx) * u_k) / u_tsize;',
     '  vec3 col = vec3(texture2D(u_tex, base + caD).r, texture2D(u_tex, base).g, texture2D(u_tex, base - caD).b);',
     '  col *= 1.0 + 0.06 * depth;',
-    // 以下两项是本站加的光照，原库没有：纯色底上折射什么也弯不出来，立体感只能靠光照。
-    // 光从正上方来（y 向下，所以是 -y）；只用法线，左右对称，不碰折射。
-    // 明暗：法线朝光处亮、背光处暗 —— 平坦区 N·L 正好等于 L.z，乘数为 1，不变
+    // Added lighting, since refraction shows nothing over flat color. Light from above (-y), normal-only,
+    // so refraction is untouched; N·L == L.z on flat areas, leaving them unchanged.
     '  vec3 Ld = normalize(vec3(0.0, -0.75, 1.0));',
     '  col *= 1.0 + u_shade * (dot(N, Ld) - Ld.z);',
-    // 轮廓高光：只在最外缘约 1.5px 的一条细线上，按这段轮廓朝向光的程度定亮度 ——
-    // 上沿最亮、沿两侧渐暗、下沿一道较弱的反光。内部不加白：加在面上，深色底上就成了一层白雾
+    // Rim highlight: outer edge only, by how much the outline faces the light; inside it reads as haze
     '  vec2 outN = length(N.xy) > 1e-4 ? normalize(N.xy) : vec2(0.0);',
     '  float facing = dot(outN, vec2(0.0, -1.0));',
-    '  float band = 1.0 - smoothstep(0.8 * u_px, 2.0 * u_px, inside);',   // 轮廓往里 0.8px 内全亮，到 2px 归零
+    '  float band = 1.0 - smoothstep(0.8 * u_px, 2.0 * u_px, inside);',   // full within 0.8px of the edge, zero at 2px
     '  float rimHL = band * (u_rimTop * pow(max(facing, 0.0), 1.5) + u_rimBot * pow(max(-facing, 0.0), 1.5));',
     '  float fres = pow(1.0 - abs(N.z), 4.0) * u_fresnel;',
     '  float bw = 1.5 * dp;',
@@ -245,31 +236,20 @@ function liquidGlass() {
     '  float envRefl = (N.y * 0.5 + 0.5) * fres * 0.08;',
     '  vec3 fin = col + vec3(rim + innerGlow + stroke * u_edgeHL * 0.55 + envRefl);',
     '  fin = mix(fin, vec3(1.0), fres * 0.2);',
-    // 滤色叠加：暗处提亮明显、亮处几乎不变 —— 像光打在表面上，而不是贴一层白
+    // Screen blend: lifts darks, leaves lights
     '  fin = fin + (1.0 - fin) * rimHL;',
     '  gl_FragColor = vec4(fin, mask * u_alpha);',
     '}'
   ].join('\n');
 
-  /* 参数取原库默认值，四处不同：
-     - 弯边深度：原库 40px 是给大面板的。放在 50px 高的胶囊上，比半高还深，上下两段圆弧
-       在中线处以夹角相接 —— 上半往下折、下半往上折，背后的内容被折成上下两截放大的副本。
-       小块玻璃取短边的 32%（胶囊与圆钮 16px，中间留出平坦区），大块玻璃仍用 40px。
-       再深也不会让边缘显得更厚，只会让上下两条弯边各拽一份背景，胶囊看起来被切成几层。
-     - 折射强度：原库 0.69。弯边是一段圆弧，坡度几乎全挤在最外面几个像素里，0.69 时边上那圈被拉弯、
-       映出别处内容的带子只有 5 像素左右宽，几乎看不出。以前导航的玻璃取 1.0，这条带子约 7 像素：轮廓内侧多出一道
-       清楚的细线（Apple 的演示里也是这样，玻璃中央的颜色被拽到轮廓上）。取 1.4 时上下两条弯边各拽一份
-       背景、连成两长条，胶囊看起来分成好几层。放大镜仍用原库值：它是用来看清照片的，边缘的折射带越窄越好。
-     - 磨砂（以前导航的玻璃用，放大镜不磨砂）：同原库演示里的胶囊按钮（blurAmount 0.3，σ 约 3.1 物理像素 —— 指 2 倍屏上，即 1.55 个
-       CSS 像素；别的屏幕按密度折算，看到的模糊程度一样）；
-       Regular Glass 那样完全不模糊，背后的字和导航文字互相打架。
-     - 色散：原库默认 0.05，这里取 0.08 —— 弯边上的彩色镶边再明显一点。 */
+  /* Original defaults, except: zRadius 40px suits large panels, but on small panes it exceeds half the
+     height and folds the backdrop into two copies, so they use zRatio of the short side; chroma 0.08
+     (vs 0.05) for a more visible fringe. refraction stays 0.69 so the loupe's edge band stays narrow. */
   var G = { refraction: .69, zRadius: 40, zRatio: .32, chroma: .08, edgeHL: .05, fresnel: 1, pad: 20,
             loupeMag: 2, loupeZ: 24,
-            shade: .015, rimTop: .7, rimBot: .35 };   // 本站加的光照：弯边明暗与轮廓高光，不影响折射
+            shade: .015, rimTop: .7, rimBot: .35 };   // added lighting
 
-  /* 磨砂：对背景纹理做一次高斯模糊（横、竖各一趟）。只在纹理换了内容时做，不是每帧 ——
-     以前用 2D 画布的 filter，每帧一次，而且 Safari 不支持，导航在那边一直没有磨砂 */
+  /* Frost: separable Gaussian, run only when the texture changes (canvas `filter` would run per frame; Safari lacks it) */
   var BLUR_R = 7;
   var FS_BLUR = [
     'precision highp float;',
@@ -298,7 +278,7 @@ function liquidGlass() {
       if (!vs || !fs) return null;
       var prog = gl.createProgram();
       gl.attachShader(prog, vs); gl.attachShader(prog, fs);
-      gl.bindAttribLocation(prog, 0, 'a');                  // 两个程序共用同一组顶点
+      gl.bindAttribLocation(prog, 0, 'a');                  // both programs share one vertex buffer
       gl.linkProgram(prog);
       if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
       var u = {};
@@ -317,22 +297,22 @@ function liquidGlass() {
     function texture() {
       var t = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, t);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);     // 双线性：效果的关键
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);     // bilinear: the key to the effect
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       return t;
     }
-    // src：上传进来的原图；a、b：模糊的两趟各画进一张（b 是最终结果）
+    // src: upload; a, b: blur pass targets (b is the result)
     var o = { gl: gl, glass: glass, blur: blur, src: texture(), a: texture(), b: texture(), fa: gl.createFramebuffer(), fb: gl.createFramebuffer(), tw: 0, th: 0 };
     return o;
   }
 
-  /* 把一张 2D 画布送进显卡，要磨砂就顺手模糊好。sigma 是纹理像素。返回玻璃该取样的那张纹理 */
+  /* Upload a 2D canvas, blurred if sigma (texels) > 0; returns the texture to sample */
   function upload(g, canvas, sigma) {
     var gl = g.gl, x = g.ctx, W = canvas.width, H = canvas.height;
     gl.bindTexture(gl.TEXTURE_2D, x.src);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);      // 画布被污染时会抛错，由调用处接住
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);      // throws if tainted; caller catches
     if (!(sigma > 0)) return x.src;
     if (x.tw !== W || x.th !== H) {
       x.tw = W; x.th = H;
@@ -362,15 +342,12 @@ function liquidGlass() {
     return x.b;
   }
 
-  /* ---------- 每块玻璃 ---------- */
+  /* ---------- panes ---------- */
 
-  /* 一组玻璃共用一张画布、一个 WebGL 环境、一张背景纹理。导航的几块是一组：以前各有各的画布，
-     显卡进程每帧要在几个环境之间来回切，光切换就占了它将近一半的时间，滚动时整页跟着掉帧。
-     host：画布放进这个元素。只有一块玻璃、而且它自己就是 host 时（放大镜），画布铺满它、随它一起
-     被 CSS 缩放；否则画布垫在几块玻璃下面，各块按自己当前的包围盒（含悬停缩放）画进去。
-     opt.mag：放大倍数（取样范围缩小为玻璃的 1/mag，底图按相应的分辨率画 —— 放大的内容是清楚的）；
-     opt.frost：背景模糊 σ（2 倍屏上的物理像素，别的屏幕按密度折算）；opt.refraction：折射强度（缺省用 G.refraction）；opt.band：底图在取样范围之外多画多宽（CSS 像素），
-     ahead 是滚动方向上的那一侧。 */
+  /* One canvas, context and texture per group of panes: per-frame context switches stall the GPU process.
+     If the only pane is the host (the loupe), the canvas fills it and scales with it; otherwise it sits
+     beneath the panes. opt: mag (rendered at matching resolution, so it stays sharp), frost (blur σ in
+     device px at 2x), refraction, band (backdrop margin in CSS px; `ahead` = scroll-direction side). */
   var groups = [], views = [];
   function addGroup(host, opt) {
     var cv = document.createElement('canvas');
@@ -385,21 +362,19 @@ function liquidGlass() {
     groups.push(g);
     return g;
   }
-  /* opt.zRadius：弯边深度；opt.active()：false 时不画 */
+  /* opt.zRadius: bevel depth; opt.active(): skip drawing when false */
   function addView(g, pane, opt) {
     var v = { g: g, pane: pane, zRadius: opt && opt.zRadius, active: opt && opt.active };
     g.views.push(v); views.push(v);
     return v;
   }
-  var loupe = makeLoupe(loupeBtn);                          // 见下文「放大镜」
-  if (!loupe) return;                                       // 没有 WebGL：放大镜开关一直收着
+  var loupe = makeLoupe(loupeBtn);                          // see makeLoupe()
+  if (!loupe) return;                                       // no WebGL: the loupe toggle stays hidden
 
   var scene = null, live = false, pageBg = getComputedStyle(document.body).backgroundColor;
   var videos = [].filter.call(document.querySelectorAll('video'), function (vd) { return !nav.contains(vd); });
-  /* 放大镜下的照片：<img data-lg-hi="大图地址"> 被放大时改画大图，否则 2 倍放大就是把原图拉伸 2 倍。
-     大图只在第一次被放大镜扫到时才下载，解码好之前先画原图，好了再让各块玻璃重画一次。
-     只留最近用过的 6 张：放大镜一次最多压着两三张照片，跑马灯却会把整个相册送过来，
-     全留着的话解码后的位图（一张约 7MB）会把手机的内存吃满 */
+  /* The loupe draws <img data-lg-hi> once decoded, so 2x isn't a stretch. Keep only the 6 most recent: the
+     marquee drags the whole gallery past it, and decoded bitmaps (~7MB each) exhaust mobile memory. */
   var hiImgs = {}, hiOrder = [];
   function sharper(im) {
     var url = im.getAttribute('data-lg-hi');
@@ -418,24 +393,42 @@ function liquidGlass() {
     return h._ok ? h : im;
   }
 
-  /* 导航玻璃里画照片用的小图。直接把 <img> 画进画布的话，浏览器要在主线程上解码整张图
-     （一张十几到几十毫秒，img.decode() 预解码对画布无效）：相册的列表模式里，每滚过一行就有
-     三张新照片经过导航，滚动跟着一顿一顿。所以照片一加载完，就在后台给它做一张缩小的位图
-     （createImageBitmap 的解码不占主线程），玻璃里画这张 —— 导航玻璃带磨砂，用不着原图的
-     分辨率，每帧画起来也更省。按图片地址存，原件和循环用的副本共用一张；
-     做好之前这一格只画底色。放大镜不走这里，它要的是大图（sharper） */
-  var THUMB_H = 360, thumbs = {};
+  /* Small bitmaps for unmagnified glass (the loupe uses sharper()). Drawing an <img> into a canvas decodes
+     on the main thread (img.decode() doesn't help). createImageBitmap from an <img> does too, in Chrome and
+     WebKit (3-16ms each on a Mac), so builds on load are queued: one per idle slot, none while live photos
+     are animating in (the gallery's list switch loads ~20 at once, mid-entrance). drawPhoto builds on demand.
+     Keyed by URL. */
+  var THUMB_H = 360, thumbs = {}, thumbQ = [], thumbT = 0;
+  var idle = window.requestIdleCallback ? function (f) { return requestIdleCallback(f, { timeout: 2000 }); }
+                                        : function (f) { return setTimeout(f, 200); };
+  function entering() {
+    return liveTracks.some(function (t) {
+      return t.getAttribute('data-lg-live') === 'enter' && t.getAnimations && t.getAnimations({ subtree: true }).length > 0;
+    });
+  }
+  function queueThumb(im) { thumbQ.push(im); pumpThumbs(); }
+  function pumpThumbs() {
+    if (thumbT || !thumbQ.length) return;
+    thumbT = idle(function (dl) {
+      thumbT = 0;
+      if (entering()) { thumbT = setTimeout(function () { thumbT = 0; pumpThumbs(); }, 250); return; }
+      if (dl && !dl.didTimeout && dl.timeRemaining() < 8) { pumpThumbs(); return; }   // too short for a decode
+      var im = thumbQ.shift();
+      if (im.complete && im.naturalWidth) thumb(im);
+      pumpThumbs();
+    });
+  }
   function thumb(im) {
     var key = im.currentSrc || im.src, t = thumbs[key];
     if (t) return t.b || null;
     t = thumbs[key] = {};
     var h = Math.min(im.naturalHeight, THUMB_H), w = Math.max(1, Math.round(im.naturalWidth * h / im.naturalHeight));
     var done = function (b) { t.b = b; refresh(); };
-    if (!window.createImageBitmap) { done(im); return im; }       // 老浏览器：照旧直接画 <img>
+    if (!window.createImageBitmap) { done(im); return im; }       // old browsers: draw the <img> directly
     try {
       createImageBitmap(im, { resizeWidth: w, resizeHeight: h, resizeQuality: 'medium' }).then(function (b) {
         if (b.height <= h * 1.2) return done(b);
-        // 没理会缩放参数（旧版 Safari）：位图已经解码好了，再画进小画布很便宜；原尺寸的那张随即释放
+        // Resize ignored (old Safari): downscale via canvas, free the big bitmap
         var c = document.createElement('canvas');
         c.width = w; c.height = h;
         c.getContext('2d').drawImage(b, 0, 0, w, h);
@@ -446,8 +439,7 @@ function liquidGlass() {
     return null;
   }
 
-  /* 把一张照片（跑马灯 / 列表里的 <figure>）画进 2D 画布：圆角、底色、图片。
-     x、y、w、h 是它在页面上的位置（CSS 像素），ox、oy 是画布左上角对应的页面位置，s 是画布的分辨率 */
+  /* Draw a live-track photo into a 2D canvas. x, y, w, h: page box; ox, oy: canvas origin on the page; s: scale */
   function drawPhoto(c, el, x, y, w, h, ox, oy, s, hi) {
     if (!el._lg) {
       var cs = getComputedStyle(el);
@@ -470,14 +462,12 @@ function liquidGlass() {
     vd.addEventListener('play', function () { views.forEach(function (v) { v.rescan = true; }); schedule(); });
   });
 
-  /* 标了 data-lg-live 的容器（相册的照片轨道）：里面的照片不进静态截图，由 renderGroup 画（见 drawPhoto）。
-     跑马灯每帧按实时位置画；列表进场中（enter）按实时位置和透明度画；不动了（still）烘进底图。
-     原库对这类内容（data-dynamic）是每帧重新栅格化；这里只画图片和圆角底色，便宜得多 */
-  /* sceneVer：页面截图换了；liveVer：烘进底图的照片变了（排版变了、照片的小图备好了）；
-     layoutVer：元素的排版位置要重新量 */
+  /* [data-lg-live] tracks: renderGroup draws their photos (marquee: live each frame; "enter": live with
+     opacity; "still": baked into the backdrop), far cheaper than re-rasterizing like the original's data-dynamic. */
+  /* sceneVer: new capture; liveVer: baked photos changed; layoutVer: re-measure layout */
   var sceneVer = 0, liveVer = 0, layoutVer = 0, liveTracks = [].slice.call(document.querySelectorAll('[data-lg-live]'));
   function isStill(track) { return track.getAttribute('data-lg-live') === 'still'; }
-  /* 元素在页面上的排版位置（不含 transform：跑马灯的平移、入场动画、悬停放大都不算）。量一次记着 */
+  /* Page layout position, ignoring transforms; cached per layoutVer */
   function layoutBox(el) {
     if (el._lv !== layoutVer) {
       var x = 0, y = 0, n = el;
@@ -490,13 +480,13 @@ function liquidGlass() {
     }
     return el;
   }
-  // 照片的图备好了：各块玻璃重新看一遍；有烘在底图里的照片（列表模式），底图也要重画
+  // A photo bitmap is ready: rescan, and redraw the backdrop if photos are baked into it
   function refresh() {
     if (liveTracks.some(isStill)) liveVer++;
     views.forEach(function (v) { v.rescan = true; });
     schedule();
   }
-  // 窗口尺寸、排版变了：照片的位置重新量，底图重画
+  // Layout changed: re-measure photos, redraw the backdrop
   function remeasure() {
     layoutVer++; liveVer++;
     views.forEach(function (v) { v.rescan = true; });
@@ -510,23 +500,19 @@ function liquidGlass() {
     views.forEach(function (v) { v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = 'none'; });
     if (loupe) loupe.ready();
   }
-  function giveUp() {                       // 截图不可用（如画布被污染）：退回 CSS 模糊
+  function giveUp() {                       // capture unusable (e.g. tainted canvas): fall back to CSS blur
     live = false; scene = null;
     groups.forEach(function (g) { if (g.cv.parentNode) g.cv.parentNode.removeChild(g.cv); });
     views.forEach(function (v) { v.pane.style.backdropFilter = v.pane.style.webkitBackdropFilter = ''; });
   }
 
-  /* 渲染。玻璃拖慢滚动，慢的不是脚本，是显卡进程：每帧往显卡送的东西越少越好。
-     - 底图：页面截图（SVG）里玻璃下面那一条，连同列表模式下不动的照片，栅格化成一张 2D 画布，
-       上传成纹理、在显卡里模糊好。它比玻璃的取样范围大一圈，滚动方向上多留得最多（导航 900px）。
-       滚动时每帧只改着色器里取样的位置，不拷贝、不模糊、不上传；滚出这一圈才往前补画一条。
-       带磨砂的玻璃，底图只按一半分辨率存（1 倍屏上模糊太小，存原样）：反正要模糊，看不出差别，像素少四分之三。
-     - 压在下面、正在动的内容（在播的视频、跑马灯的照片、正在悬停放大的照片）没法预先备好：
-       这样的帧把底图里对应的一块拷出来，把它们按实时位置画上去，再上传、模糊。
-     - 玻璃没动、下面也没有在动的内容，这一帧就不画；只有内容在动时按 30fps 画：跑马灯一帧才走
-       1.4px，视频本身多是 30fps；滚动、拖动放大镜仍然逐帧跟上。 */
-  var hot = [];                                             // 列表模式下正在过渡 / 悬停放大的照片：与底图里烘的不一样，要实时画
-  function overlap(r, x0, y0, x1, y1) {                     // r：视口坐标的包围盒；其余：页面坐标的范围
+  /* Rendering. The cost is in the GPU process, so minimize per-frame uploads:
+     - Backdrop: the capture strip under the glass plus still photos, with an opt.band margin; scrolling
+       only moves the sample offset until it leaves the margin. Frosted ones are stored at half resolution.
+     - Moving content (video, marquee, hover-scaling photos): copy the region, draw it live, upload.
+     - Idle frames are skipped; content-only motion runs at 30fps (the marquee moves ~1.4px/frame). */
+  var hot = [];                                             // still photos mid-transition: draw live
+  function overlap(r, x0, y0, x1, y1) {                     // r: viewport box; x0…y1: page range
     var x = r.left + window.scrollX, y = r.top + window.scrollY;
     return r.width && !(x > x1 || x + r.width < x0 || y > y1 || y + r.height < y0);
   }
@@ -538,22 +524,22 @@ function liquidGlass() {
     var cr = inner ? null : cv.getBoundingClientRect();
     if (cr && (!cr.width || !cr.height)) return false;
 
-    // 各块玻璃在画布里的位置、在页面上的取样范围；bx0…by1 是整组取样范围的并集
+    // Each pane's canvas position and page sample range; bx0…by1: their union
     var list = [], bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9, key = '';
     for (i = 0; i < g.views.length; i++) {
       var v = g.views[i], pane = v.pane;
       if (v.active && !v.active()) continue;
       var ow = pane.offsetWidth, oh = pane.offsetHeight, rc = pane.getBoundingClientRect();
       if (!ow || !oh || rc.width < 1 || rc.height < 1) continue;
-      // 画布铺在玻璃里面：用布局尺寸（悬停缩放由 CSS 作用在画布上）；垫在下面：用当前的包围盒
+      // Inner canvas: layout size (CSS applies hover scale); beneath: current box
       var w = inner ? ow : rc.width, h = inner ? oh : rc.height;
-      var cx = rc.left + rc.width / 2 + sX, cy = rc.top + rc.height / 2 + sY;   // 缩放以中心为原点，中心不变
+      var cx = rc.left + rc.width / 2 + sX, cy = rc.top + rc.height / 2 + sY;   // scale is centered
       var cw = (w + 2 * pad) / mag, ch = (h + 2 * pad) / mag;
-      if (v.rw !== ow || v.rh !== oh) {                     // 圆角只在尺寸变了时重新读
+      if (v.rw !== ow || v.rh !== oh) {                     // re-read radius on resize only
         v.rw = ow; v.rh = oh;
         v.radius = Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius) || 0, ow / 2, oh / 2);
       }
-      // 正在展开 / 收起的那块（相册页的放大镜开关）跟着自己的透明度淡入淡出
+      // Panes fade with their own opacity
       if (!inner && (easing || v.rescan || v.alpha == null)) v.alpha = +getComputedStyle(pane).opacity;
       var it = { v: v, w: w, h: h, x0: cx - cw / 2, y0: cy - ch / 2, sc: w / ow, a: inner ? 1 : v.alpha,
                  px: inner ? 0 : rc.left - cr.left, py: inner ? 0 : rc.top - cr.top };
@@ -564,8 +550,7 @@ function liquidGlass() {
     if (!list.length) return false;
     key += [sceneVer, liveVer, d, cr ? cr.width : 0, cr ? cr.height : 0].join();
 
-    // 先决定要不要画，再去找下面动的内容 —— 找的那一步要逐张读照片位置。
-    // 玻璃没动、也没人要求重看：上一帧下面没东西在动，这一帧也不会有；有就按 30fps 看
+    // Cheap check before the per-photo scan: if unchanged, recheck only while animating, at 30fps
     var moved = g.at !== key, rescan = false;
     g.views.forEach(function (vv) { if (vv.rescan) { rescan = true; vv.rescan = false; } });
     if (!moved && !rescan) {
@@ -573,8 +558,8 @@ function liquidGlass() {
       if (now - g.t < 33) return true;
     }
 
-    // 这一帧压在下面、要实时画的内容。不动的照片（列表模式）烘在底图里，不算 —— 放大镜除外：它要的是
-    // 大图，而大图只留最近几张（见 sharper），烘一整圈会把正用着的挤掉；它仍旧只画镜片下面那几张
+    // Live content under the glass. Still photos are baked, except for the loupe: baking its whole margin
+    // would evict the few cached large images in use (see sharper)
     var dyn = [], animating = false, bake = mag === 1;
     for (j = 0; j < videos.length; j++) {
       var vid = videos[j];
@@ -586,9 +571,9 @@ function liquidGlass() {
     for (j = 0; j < liveTracks.length; j++) {
       var track = liveTracks[j], tr = track.getBoundingClientRect();
       var still = isStill(track);
-      if ((bake && still) || !overlap(tr, bx0 - 60, by0 - 60, bx1 + 60, by1 + 60)) continue;   // 整条不沾边就不逐张看
-      // 照片在条内的位置是固定的，只有整条在平移：用各张的排版位置加上整条的位移粗筛（放宽 60px
-      // 盖住错落的 translateY 与悬停放大），沾边的才读精确位置
+      if ((bake && still) || !overlap(tr, bx0 - 60, by0 - 60, bx1 + 60, by1 + 60)) continue;   // track nowhere near
+      // Photos are fixed within a moving track: coarse-filter by layout box plus track offset
+      // (60px slack for stagger and hover scale) before reading exact boxes
       layoutBox(track);
       var shx = tr.left + sX - track._lx, shy = tr.top + sY - track._ly, kids = track.children;
       for (var li = 0; li < kids.length; li++) {
@@ -601,21 +586,20 @@ function liquidGlass() {
     }
     for (j = hot.length - 1; j >= 0; j--) {
       var he = hot[j], hr = he.getBoundingClientRect();
-      if (!he._lgRun && Math.abs(hr.width - he.offsetWidth) < .6) { hot.splice(j, 1); continue; }   // 过渡走完、也没在放大：回到底图里那样了
+      if (!he._lgRun && Math.abs(hr.width - he.offsetWidth) < .6) { hot.splice(j, 1); continue; }   // settled: matches the baked backdrop
       if (bake && he.parentNode && isStill(he.parentNode) && overlap(hr, bx0, by0, bx1, by1)) dyn.push(he);
     }
     g.anim = animating;
 
-    // 底图还够不够用：内容没变，取样范围（模糊时再留出模糊半径）也还在里面
-    // 磨砂的 σ 也按看到的大小算：g.frost 是 2 倍屏上的物理像素，折成 CSS 像素是它的一半（fr）。
-    // 模糊够大（折成这块屏的物理像素不小于 2.4）底图才存一半分辨率；1 倍屏上模糊只有一个多像素，存原样
+    // Stale if content changed or the range (plus blur radius) left it. fr: frost in CSS px;
+    // half resolution only if the blur is ≥ 2.4 device px
     var fr = g.frost / 2, st = g.st, s = mag * d * (fr * d >= 2.4 ? .5 : 1), ver = sceneVer + ':' + liveVer + ':' + s;
     var guard = g.frost ? (BLUR_R + 1) / s : 0;
     var stale = st.ver !== ver || bx0 < st.x0 + guard || by0 < st.y0 + guard ||
                 bx1 > st.x0 + st.w - guard || by1 > st.y0 + st.h - guard;
     if (g.lastY != null && by0 !== g.lastY) g.dir = by0 > g.lastY ? 1 : -1;
     g.lastY = by0;
-    if (!moved && !dyn.length && !g.wasDyn && !stale) return false;   // 重新看了一遍，没什么要画的
+    if (!moved && !dyn.length && !g.wasDyn && !stale) return false;   // rescanned, nothing to draw
     g.at = key;
     g.t = now;
 
@@ -623,12 +607,11 @@ function liquidGlass() {
       var mx = g.band.x + guard, up = (g.dir > 0 ? g.band.behind : g.band.ahead) + guard,
           dn = (g.dir > 0 ? g.band.ahead : g.band.behind) + guard;
       var SW = Math.ceil((bx1 - bx0 + 2 * mx) * s) + 1, SH = Math.ceil((by1 - by0 + up + dn) * s) + 1, sc = st.c;
-      // 带磨砂的：左上角对齐到纹理像素的整数格，每次重画都落在同一套格子上，结果与怎么
-      // 滚过来的无关。不磨砂的（放大镜）照取样范围原样起算：刚画好时一个纹理像素正对一个屏幕像素，字是利的
+      // Frosted: snap to the texel grid so redraws don't depend on the scroll path.
+      // Unfrosted (loupe): no snap, so texels map 1:1 to screen pixels and text is crisp
       var snap = function (n) { return g.frost ? Math.floor(n * s) / s : n; }, nx0 = snap(bx0 - mx);
-      // 只是滚出去了（内容、宽度都没变）：整张往滚动方向挪半圈，还用得上的部分原样留着，只补画新露出来
-      // 的那一条 —— 整张重画一次要十几毫秒（手机上更久），玻璃会顿一下；分成小条就不觉得了。
-      // 挪的距离取整到纹理像素，留下的部分不必重新取样。p0…p1 是要画的那几行（纹理像素）
+      // Only scrolled out: shift by half the margin (whole texels, no resampling) and draw just the exposed
+      // strip, since a full redraw stutters. p0…p1: texel rows to draw
       var step = Math.round(g.band.ahead / 2 * s) * (by1 > st.y0 + st.h - guard ? 1 : -1), ny = st.y0 + step / s, p0 = 0, p1 = SH;
       if (st.ver === ver && st.cv.width === SW && st.cv.height === SH && st.x0 === nx0 &&
           by0 >= ny + guard && by1 <= ny + st.h - guard) {
@@ -641,17 +624,17 @@ function liquidGlass() {
         st.ver = ver; st.x0 = nx0; st.y0 = snap(by0 - up); st.w = SW / s; st.h = SH / s;
         if (st.cv.width !== SW || st.cv.height !== SH) { st.cv.width = SW; st.cv.height = SH; }
       }
-      var s0 = st.y0 + p0 / s, s1 = st.y0 + p1 / s;         // 同一段，页面坐标
+      var s0 = st.y0 + p0 / s, s1 = st.y0 + p1 / s;         // same rows, page coords
       sc.save();
       sc.beginPath(); sc.rect(0, p0, SW, p1 - p0); sc.clip();
-      sc.fillStyle = pageBg;                                // 超出页面的部分填底色
+      sc.fillStyle = pageBg;                                // beyond the page edges
       sc.fillRect(0, p0, SW, p1 - p0);
       var qx = Math.max(st.x0, 0), qy = Math.max(s0, 0);
       var ex = Math.min(st.x0 + st.w, scene.W), ey = Math.min(s1, scene.H);
       if (ex > qx && ey > qy) {
         sc.drawImage(scene.img, qx, qy, ex - qx, ey - qy, (qx - st.x0) * s, (qy - st.y0) * s, (ex - qx) * s, (ey - qy) * s);
       }
-      for (j = 0; j < liveTracks.length; j++) {             // 不动的照片（列表模式）按排版位置烘进来
+      for (j = 0; j < liveTracks.length; j++) {             // bake still photos
         if (!bake || !isStill(liveTracks[j])) continue;
         var ks = liveTracks[j].children;
         for (var q = 0; q < ks.length; q++) {
@@ -665,7 +648,7 @@ function liquidGlass() {
       if (!healing && !healT) healT = heal(400);
     }
 
-    // 纹理：没有实时内容就用整张底图（只在它重画后上传一次）；有就拷出取样范围、把实时内容画上去再上传
+    // No live content: the whole backdrop, uploaded once per redraw; otherwise a copy with live content drawn in
     var sigma = fr * s / mag, tx0, ty0, TW, TH;
     try {
       if (dyn.length) {
@@ -678,7 +661,7 @@ function liquidGlass() {
           if (el.tagName === 'VIDEO') {
             try { r2.drawImage(el, (er.left + sX - bx0) * s, (er.top + sY - by0) * s, er.width * s, er.height * s); } catch (e) {}
           } else {
-            // 正在进场的照片（相册列表，轨道标着 enter）是淡入的：照它此刻的透明度画，还没露面的不画
+            // "enter" photos fade in: use their current opacity
             var al = el.parentNode.getAttribute('data-lg-live') === 'enter' ? +getComputedStyle(el).opacity : 1;
             if (al < .02) continue;
             r2.globalAlpha = al;
@@ -695,7 +678,6 @@ function liquidGlass() {
     } catch (e2) { giveUp(); return false; }
     g.wasDyn = dyn.length > 0;
 
-    // 画：整张画布清掉，每块玻璃在自己的位置画一次
     var PW = Math.round((inner ? list[0].w : cr.width) * d), PH = Math.round((inner ? list[0].h : cr.height) * d);
     if (cv.width !== PW || cv.height !== PH) { cv.width = PW; cv.height = PH; }
     var fx = PW / (inner ? list[0].w : cr.width), fy = PH / (inner ? list[0].h : cr.height), u = g.ctx.glass.u;
@@ -741,13 +723,12 @@ function liquidGlass() {
     var moving = loupe ? loupe.step() : false;
     groups.forEach(function (g) { if (renderGroup(g, now)) moving = true; });
     healing = false;
-    // 还有在动的、有过渡没走完、或刚滚动 / 触摸过（见 follow）：下一帧接着看
+    // Keep going while anything moves, a transition runs, or just after scroll/touch (see follow)
     if (moving || easing || now < keepUntil) schedule();
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
-  /* 底图画好以后会用很久。Safari 把截图（SVG）画进画布时，嵌在里面的图片要是还没载入、解码完，那一处就是
-     空的，等它好了也不会自己补上 —— 玻璃下的图片就「透不出来」。所以每次画过底图，等滚动停下来再整张
-     重画一次（这一次不再触发下一次）；刚截完图时图片最容易没到齐，runCapture 那边再多补两次 */
+  /* Safari draws not-yet-decoded images in the SVG capture as blank and never fills them in, so redraw the
+     backdrop once more after scrolling stops (without chaining); runCapture adds two more after a capture. */
   var healT = 0, healing = false;
   function heal(ms) {
     return setTimeout(function again() {
@@ -757,11 +738,9 @@ function liquidGlass() {
       schedule();
     }, ms);
   }
-  /* 不动的照片（相册的列表模式）烘在底图里，玻璃不逐帧重画。但照片悬停（触屏上是点一下）会在原位
-     放大，切换显示模式时也要挪一下位置，都带一小段过渡 —— 这样的照片记进 hot，改为实时画，
-     过渡期间逐帧重画，玻璃里的照片跟着变。逐帧重画只管挨着玻璃的照片（放宽 60px，盖住放大与错落
-     的位移），别处的照片悬停不必重画。过渡事件每个属性各发一次，开始与结束（或取消）成对，数着就
-     知道还有没有在走的；结束时不论远近都再看一次收尾。万一漏了结束事件，2 秒后不再等 */
+  /* Still photos transition on hover and view-mode switches; those go into `hot` and are drawn live, with
+     per-frame redraws only near the glass (60px slack). run/end events pair up per property, so count them;
+     give up after 2s in case an end event is lost. */
   function nearGlass(el) {
     var r = el.getBoundingClientRect(), m = 60;
     return views.some(function (v) {
@@ -797,10 +776,8 @@ function liquidGlass() {
       });
     });
   });
-  /* 手机上地址栏 / 工具栏随滚动收起、展开时，固定在视口里的玻璃（放大镜）会跟着视口
-     挪位置，页面却没有滚动、也不发 scroll 事件，收放完才来一个 resize —— 玻璃里的背景停在旧位置，
-     等下一次滚动才突然跳过去。所以滚动、触摸、视口变化之后再连着看半秒：位置没变的帧只是读一下
-     包围盒、不重画；视口一变也马上重画，不等下一次滚动 */
+  /* Mobile toolbars collapsing move viewport-fixed glass without a scroll event (resize comes only after),
+     so keep checking for 500ms after scroll, touch or viewport changes. */
   function follow() { keepUntil = performance.now() + 500; schedule(); }
   window.addEventListener('scroll', follow, { passive: true });
   window.addEventListener('touchmove', follow, { passive: true });
@@ -815,16 +792,14 @@ function liquidGlass() {
     views.forEach(function (v) { ro.observe(v.pane); });
   }
 
-  /* ---------- 放大镜（相册页） ----------
-     仿 macOS 预览的放大镜：一块圆形液态玻璃，里面是 2 倍放大的画面（按照片原图与页面矢量重新
-     画，不是把纹理拉大，所以是清楚的）。由导航里的开关（data-lg-loupe-toggle）打开，打开后常驻：
-     鼠标 / 触控板下跟着光标走（带一点滞后，pointer-events: none 不挡点击）；
-     触屏上没有光标，改为用手指拖动。每次打开页面都是关闭的，不记住上次的状态。 */
+  /* ---------- loupe (gallery) ----------
+     Round 2x lens like macOS Preview's, toggled by [data-lg-loupe-toggle]. Follows the mouse with slight lag
+     (pointer-events: none keeps clicks working); dragged on touch. Always starts closed. */
   function makeLoupe(btn) {
     var el = document.createElement('div');
     el.className = 'lg-loupe';
     el.setAttribute('aria-hidden', 'true');
-    el.setAttribute('data-lg-skip', '');           // 不进截图
+    el.setAttribute('data-lg-skip', '');           // excluded from captures
     document.body.appendChild(el);
     var lg = addGroup(el, { mag: G.loupeMag, band: { x: 60 / G.loupeMag, ahead: 60 / G.loupeMag, behind: 60 / G.loupeMag } });
     if (!lg) { el.parentNode.removeChild(el); return null; }
@@ -834,17 +809,15 @@ function liquidGlass() {
     var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var enabled = false, tx = innerWidth / 2, ty = innerHeight / 2, x = tx, y = ty, last = 0, drag = null;
     if (!mouse) el.classList.add('drag');
-    try { localStorage.removeItem('lg:loupe'); } catch (e) {}   // 清掉旧版本记下的状态
+    try { localStorage.removeItem('lg:loupe'); } catch (e) {}   // clear state saved by older versions
 
-    function clamp() {                              // 别让它跑到窗口外面找不回来
+    function clamp() {                              // keep it inside the window
       var r = el.offsetWidth / 2;
       tx = Math.min(Math.max(tx, r), innerWidth - r);
       ty = Math.min(Math.max(ty, r), innerHeight - r);
     }
-    /* 用独立的 translate 属性定位，而不是 transform：按规范的顺序 translate → rotate → scale →
-       transform，出现动画的 scale 会把 transform 里的位移一起缩小 —— 刚打开时（scale 0.82）
-       放大镜实际在目标位置的 0.82 倍处，第一帧按那个位置取样，光标不动就一直错着
-       （手机上尤其明显：没有光标，打开后不动）。translate 在 scale 之外，缩放只绕自身中心。 */
+    /* Use `translate`, not `transform`: `scale` composes outside `transform`, so the entry scale would shrink
+       a transform offset and the first frame would sample the wrong spot (stuck there on touch). */
     var useTranslate = 'translate' in el.style;
     function place() {
       var px = (x - el.offsetWidth / 2) + 'px', py = (y - el.offsetHeight / 2) + 'px';
@@ -852,9 +825,9 @@ function liquidGlass() {
       else el.style.transform = 'translate3d(' + px + ',' + py + ',0)';
     }
     function sync() {
-      var on = enabled && live;                     // 截图就绪前不出现，免得浮着一块空玻璃
+      var on = enabled && live;                     // no empty glass before the capture
       btn.setAttribute('aria-pressed', String(enabled));
-      if (on && !el.classList.contains('on')) { clamp(); x = tx; y = ty; last = 0; place(); lg.at = null; }   // 出现时直接落位、重画
+      if (on && !el.classList.contains('on')) { clamp(); x = tx; y = ty; last = 0; place(); lg.at = null; }   // jump into place, redraw
       el.classList.toggle('on', on);
       schedule();
     }
@@ -863,7 +836,7 @@ function liquidGlass() {
       sync();
     });
     var hinted = false;
-    btn.addEventListener('animationend', function (e) { if (e.target === btn) btn.classList.remove('hint'); });   // 图标自己的动画结束不算
+    btn.addEventListener('animationend', function (e) { if (e.target === btn) btn.classList.remove('hint'); });   // ignore the icon's own animations
 
     if (mouse) {
       document.addEventListener('pointermove', function (e) {
@@ -889,20 +862,19 @@ function liquidGlass() {
     window.addEventListener('resize', function () { clamp(); if (enabled) schedule(); });
 
     return {
-      // 玻璃就绪：露出开关。再提示一下这里有个放大镜 —— 打开页面满 1 秒后（至少等圆钮展开完），
-      // 图标晃两下、底色浮起淡去一次（样式见 .nav-loupe.hint），只做这一次；已经点开了就不必提示
+      // Reveal the toggle; hint once (.nav-loupe.hint) ≥1s after load, after the button expands
       ready: function () {
         btn.hidden = false; sync();
         if (hinted) return;
         hinted = true;
         setTimeout(function () { if (!enabled) btn.classList.add('hint'); }, Math.max(1000 - performance.now(), 450));
       },
-      // 每帧调用：朝目标位置靠近（时间常数 70ms 的指数跟随），还没跟上就返回 true 要下一帧
+      // Exponential follow (τ = 70ms); true while still catching up
       step: function () {
         if (!el.classList.contains('on')) return false;
         var now = performance.now(), dt = last ? Math.min(now - last, 50) : 16;
         last = now;
-        var a = still || drag ? 1 : 1 - Math.exp(-dt / 70);   // 拖动时贴着手指，不滞后
+        var a = still || drag ? 1 : 1 - Math.exp(-dt / 70);   // no lag while dragging
         x += (tx - x) * a; y += (ty - y) * a;
         place();
         if (Math.abs(tx - x) < .3 && Math.abs(ty - y) < .3) { last = 0; return false; }
@@ -911,7 +883,7 @@ function liquidGlass() {
     };
   }
 
-  /* ---------- 什么时候重截 ---------- */
+  /* ---------- recapture triggers ---------- */
 
   var capTimer = 0, capturing = false, again = false, capWaitFrom = 0;
   function recapture(delay) {
@@ -920,9 +892,7 @@ function liquidGlass() {
   }
   function runCapture() {
     if (capturing) { again = true; return; }
-    /* 一次截图连同它的首次绘制要占住主线程一两百毫秒（手机上更久），正在滚动、触摸时做，页面会顿一下。
-       已经有一张截图可用的话，等手停下来再截（keepUntil 由 follow 在每次滚动 / 触摸时往后推）；
-       最多等 4 秒，免得一直滚就一直不更新 */
+    /* A capture blocks the main thread enough to hitch scrolling: if one exists, wait for input to stop, up to 4s */
     var now = performance.now();
     if (scene && now < keepUntil && now - (capWaitFrom || (capWaitFrom = now)) < 4000) {
       capTimer = setTimeout(runCapture, 200);
@@ -941,23 +911,21 @@ function liquidGlass() {
     });
   }
 
-  // 首次：字体就绪、页面加载完（图片尺寸定下来）之后
+  // First capture: after fonts and page load (image sizes settled)
   var start = function () { (document.fonts && document.fonts.ready || Promise.resolve()).then(function () { recapture(0); }); };
   if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
-  // 切换语言
   document.addEventListener('languagechange', function () { recapture(60); });
-  // 页面自己换了排版（相册切换滚动 / 列表）：照片位置重新量、先按新位置画，背景随后重截
+  // Gallery marquee/list switch: draw at new positions now, recapture after
   document.addEventListener('lg:relayout', function () { remeasure(); schedule(); recapture(60); });
-  // 排版没变，只是哪些照片算「不动的」变了（相册列表的进场动画落完）：照片位置重新量、底图重画，不必重截
+  // Only the set of still photos changed: redraw, no recapture
   document.addEventListener('lg:relive', function () { remeasure(); schedule(); });
-  // 窗口变宽变窄（只变高不重截）
+  // Width changes only
   var lastW = document.documentElement.clientWidth;
   window.addEventListener('resize', function () {
     var w = document.documentElement.clientWidth;
     if (w !== lastW) { lastW = w; recapture(); }
   });
-  // 页面内容的增删改（展开 News、地图载入等）。导航自身、入场动画加的类、行内样式都不算；
-  // 不进截图的部分（data-lg-skip，如邮箱浮层里按钮文字的变化）也不算
+  // Content mutations, ignoring the nav, class/style changes and [data-lg-skip]
   new MutationObserver(function (list) {
     for (var j = 0; j < list.length; j++) {
       var mt = list[j].target;
@@ -966,22 +934,19 @@ function liquidGlass() {
     }
   }).observe(document.body, { subtree: true, childList: true, characterData: true,
                               attributes: true, attributeFilter: ['hidden', 'src', 'open'] });
-  // 图片、视频晚到：自身尺寸变了，页面总高却不一定变（并排布局里行高由旁边的文字决定，
-  // 比如论文卡片的视频从封面换成画面），下面按总高判断的那条察觉不到。跑马灯里的照片是实时画的，不算
+  // Late media can resize without changing page height (side-by-side rows), which the height observer misses
   function mediaChanged() { if (scene || capturing) recapture(); }
   document.addEventListener('load', function (e) {
     var t = e.target;
     if (!t || t.tagName !== 'IMG' || nav.contains(t)) return;
-    if (t.closest('[data-lg-live]')) { thumb(t); return; }   // 实时画的照片：后台备好小图，好了会重画
-    // 写了宽高属性的图片，加载前后占的位置一样，截图里也早就有它的像素（截图自己去读了图片文件），
-    // 不必为它重截；尺寸真变了的才重截
+    if (t.closest('[data-lg-live]')) { queueThumb(t); return; }   // live photo: just build its thumbnail, later
+    // The capture fetched the pixels itself; recapture only if the box changed
     var bs = getComputedStyle(t);
     if (t._lgBox !== bs.width + ' ' + bs.height) mediaChanged();
   }, true);
   videos.forEach(function (vd) { vd.addEventListener('loadedmetadata', mediaChanged); });
-  // 页面高度变化（如图片晚到、折叠展开）。正在截的时候长高也要算：截图用的是开始那一刻的排版，
-  // 手机上第一次截图要好几秒，图片恰好在这期间陆续到齐 —— 漏掉的话那张旧截图会一直用下去，
-  // 玻璃里的背景越往下滚错得越远。（还没开始截时不必管，首次截图自己会来）
+  // Page height changes, including during a capture: it uses the layout from its start, and on mobile the
+  // first one takes seconds while images arrive
   if (window.ResizeObserver) {
     var lastH = 0;
     new ResizeObserver(function () {
@@ -992,11 +957,8 @@ function liquidGlass() {
 
 }
 
-/* 启动时机：首屏让给进场动画。创建 WebGL 环境、编译着色器是同步的，弱设备上会占住主线程几百毫秒；
-   以前脚本一加载就做，而带 defer 的脚本排在 DOMContentLoaded 之前，进场动画（reveal.js 等的正是
-   DOMContentLoaded）只能等它做完才开始，紧接着的截图又和动画抢同一段时间。现在等首屏那批入场动画
-   走完（reveal.js 发出 rise:settled），再趁主线程空闲启动；在这之前导航先用 CSS 的兜底（见 style.css「顶部导航」）。
-   reveal.js 没能加载之类的情况，最多等 4 秒也照常启动。 */
+/* Boot after entry animations: WebGL setup is synchronous and can block weak devices for hundreds of ms.
+   Wait for reveal.js's rise:settled, then idle time; fall back to 4s. */
 (function () {
   var started = false;
   function boot() {

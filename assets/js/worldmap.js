@@ -1,26 +1,21 @@
-/* 访客世界地图 —— 错位点阵的平面地图，零外部依赖。
+/* Visitor world map: a staggered dot-matrix map with no external dependencies.
 
-   陆地用一张 180x101 的位掩码画成圆点：每行 45 个十六进制字符，
-   一个字符管四格，整张图 4.5 KB，不需要任何地图库或瓦片服务。
+   Land is a 180x101 bitmask, 45 hex chars per row (4 cells per char), 4.5 KB in all: no map library or tiles.
 
-   点阵是错位（六边形）排布：奇数行右移半格，行距取列距的 √3/2，
-   每个点与周围六个点等距。比横平竖直的方格细腻，也不会在斜向海岸线
-   上出现锯齿台阶。
+   Hexagonal layout: odd rows shift half a cell and row spacing is √3/2 of column spacing, so each dot is
+   equidistant from its six neighbours. Finer than a square grid, with no stair-steps on diagonal coasts.
 
-   投影是 Miller 圆柱：纬线仍是水平直线，但越往高纬行距越大，
-   整张图约 2:1，接近平常看惯的世界地图。等距圆柱（纬线等距）会有
-   2.6:1 那么扁；墨卡托则把格陵兰放大到跟非洲差不多。Miller 介于两者之间。
+   Miller cylindrical projection: parallels stay straight, spacing grows with latitude, about 2:1 overall.
+   Equirectangular would be 2.6:1; Mercator blows Greenland up to Africa's size.
 
-   掩码由 Natural Earth 110m 陆地边界离线生成：每行取该行中心的纬线，
-   在格心做扫描线判定。纬度裁到 83N~56S，去掉南极洲和北冰洋的空行；
-   左右切在白令海峡，大西洋居中。 */
-/* ---------- 记一次访问 ----------
-   与地图的显示完全解耦：地图被隐藏、#visitorMap 不存在时照样记录，
-   恢复显示那天看到的是连续的数据，而不是隐藏期间的一段空白。
+   The mask is generated offline from Natural Earth 110m land, scanline-testing cell centres on each row's
+   central parallel. Clipped to 83N–56S (no Antarctica or empty Arctic rows); the left edge cuts through
+   the Bering Strait so the Atlantic is centred. */
+/* ---------- Record a visit ----------
+   Independent of the map: recorded even when #visitorMap is hidden or absent, so the data has no gap.
 
-   同一浏览器 24 小时内只记一次 —— 判断在客户端，能被绕过，但对个人
-   主页足够，也免得自己刷新几次就把本地的点顶大。隐私模式下 localStorage
-   访问本身就会抛异常，所以包 try/catch；存不了就每次都记，无所谓。 */
+   Once per browser per 24 h. Client-side and bypassable, but enough for a homepage, and the owner's reloads
+   don't inflate the local dot. localStorage throws in some private modes, hence try/catch; then every load counts. */
 (function () {
   var KEY = 'vmap:seen', now = Date.now();
   try {
@@ -32,26 +27,25 @@
   }
 })();
 
-/* ---------- 画地图 ---------- */
+/* ---------- Draw the map ---------- */
 (function () {
   var el = document.getElementById('visitorMap');
   if (!el) return;
 
   var W = 180, H = 101, CH = 45;
-  var ROWK = Math.sqrt(3) / 2;   // 六边形排布的行距 / 列距
-  /* 左边缘所在经线：切在白令海峡正中 —— 阿拉斯加本土最西 −168.1°，
-     对岸圣劳伦斯岛最东 −168.7°。切在 180° 的话，楚科奇半岛越过 180°
-     的那一截会被甩到最左边，挂在阿拉斯加旁边。 */
+  var ROWK = Math.sqrt(3) / 2;   // hex layout: row spacing / column spacing
+  /* Left-edge meridian, mid Bering Strait: mainland Alaska ends at −168.1°, St. Lawrence Island at −168.7°.
+     Cutting at 180° would wrap the tip of Chukotka to the far left, next to Alaska. */
   var LON_W = -168.5;
 
-  /* Miller 圆柱投影的纵坐标（弧度单位，与经度同尺度） */
+  /* Miller y, in radians (same scale as longitude) */
   function miller(lat) {
     return 1.25 * Math.log(Math.tan(Math.PI / 4 + 0.4 * lat * Math.PI / 180));
   }
-  /* 顶边 83N；底边由 H 行 × 行距推出（≈56S），与生成掩码时完全一致 */
+  /* Top edge 83N; bottom (~56S) follows from H rows × row spacing, exactly as in the mask generator */
   var YT = miller(83), YB = YT - H * ROWK * 2 * Math.PI / W;
 
-  /* 经纬度 → 在地图上的相对位置（0–1），与生成掩码时的映射一致 */
+  /* lat/lon → relative map position (0–1), same mapping as the mask generator */
   function place(lat, lon) {
     return { x: ((((lon - LON_W) % 360) + 360) % 360) / 360,
              y: (YT - miller(lat)) / (YT - YB) };
@@ -160,15 +154,14 @@
     '000000000000000000000000000000000000000000000'
 ;
 
-  /* USE_MOCK 为 true 时用下面的原型数据预览版式（本地没有 Worker 时用）；线上保持 false。
-     为 false 时若接口取不到数据，整块保持隐藏 —— 宁可什么都不显示，
-     也不能把编出来的数字当成真实访问量摆在页面上。 */
+  /* USE_MOCK = true previews the layout with the mock data below (no local Worker); keep it false live.
+     When false and the API returns nothing, the section stays hidden: never show made-up numbers as real traffic. */
   var USE_MOCK = false;
   var API_READ  = '/api/visitors';
 
   var DATA = [];
 
-  /* ⚠️ 原型数据，非真实访问，仅供 USE_MOCK 时预览版式。 */
+  /* Mock data, NOT real visits: only for USE_MOCK layout previews. */
   var MOCK = [
     { city: 'Singapore',     cc: 'SG', lat:   1.29, lon:  103.85, n: 486, ago: 2 },
     { city: 'Hangzhou',      cc: 'CN', lat:  30.27, lon:  120.15, n: 341, ago: 10 },
@@ -209,8 +202,7 @@
 
   var w = 0, h = 0;
 
-  /* 取第 gy 行第 gx 格的位。一个十六进制字符压四格，
-     所以先定位到 gx>>2 那个字符，再取它的第 gx&3 位。 */
+  /* Bit for cell (gx, gy): each hex char packs four cells, so read char gx>>2, then its bit gx&3. */
   function bitAt(gx, gy) {
     var c = MASK.charCodeAt(gy * CH + (gx >> 2));
     var v = c <= 57 ? c - 48 : c - 87;
@@ -221,7 +213,7 @@
     w = el.clientWidth;
     if (!w) return;
     var cw  = w / W;
-    var ch  = cw * ROWK;         // 行距
+    var ch  = cw * ROWK;         // row spacing
     h = ch * H;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     cvs.width  = Math.round(w * dpr);
@@ -235,7 +227,7 @@
     g.fillStyle = getComputedStyle(el).getPropertyValue('--vmap-dot').trim() || '#cec9c6';
     var r = Math.max(0.55, cw * 0.30);
     for (var gy = 0; gy < H; gy++) {
-      var off = (gy & 1) ? 0.5 : 0;   // 奇数行右移半格
+      var off = (gy & 1) ? 0.5 : 0;   // odd rows shift half a cell
       for (var gx = 0; gx < W; gx++) {
         if (!bitAt(gx, gy)) continue;
         g.beginPath();
@@ -244,7 +236,7 @@
       }
     }
 
-    /* 点的大小随地图宽度变，哪些点互相压住也跟着变，所以每次重画都重新合并 */
+    /* Dot size, and hence which dots overlap, depends on map width: regroup on every redraw */
     regroup();
     [].forEach.call(pins.children, function (b) {
       b._x = b._u * w; b._y = b._v * h;
@@ -253,43 +245,42 @@
     });
   }
 
-  /* 点的直径（px）参照 chenyanzhe.page：半径 = 3 + min(4, 2.4·log10(n+1))，按 900 宽的坐标算，
-     访问量到 ~45 次封顶 —— 对数而非开方，一个热门城市不会大到压住周围。
-     换算比例随地图宽度：620px（对方地图的最大宽度）时直径 5–9.6px，更窄时等比缩小，
-     手机上的点才不会相对地图大出一倍、挤成一团。 */
+  /* Diameter (px) after chenyanzhe.page: radius = 3 + min(4, 2.4·log10(n+1)) on a 900-wide canvas, capping
+     at ~45 visits. Log, not sqrt, so one busy city can't bury its neighbours. Scaled to map width: 5–9.6 px
+     at 620 px (that site's max width), proportionally smaller below, so dots don't clump on phones. */
   function sizeOf(n) {
     var r = 3 + Math.min(4, 2.4 * Math.log(n + 1) / Math.LN10);
     return Math.max(3, 2 * r * Math.min(w, 620) / 900);
   }
 
-  /* 合并互相压住的点。接口按城市计数，同一片地方会有好几个名字（香港、东涌、上水；
-     深圳的宝安、固戍），1° 之内挤着五六个点，在地图上还不到 2px，鼠标只摸得到最上面那个。
-     所以按屏幕距离分组：两点间距小于半径之和再加 2px 就并成一个点，
-     大小按合计次数，悬停时列出组里每个城市。
-     贪心：按访问量从多到少，只和每组的第一个点（种子）比距离，点就落在种子上 ——
-     不会 A 挨 B、B 挨 C 地连成一长串，也不会把点挪到两座城市中间的空地上。 */
+  /* Merge dots that cover each other: one place can report several names (Hong Kong, Tung Chung, Sheung Shui;
+     Shenzhen districts) that land px apart, leaving only the top dot hoverable. Merge when one centre lies
+     inside the other dot (distance < larger radius); size by total, tooltip lists each city. Touching dots stay apart.
+     Compare with the seed's own size, not the group total, or groups snowball (Beijing swallowing
+     Shijiazhuang and Zhengzhou, LA absorbing the Bay Area). Greedy by count, matching only each group's seed
+     and keeping the dot on it: no A-B-C chains, no dot drifting into the gap between cities. */
   var POINTS = [];
   function regroup() {
     var groups = [];
     POINTS.forEach(function (p) {
       for (var i = 0; i < groups.length; i++) {
         var g = groups[i];
-        if (Math.hypot((p.u - g.u) * w, (p.v - g.v) * h) < (sizeOf(g.n) + sizeOf(p.d.n)) / 2 + 2) {
+        if (Math.hypot((p.u - g.u) * w, (p.v - g.v) * h) < Math.max(sizeOf(g.n0), sizeOf(p.d.n)) / 2) {
           g.n += p.d.n; g.list.push(p.d);
           return;
         }
       }
-      groups.push({ u: p.u, v: p.v, n: p.d.n, list: [p.d] });
+      groups.push({ u: p.u, v: p.v, n: p.d.n, n0: p.d.n, list: [p.d] });
     });
     pins.textContent = '';
     tip.hidden = true; tip._pin = null;
     groups.forEach(function (g) { pins.appendChild(makePin(g)); });
   }
 
-  /* 按"多久前访问"着色：本周内是页面的主蓝，一个月淡成浅蓝，此后渐隐，半年及以上完全透明。
-     三个锚点把刻度分成两臂，每臂内部按对数插值 —— 一周到一个月、
-     一个月到半年，跨度差了好几倍，线性的话前一臂几乎看不出过渡。 */
-  var WEEK = 168, MONTH = 720, HALF_YEAR = 4320;   // 小时
+  /* Colour by recency: page blue within a week, light blue at a month, then fading out, invisible from six
+     months. Two arms (week→month, month→half year), each log-interpolated: their spans differ several-fold,
+     so linear would hide the first transition. */
+  var WEEK = 168, MONTH = 720, HALF_YEAR = 4320;   // hours
   function heat(ago) {
     if (ago <= WEEK) return 0;
     if (ago >= HALF_YEAR) return 1;
@@ -297,10 +288,10 @@
       ? 0.5 * Math.log(ago / WEEK) / Math.log(MONTH / WEEK)
       : 0.5 + 0.5 * Math.log(ago / MONTH) / Math.log(HALF_YEAR / MONTH);
   }
-  /* 前一臂（0–0.5）用 color-mix 从主蓝过渡到浅蓝；颜色本身留在 CSS 变量里，JS 只算比例。
-     浏览器不支持 color-mix 时这条内联样式整条作废，退回样式表里的单色 --vmap-pin。
-     后一臂（0.5–1）不再变色，而是整体淡出（fadeOf → --fade）：
-     若把颜色混向 transparent，点是透明了，外面那圈描边却还在，会剩一个空心圆。 */
+  /* First arm (0–0.5): color-mix from main to light blue; colours stay in CSS vars, JS only computes the ratio.
+     Without color-mix support the inline style is dropped and the stylesheet's --vmap-pin applies.
+     Second arm (0.5–1): fade the whole pin (fadeOf → --fade); mixing toward transparent would leave the
+     outline behind as a hollow ring. */
   function heatColor(t) {
     return 'color-mix(in oklab, var(--vmap-mid) ' + (Math.min(t, 0.5) * 200).toFixed(1) + '%, var(--vmap-hot))';
   }
@@ -318,11 +309,13 @@
     return Math.round(h / 720) + ' mo ago';
   }
 
-  /* 中文页面上的城市名。接口给的是 Cloudflare 的英文城市名，没有译名可查，只能列在这里：
-     线上已出现过的城市全部收录，另补一批常见城市；不在表里的照旧显示英文。
-     国家/地区名不用列，交给浏览器自带的 Intl.DisplayNames（CLDR 简称：CN → 中国）。 */
+  /* City names on the Chinese page. The Worker looks up Chinese names for new cities and returns them as zh
+     (toChinese in worker/src/index.js), and area_zh for merged areas, so this table rarely needs additions.
+     It overrides the automatic names: fix an unwanted one here (a transliterated Redwood City, "Tokyo
+     Metropolis" for Tokyo). It also covers the minutes before a lookup finishes; English is the last resort.
+     Country/region names come from Intl.DisplayNames (CLDR short names), not this table. */
   var CITY_ZH = {
-    // 线上已出现过的
+    // seen live
     'Singapore': '新加坡', 'Shanghai': '上海', 'Hangzhou': '杭州',
     'Jiaxing': '嘉兴', 'Nanjing': '南京', 'Hefei': '合肥', 'Beijing': '北京', 'Tianjin': '天津',
     'Taiyuan': '太原', 'Zhengzhou': '郑州', 'Shijiazhuang': '石家庄', 'Hohhot': '呼和浩特',
@@ -340,7 +333,8 @@
     'Santa Clara': '圣克拉拉', 'Palo Alto': '帕洛阿尔托', 'Moses Lake': '摩西湖',
     'Montréal': '蒙特利尔', 'Beauharnois': '博阿尔努瓦',
     'Caracas': '加拉加斯', 'Ciudad Guayana': '圭亚那城', 'Managua': '马那瓜', 'Cali': '卡利',
-    // 常见城市，备着
+    'Nagoya': '名古屋', 'Redwood City': '红木城', 'Gallatin': '加勒廷', 'Soacha': '索阿查',
+    // common cities, in reserve
     'Shenzhen': '深圳', 'Foshan': '佛山', 'Zhuhai': '珠海', 'Macau': '澳门', 'Macao': '澳门',
     'Suzhou': '苏州', 'Wuxi': '无锡', 'Ningbo': '宁波', 'Shaoxing': '绍兴', 'Wenzhou': '温州',
     'Chengdu': '成都', 'Chongqing': '重庆', "Xi'an": '西安', 'Changsha': '长沙', 'Xiamen': '厦门',
@@ -367,13 +361,13 @@
   var REGION_ZH = null;
   try { REGION_ZH = new Intl.DisplayNames(['zh-CN'], { type: 'region', style: 'short' }); } catch (e) {}
 
-  /* 港澳台和内地一样写成中国：英文 "Hong Kong, CN"、"Taipei, CN"，中文「香港，中国」「台北，中国」。
-     不能像其他国家那样写 HK、TW 或「香港」「台湾」，读起来像是与中国并列的国家。
-     只改显示：Cloudflare 报的原始代码照旧用来并区（见下面的 WHOLE） */
+  /* HK, MO and TW display as China like the mainland ("Hong Kong, CN", "Taipei, CN", same in Chinese):
+     HK/TW or a bare region name would read as a country alongside China. Display only: the raw
+     Cloudflare code still drives merging (WHOLE below) */
   var IN_CN = { HK: 1, MO: 1, TW: 1 };
-  /* 中文写成「广州，中国」，英文 "Guangzhou, CN"；城市与国家同名时只写一次（新加坡） */
+  /* "Guangzhou, CN" (full-width comma in Chinese); a city named like its country appears once (Singapore) */
   function placeName(d, chinese) {
-    var city = chinese ? CITY_ZH[d.city] || d.city : d.city, sep = chinese ? '，' : ', ';
+    var city = chinese ? CITY_ZH[d.city] || d.zh || d.city : d.city, sep = chinese ? '，' : ', ';
     var cc = IN_CN[d.cc] ? 'CN' : d.cc;
     if (!chinese) return city + sep + cc;
     var region = cc;
@@ -385,8 +379,8 @@
     return placeName(d, chinese) + ' \u00b7 ' + d.n + (chinese ? ' 次访问' : d.n === 1 ? ' visit' : ' visits') +
       (typeof d.ago === 'number' ? ' \u00b7 ' + agoText(d.ago) : '');
   }
-  function agoOf(d) { return typeof d.ago === 'number' ? d.ago : Infinity; }   // 旧版接口没有 ago，排到最后
-  /* 一组点的说明：每个城市一行，最近来过的排在最前；超过 8 个只列最近的 7 个 */
+  function agoOf(d) { return typeof d.ago === 'number' ? d.ago : Infinity; }   // old API has no ago: sort last
+  /* Group label: one line per city, most recent first; over 8, list only the latest 7 */
   function groupLabel(g, sep) {
     var all = g.list.slice().sort(function (a, b) { return agoOf(a) < agoOf(b) ? -1 : agoOf(a) > agoOf(b) ? 1 : 0; });
     var list = all.length > 8 ? all.slice(0, 7) : all;
@@ -403,8 +397,8 @@
   document.addEventListener('languagechange', updateLanguage);
   updateLanguage();
 
-  /* 提示框以点为中心，但左右不出地图：多行的提示比单个城市宽得多，
-     落在美西、东亚边上的点会把它顶出纸面 */
+  /* Centre the tooltip on the dot but keep it within the map: multi-line tips are much wider and would
+     overflow at the US West Coast or East Asia edges */
   function placeTip() {
     var p = tip._pin, half = tip.offsetWidth / 2;
     tip.style.left = Math.max(half, Math.min(w - half, p._x)) + 'px';
@@ -421,16 +415,16 @@
     var b = document.createElement('button');
     b.type = 'button';
     b.className = 'vmap-pin';
-    b._u = g.u;                  // 在整张图上的相对位置；像素坐标由 draw() 按视图换算
+    b._u = g.u;                  // relative position on the map; draw() converts to px
     b._v = g.v;
     b._group = g;
     b.style.setProperty('--s', sizeOf(g.n).toFixed(1) + 'px');
     b.setAttribute('aria-label', groupLabel(g, '; '));
-    // 按组里最近的一次访问着色；旧版接口没有 ago 字段时不着色，保持单色，页面不会坏
+    // Colour by the group's latest visit; the old API (no ago) stays single-colour without breaking
     var ago = Math.min.apply(null, g.list.map(agoOf));
     if (ago < Infinity) {
       var t = heat(ago);
-      b.style.color = heatColor(t);               // 圆点取 currentColor
+      b.style.color = heatColor(t);               // the dot uses currentColor
       b.style.setProperty('--fade', fadeOf(t).toFixed(3));
     }
     b.addEventListener('mouseenter', function () { showTip(b); });
@@ -441,8 +435,8 @@
   }
 
   function build() {
-    /* 淡到看不见的点（半年以上没来过）直接不画：既不该是一个摸得到的按钮，
-       也不能被并进附近的点里，把它的城市名带进别人的提示 */
+    /* Drop fully faded dots (no visit in six months): they shouldn't be focusable buttons, nor merge into
+       a neighbour and put their city in its tooltip */
     POINTS = DATA.filter(function (d) {
       return typeof d.ago !== 'number' || fadeOf(heat(d.ago)) >= 0.03;
     }).sort(function (a, b) { return b.n - a.n; }).map(function (d) {
@@ -455,21 +449,22 @@
     if (sec) sec.removeAttribute('hidden');
   }
 
-  /* 同一座城市会被拆成好几个名字：Cloudflare 按 IP 库定位，有的 IP 只精确到城市（Hong Kong），
-     有的精确到区（东涌、上水；深圳的宝安、固戍）。显示前并回所属城市 ——
-     次数相加，取最近一次访问，位置放在次数最多的那个区上。数据库里的原始记录不动。
-     香港、澳门整个就是一座城，报的是哪个区都并成一个；台湾也整个并成一个点，不再分台中、新竹这些城市 */
-  var WHOLE = { HK: 'Hong Kong', MO: 'Macau', TW: 'Taiwan' };
-  var PARENT = {
-    "Bao'an|CN": 'Shenzhen', 'Gushu|CN': 'Shenzhen', 'Nanshan|CN': 'Shenzhen', 'Futian|CN': 'Shenzhen',
-    'Longgang|CN': 'Shenzhen', 'Longhua|CN': 'Shenzhen', 'Luohu|CN': 'Shenzhen',
-    'Jurong West|SG': 'Singapore', 'Stodůlky|CZ': 'Prague'
-  };
+  /* A city can arrive under several names; merge them for display: counts add up, latest visit wins,
+     position from the row with most visits. Stored rows are untouched. The level comes from the Worker's
+     `area` (CN prefecture, US metro area, Tokyo; see AREA in worker/src/index.js); this only groups by it.
+     HK, MO and SG are single cities, so any district merges into one; TW is one point too (no Taichung, Hsinchu).
+     PARENT covers stray districts in countries the Worker doesn't look up */
+  var WHOLE = { HK: 'Hong Kong', MO: 'Macau', SG: 'Singapore', TW: 'Taiwan' };
+  var PARENT = { 'Stodůlky|CZ': 'Prague' };
   function mergeDistricts(rows) {
     var byKey = {}, merged = [];
     rows.forEach(function (d) {
-      var city = WHOLE[d.cc] || PARENT[d.city + '|' + d.cc] || d.city, k = city + '|' + d.cc, m = byKey[k];
+      var city = WHOLE[d.cc] || PARENT[d.city + '|' + d.cc] || d.area || d.city, k = city + '|' + d.cc, m = byKey[k];
       if (!m) { m = byKey[k] = { city: city, cc: d.cc, lat: d.lat, lon: d.lon, n: 0, top: 0 }; merged.push(m); }
+      // Chinese name: the city's own row uses its zh; a merged district uses the Worker's area_zh (own row wins).
+      // A district's own name (Bao'an District) must never name the whole city
+      var zh = d.city === city ? d.zh : d.area === city ? d.area_zh : null;
+      if (zh && (d.city === city || !m.zh)) m.zh = zh;
       if (d.n > m.top) { m.top = d.n; m.lat = d.lat; m.lon = d.lon; }
       m.n += d.n;
       if (typeof d.ago === 'number') m.ago = typeof m.ago === 'number' ? Math.min(m.ago, d.ago) : d.ago;
@@ -478,7 +473,7 @@
   }
 
   function start(rows) {
-    if (!rows || !rows.length) return;     // 没数据就整块不出现
+    if (!rows || !rows.length) return;     // no data: the section never appears
     DATA = mergeDistricts(rows);
     build();
     draw();
@@ -494,6 +489,6 @@
     fetch(API_READ, { headers: { accept: 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(start)
-      .catch(function () { /* 接口挂了就当没这一节 */ });
+      .catch(function () { /* API down: behave as if the section didn't exist */ });
   }
 })();

@@ -1,9 +1,8 @@
-/* GitHub star 数。给链接加 data-gh-stars="owner/name"，这里去同源的
-   /api/stars 取数（由 Cloudflare Worker 代理并缓存一小时），拿到后在链接
-   文字后面追加 "★ 127"。
+/* GitHub star counts. Links with data-gh-stars="owner/name" get "★ 127" appended, fetched from same-origin
+   /api/stars (proxied and cached for 1 h by the Worker).
 
-   取不到 —— 本地预览没有 Worker、接口挂了、仓库不在白名单 —— 就什么都
-   不做，链接保持原样。宁可不显示，也不要出现空星号或 "★ NaN"。 */
+   On any failure (no Worker in local preview, API down, repo not allow-listed) the link is left as is:
+   better nothing than an empty star or "★ NaN". */
 (function () {
   var links = document.querySelectorAll('[data-gh-stars]');
   if (!links.length || !window.fetch) return;
@@ -13,7 +12,7 @@
     return (n / 1000).toFixed(n < 10000 ? 1 : 0).replace(/\.0$/, '') + 'k';
   }
 
-  // 同一个仓库在页面上出现多次时只请求一次
+  // one request per repo, however many links point to it
   var pending = {};
   function stars(repo) {
     if (!pending[repo]) {

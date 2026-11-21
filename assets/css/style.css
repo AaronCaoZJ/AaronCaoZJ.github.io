@@ -1,14 +1,11 @@
 /* ============================================================
    Zhijun Cao — personal site
-   配色沿用简历 (LaTeX) 中的莫兰迪色板，保持视觉同源。
-   全站仅浅色一套主题。
+   Palette follows the CV's (LaTeX) Morandi colors. Light theme only.
    ============================================================ */
 
-/* ---------- 自托管字体 ----------
-   不用 Google Fonts CDN：fonts.googleapis.com 在中国大陆不可达，
-   会阻塞渲染。字体文件随站点一起发布，全球访客看到同一套排版。
-   正文用 Gelasio（见下方与 --serif）；Charis 与 Inter 目前都没有用到，浏览器不会下载，
-   @font-face 留着，想换回只需改 --serif 并改 preload。 */
+/* ---------- self-hosted fonts ----------
+   No Google Fonts CDN: unreachable in mainland China, and it blocks rendering.
+   Inter and Charis are unused spares (never downloaded), kept for switching back. */
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -37,10 +34,9 @@
   font-display: swap;
   src: url('../fonts/Charis-700.woff2') format('woff2');
 }
-/* Gelasio：照 Georgia 设计的开源衬线体（SIL OFL 1.1，许可证随附 OFL-Gelasio.txt），字形、字宽与 Georgia 兼容，
-   换上后行宽、换行位置基本不变。可变字体，字重 400–700 连续可调 —— Georgia 只有 400 / 700 两档，
-   样式里写 600、650 都会落成 700。从 Google Fonts 仓库的原件裁成西文（含扩展拉丁，地图地名要用）再转 woff2。
-   斜体只在首屏以下的 venue 行用，不预加载 */
+/* Gelasio: OFL Georgia clone (license in OFL-Gelasio.txt) with matching metrics, so line breaks don't
+   shift; variable 400–700, unlike Georgia's 400/700. Latin subset incl. Latin Extended (map place names).
+   Italic is only used below the fold: not preloaded. */
 @font-face {
   font-family: 'Gelasio';
   font-style: normal;
@@ -55,9 +51,8 @@
   font-display: swap;
   src: url('../fonts/Gelasio-Italic-var.woff2') format('woff2');
 }
-/* 中文：系统的苹方（Windows 上是微软雅黑），字形缩到 95%。汉字撑满整个字框，英文字母只占其中一部分，
-   同样 17px 的中文比旁边的英文大一圈、显得又大又方；size-adjust 只缩汉字，英文、数字和版面都不动。
-   unicode-range 只认中日韩文字和全角标点，别的字符照旧交给 Georgia */
+/* Chinese: system PingFang / YaHei at 95%, since Han glyphs fill the em box and look oversized next to
+   Latin at the same px. unicode-range limits it to CJK and full-width punctuation. */
 @font-face {
   font-family: 'ZH Adj';
   font-weight: 400;
@@ -74,91 +69,83 @@
 }
 
 :root {
-  --accent: #4d6e8a;   /* 莫兰迪雾霾蓝 */
-  --heading: #34526b;  /* 比 accent 深一档：章节标题、News 描边 */
-  --high:   #c4876e;   /* 莫兰迪暖赤陶 —— 已发表的 venue、作者星号 */
+  --accent: #4d6e8a;   /* Morandi haze blue */
+  --heading: #34526b;  /* darker accent: section headings, bracket-link hover */
+  --high:   #c4876e;   /* Morandi terracotta: published venues, author stars */
 
-  /* Show Lab logo 四色 —— 见 .shx 与页首求职句 */
+  /* Show Lab logo colors: .shx (the "Show" in Show-Harness); red also for the hero invitation's links */
   --sl-blue:   #669ED3;
   --sl-green:  #67A651;
   --sl-red:    #D85E5D;
   --sl-orange: #F3AA68;
-  --link:   #4d6e8a;   /* 链接与主题雾霾蓝同色：白底上对比度 5.4:1（原先的石青 #5c8299 只有 4.1，不到 4.5 的及格线） */
-  --rule:   #c9d3dd;   /* 浅蓝灰 —— 分隔线 */
-  --subtle: #7b8794;   /* 蓝灰 —— 次要文字 */
+  --link:   #4d6e8a;   /* same as accent: 5.4:1 on white, passes the 4.5:1 AA bar */
+  --rule:   #c9d3dd;   /* light blue-gray: dividers */
+  --subtle: #7b8794;   /* blue-gray: secondary text */
 
-  --desk:   #eeeeee;   /* 浅灰：首页白纸外面的衬底，同 jemdoc 一系学术主页（如 baizechen.site）的灰底 */
-  --bg:     var(--desk);   /* 页面底色：首页是灰；相册页没有白纸，改成白（见相册页的样式） */
+  --desk:   #eeeeee;   /* gray backdrop behind the homepage sheet, jemdoc-style */
+  --bg:     var(--desk);   /* page background; the gallery has no sheet and sets it to white (gallery/index.html :root { --bg }) */
   --fg:     #232a31;
   --card:   #ffffff;
-  --card-b: #dbe3eb;   /* 所有圆角框统一用这条描边 */
+  --card-b: #dbe3eb;   /* shared border for all rounded boxes */
   --chip:   #eef2f6;
 
-  /* 英文用 Gelasio（Georgia 的开源同款，见文件开头），字重可以任意取；加载前和加载失败时
-     退回系统的 Georgia —— 两者字宽兼容，换字体那一下不会跳行。
-     中文使用系统字体，避免额外下载大型字库；'ZH Adj' 是缩到 95% 的苹方 / 微软雅黑（见文件开头），
-     找不到时退回原样大小的。试过宋体：笔画的细横太细，正文字号下发虚，退回苹方 */
+  /* Fallback Georgia is metric-compatible (no reflow on swap). Chinese uses system fonts to avoid a
+     large download ('ZH Adj' = 95% PingFang / YaHei); Songti looked fuzzy at body size. */
   --serif: "Gelasio", Georgia, "ZH Adj", "PingFang SC", "Microsoft YaHei", serif;
-  /* 全站统一用衬线体：--sans 直接指向 --serif，原先用无衬线的十几处
-     （标题、导航、日期、卡片标题、方括号链接……）一处改动全部跟过来。
-     要恢复 Inter，把这一行改回
+  /* All-serif site: --sans aliases --serif. To restore Inter, set it to
      "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif
-     并在两个页面加回 Inter 的 preload 即可；@font-face 仍保留着。 */
+     and re-add the Inter preload on both pages. */
   --sans: var(--serif);
 
-  /* 字号只有五档。原先散落着 17 种，13 / 13.2 / 13.5 / 13.8 / 14 / 14.8 这类
-     只差零点几像素，肉眼分不出层级，只显得乱。新增样式请从这五档里选。 */
-  --fs-xs: 13px;   /* 地图提示、页脚 */
-  --fs-sm: 15px;   /* 作者、职位、列表、venue、日期、方括号链接、资助说明、导航、联系方式、News 展开按钮、相册标题旁的中文小字 */
-  --fs-md: 16px;   /* 正文、News 条目、论文与经历标题。17px 时比 jemdoc 页（Georgia 16px）满一圈，显得挤 */
-  --fs-lg: 20px;   /* 章节标题 */
-  --fs-xl: 34px;   /* 名字 */
+  /* Only five font sizes; pick from these for new styles. */
+  --fs-xs: 13px;   /* map tooltip, footer */
+  --fs-sm: 15px;   /* secondary text: authors, venues, dates, bracket links, nav, contacts, etc. */
+  --fs-md: 16px;   /* body and titles. 17px looked crowded next to jemdoc pages (Georgia 16px) */
+  --fs-lg: 20px;   /* section headings */
+  --fs-xl: 34px;   /* name */
 
-  /* 全站只有一种粗体字重：链接、名字、章节与论文标题、强调、自己的署名都用它。
-     Gelasio 是可变字体，400–700 之间任意取值都是真实字形；中文 ≥600 落在苹方中粗（见文件开头）。
-     原先分 600 / 650 / 700 三档，在 Georgia 下全变成 700，整页近一半文字是粗体，显得挤 */
+  /* The site's single bold weight. Gelasio is variable, so 670 is a real weight;
+     Chinese ≥600 maps to PingFang Semibold ('ZH Adj' above). */
   --bold: 670;
 
-  --w: 860px;   /* 正文栏的最大宽度：首页、相册页和相册的列表模式共用 */
-  --radius: 6px;   /* 方框的统一圆角：首页的纸面、头像、论文缩略图和相册页的照片都用这一个，角的弧度一致 */
-  /* 首页的纸面（见「正文纸面」）：内边距比普通的两侧留白（22px）宽，纸就跟着加宽（再加两侧 1px 描边），
-     里面的文字栏仍是 --w − 44px = 816px，与相册页的正文同宽，页首那笔账不变。
-     纸面本身 860 − 44 + 160 + 2 = 978px；窗口窄了纸面和内边距一起收（1000px 宽时 70px，最窄的 700px 时 49px），
-     文字栏跟着变窄、重新换行 */
+  --w: 860px;   /* max text column width: homepage, gallery and gallery list view */
+  --radius: 6px;   /* shared corner radius: sheet, avatar, thumbnails, gallery photos */
+  /* Homepage sheet (main.wrap): wider padding widens the sheet, keeping the text column at
+     --w − 44px = 816px like the gallery. Sheet = 860 − 44 + 160 + 2 = 978px. */
   --sheet-pad: clamp(48px, 7vw, 80px);
-  /* 页面的最小宽度，与两个页面 <head> 里 viewport 脚本的 MIN 同一个数。比它宽：按窗口的真实宽度排（半屏、
-     iPad 分屏都是）；比它窄就不再往里挤 —— 头像和左边的文字挤不下了。手机上按 700px 排好、整体缩到屏幕宽，
-     不另做手机排版；电脑上窗口比它还窄（很少见）出横向滚动条 */
+  /* Minimum page width; must match MIN in the viewport script in both pages' <head>. Below it the hero
+     doesn't fit, so phones lay out at 700px and scale down. */
   --page-min: 700px;
   --sheet-w: calc(var(--w) - 44px + 2 * var(--sheet-pad) + 2px);
 
-  /* 悬停转动的整体力度：最大转角与放大比例。相册的照片和首页的头像都用这一组，各自再乘一个倍数 --hover-k */
+  /* Hover tilt strength (max angle, zoom), shared by gallery photos and the avatar; each scales it by --hover-k.
+     --hover-shadow is their common hover shadow: a tight contact layer for the edge plus a soft drop. */
   --hover-tilt: 6deg;
   --hover-zoom: .02;
+  --hover-shadow: 0 1px 3px rgba(45,42,41,.08), 0 6px 16px rgba(45,42,41,.18);
+  --ease-focus: cubic-bezier(.25, .8, .3, 1);   /* every focus entrance: pieces, sections, avatar, gallery photos */
 
-  /* 明确声明只支持浅色：阻止浏览器或系统的“强制深色模式”
-     擅自反转配色（那种自动反转的效果通常很糟）。 */
+  /* Light only: opt out of browser/OS forced dark mode. */
   color-scheme: light;
 
-  /* 半透明：导航以外的组件只用这一层底色，不模糊、不做高光 */
+  /* Translucent fill for non-nav components: no blur, no highlight */
   --glass-fill: rgba(255, 255, 255, .20);
   --glass-cast: rgba(35, 52, 70, .09);
-  --text-halo: rgba(255, 255, 255, .85);   /* 导航文字的淡描边：压在模糊的深色内容上也看得清 */
-  /* 导航的悬停水滴；相册页的放大镜开着、招手提示时垫的也是它，三处同一个颜色（说明见「悬停水滴」） */
+  --text-halo: rgba(255, 255, 255, .85);   /* faint halo keeps nav text legible over blurred dark content */
+  /* Nav hover blob; also the loupe toggle's pressed and hint fill (see .liquid-lens) */
   --lens: color-mix(in srgb, var(--accent) 10%, var(--bg));
-  --lg-spring: cubic-bezier(.3, 1.45, .5, 1);   /* 带回弹的缓动：放大镜、邮箱浮层的出现 */
+  --lg-spring: cubic-bezier(.3, 1.45, .5, 1);   /* springy easing: loupe and email popover entrance, hover blob slide */
 }
 
 * { box-sizing: border-box; }
 
-/* HTML 的 hidden 属性只有 UA 样式表级别的优先级，会被下面任何显式
-   display 声明（如 .news li 的 display:grid）覆盖，必须显式兜底。 */
+/* [hidden] has only UA-level priority and loses to any explicit display below. */
 [hidden] { display: none !important; }
 
 html {
   scroll-behavior: smooth; scroll-padding-top: 72px;
-  /* iOS Safari 会自作主张放大文字（横屏时，或把一份文档当成桌面版时）。关掉，字号只听样式表的；
-     glass.js 把整页截成 SVG 图时也吃这条，截图与页面的排版才对得上 */
+  /* Stop iOS Safari's text inflation (landscape, desktop-mode pages). glass.js capturePage() relies on
+     it too, so the SVG snapshot matches the page layout. */
   -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
 }
 
@@ -168,10 +155,10 @@ body {
   color: var(--fg);
   font-family: var(--serif);
   font-size: var(--fs-md);
-  line-height: 1.45;   /* 全站唯一的行距，论文区也跟它走。Georgia 系字体小写字母高，1.35 显得挤；中文比英文多 0.15 */
+  line-height: 1.45;   /* the only line height; 1.35 felt cramped with Georgia's tall x-height. zh-CN: 1.6 */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* 兜底：极长的 URL 或未断行的长词不会把页面撑出横向滚动 */
+  /* long URLs or unbroken words must not cause horizontal scroll */
   overflow-wrap: break-word;
 }
 
@@ -188,32 +175,25 @@ img { max-width: 100%; }
 
 .wrap { max-width: var(--w); margin: 0 auto; padding: 0 22px; }
 
-/* ---------- 顶部导航 ----------
-   整条贴在视口顶部，学 iOS 26/27 的柔和滚动边缘（scroll edge effect 的 soft 样式）：导航没有底板，
-   下面垫一层从上往下渐弱的模糊 .nav-edge —— 内容滚到导航底下时，越靠上越糊、往下渐渐清楚，
-   再叠一层同样渐隐的底色，导航的字压得住。导航与下面的白纸同宽。
-
-   渐变模糊的做法：四层叠起来，模糊半径逐层加倍（1 / 2 / 4 / 8px），每层用遮罩只留上面一截，
-   越强的层留得越短；后一层的 backdrop-filter 取到的是前几层已经糊过的画面，所以越往上叠得越多。
-   注意 .nav-edge 和 .nav 自己都不能带 opacity、filter、mask —— 带了就成了 backdrop 的根，
-   里面几层只能糊到它自己内部的东西（什么都没有）。所以出现时是模糊半径从 0 过渡上去，而不是淡入整层。
-   页面在顶部时导航下面只有纯色底，模糊看不出区别，却要 GPU 每帧多做几遍：默认关，
-   滚动之后（nav.js 给导航加 .scrolled）才打开。
-
-   相册页的放大镜仍是液态玻璃（glass.js），它的开关和语言按钮一样，是导航右端的一颗普通圆钮。 */
+/* ---------- top nav ----------
+   Sticky, no backing (iOS 26 soft scroll edge): .nav-edge adds a progressive blur plus a fading tint.
+   Blur = four layers, radius 1/2/4/8px, each masked to a shorter top band; each backdrop-filter sees
+   the layers before it, so blur accumulates upward.
+   .nav and .nav-edge must not get opacity, filter or mask: that creates a backdrop root and the layers
+   blur nothing, so the blur radius is transitioned instead of fading the layer.
+   Blur is off until .nav.scrolled (nav.js): invisible at the top but costs GPU every frame. */
 .nav {
   position: sticky; top: 0; z-index: 50;
   --nav-gap: 4px;
   display: flex; align-items: center; gap: var(--nav-gap);
   height: 60px;
-  /* 左右跟着白纸的两边，再往里收 16px：第一个入口的悬停底、右端圆钮的外缘离纸边各 16px，不贴着。
-     纸面宽度与 main.wrap 同一个式子（窗口窄时是 100% − 28px）。以前对齐纸里的文字栏，两侧各让出一个纸面内边距，
-     手机上（按 700px 排）导航只剩 570px 宽，相册页的放大镜和入口挤在一起 */
+  /* Sheet edges inset 16px (same width formula as main.wrap). Not the text column: at 700px that
+     leaves only 570px and crowds the gallery loupe toggle. */
   padding: 0 calc((100% - min(var(--sheet-w), 100% - 28px)) / 2 + 16px);
 }
 .nav-edge {
   position: absolute; left: 0; right: 0; top: 0; z-index: -1;
-  height: calc(100% + 26px);      /* 比导航高出一截：模糊在导航下沿之外再渐渐消失 */
+  height: calc(100% + 26px);      /* blur fades out below the nav's bottom edge */
   pointer-events: none;
 }
 .nav-edge > i, .nav-edge::after { position: absolute; inset: 0; }
@@ -226,7 +206,7 @@ img { max-width: 100%; }
 .nav.scrolled .nav-edge > i:nth-child(2) { -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
 .nav.scrolled .nav-edge > i:nth-child(3) { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .nav.scrolled .nav-edge > i:nth-child(4) { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-/* 底色：页面底色从上往下渐隐，压在任何内容上导航的字都看得清 */
+/* tint: page color fading downward, keeps nav text legible over anything */
 .nav-edge::after {
   content: '';
   background: linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent),
@@ -235,13 +215,12 @@ img { max-width: 100%; }
 }
 .nav.scrolled .nav-edge::after { opacity: 1; }
 
-/* 液态玻璃的 WebGL 画布（glass.js 生成）：现在只有相册页的放大镜用 */
+/* liquid-glass WebGL canvas (created by glass.js); only the gallery loupe uses it */
 .lg-refract {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; pointer-events: none;
 }
-/* 相册页的放大镜（glass.js 生成）：圆形，导航里的开关打开后常驻。鼠标下跟随光标、不挡点击；
-   触屏上没有光标，改为用手指拖动（脚本给它打开 pointer-events）。
-   位置由脚本每帧写 translate 属性，出现 / 消失用 opacity 与 scale（scale 只绕自身中心，不影响位置） */
+/* Gallery loupe (glass.js). Follows the mouse without catching clicks; dragged on touch (script enables
+   pointer-events). Script writes translate per frame, so show/hide uses opacity and scale. */
 .lg-loupe {
   position: fixed; left: 0; top: 0; z-index: 45; pointer-events: none;
   width: 170px; height: 170px; border-radius: 999px;
@@ -254,8 +233,7 @@ img { max-width: 100%; }
 .lg-loupe.on { opacity: 1; scale: 1; }
 .lg-loupe.drag { pointer-events: auto; cursor: grab; }
 @media (prefers-reduced-motion: reduce) { .lg-loupe { transition: opacity .15s ease; scale: 1; } }
-/* 相册页简介下面的显示模式开关（胶卷 / 列表）：一条分段开关，两个选项并排，当前的那个用主题蓝
-   高亮。底子是一层半透明白，带描边和淡淡的投影 */
+/* Gallery view switch (film / list): segmented control, active option in accent blue */
 .view-switch {
   display: inline-flex; gap: 2px; margin-top: 12px; padding: 3px;
   border: 1px solid var(--rule); border-radius: 999px;
@@ -273,31 +251,27 @@ img { max-width: 100%; }
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 .view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* 入口：纯文字，悬停时垫一块淡淡的主题色圆角底；脚本在时换成下面跟着指针滑动的水滴 */
+/* Nav links: plain text with a faint accent pill on hover; with JS, the sliding .liquid-lens replaces it */
 .nav .wrap {
   display: flex; align-items: center; gap: 2px;
   flex: 1 1 auto; min-width: 0; margin: 0; padding: 0;
-  /* 盖掉 .wrap 的 max-width（860px）：导航与纸同宽（978px）后，入口这一排被它卡住、填不满，
-     右端的圆钮离纸边空出一截，相册页的放大镜露出时也不是挤入口这一排，而是把语言按钮往右推 */
+  /* Override .wrap's 860px cap so the row fills the 978px nav; else the right-end buttons fall short. */
   max-width: none;
 }
-/* 悬停水滴（nav.js 的 liquidLens）：一颗灰色的小水滴，跟着指针在入口和右端的圆钮之间滑，
-   换位时沿移动方向被拉长、再回弹落定，到圆钮上变成圆的。它绝对定位在 .nav 里（入口那一排不设定位，
-   入口和圆钮的 offsetLeft 才都相对于导航）；z-index -1 且排在渐变模糊之后：盖住模糊、垫在文字之下 */
+/* Hover blob (nav.js liquidLens), positioned in .nav: the links row must stay unpositioned so
+   offsetLeft is relative to .nav. z-index -1 after .nav-edge: above the blur, below the text. */
 .liquid-lens {
   position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none;
   border-radius: 999px; opacity: 0;
-  /* 平的一块雾霾蓝灰，不描边、不投影、不打高光。主题色按 10% 混进页面底色，而不是写死一个灰：首页衬底是灰（#eee）、
-     相册页是白，两处都比底色深一档，读起来是同一种颜色（相册页上约等于 --chip）。试过正文色混出的中性灰，
-     压在首页的灰底上又平又闷。混出来是不透明的 —— 半透明的话，滚动后导航底下被模糊的正文会从水滴里透出来，脏 */
+  /* Accent mixed into --bg, not a fixed gray, so it fits both the gray homepage and white gallery.
+     Must stay opaque, or blurred content under the nav shows through. */
   background: var(--lens);
   transition: transform .55s var(--lg-spring), width .55s var(--lg-spring),
               height .45s var(--lg-spring), opacity .25s ease;
 }
 .liquid-lens.on { opacity: 1; }
 .nav.has-lens .wrap a:hover, .nav.has-lens .language-toggle:hover, .nav.has-lens .nav-loupe:hover { background: none; }
-/* 水滴底下的字去掉白描边：描边是给压在模糊的深色内容上用的，水滴是一块不透明的浅色，用不着；
-   留着的话字的四周会多出一圈白晕，发虚 */
+/* No text halo over the opaque blob; it would only blur the glyph edges */
 .nav.has-lens .wrap a:hover, .nav.has-lens .language-toggle:hover, .nav.has-lens .nav-loupe:hover,
 .nav.has-lens .wrap a:focus-visible, .nav.has-lens .language-toggle:focus-visible, .nav.has-lens .nav-loupe:focus-visible { text-shadow: none; }
 .nav.has-lens .language-toggle:hover svg, .nav.has-lens .language-toggle:focus-visible svg { filter: none; }
@@ -306,24 +280,24 @@ img { max-width: 100%; }
   font-size: var(--fs-sm); font-weight: var(--bold); letter-spacing: .02em;
   color: var(--fg);
   padding: 6px 10px; border-radius: 999px; white-space: nowrap;
-  /* 模糊之下可能是深色照片，加一层淡描边保证可读 */
+  /* halo for legibility over blurred dark photos */
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
   transition: background .2s ease;
 }
-/* 正文的几个锚点不加粗，只有首页与相册两个页面入口是粗体：一眼分出"换页"和"本页内跳转" */
+/* Only the Home / Gallery page links are bold, to set them apart from in-page anchors */
 .nav .wrap > a:not([data-i18n="nav.home"]):not([data-i18n="nav.gallery"]) { font-weight: 400; }
 .nav a.language-pair {
-  /* 中英两种文字叠在同一格里，切换时原地交叉淡入淡出 */
+  /* both language labels share one grid cell and cross-fade in place */
   display: grid; flex: 0 0 auto; position: relative;
 }
-/* 当前不显示的那种语言脱离排版，入口只按正在显示的文字算宽度 —— 否则中文的「简介」也要占
-   「Biography」那么宽，字后面空出一大截，入口之间的距离忽大忽小 */
+/* Hidden label leaves the flow so link width follows the visible one (else the short Chinese
+   label would be as wide as "Biography" and spacing would look uneven) */
 .nav a .language-label[aria-hidden="true"] { position: absolute; }
 .nav a:hover, .language-toggle:hover, .nav-loupe:hover {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   text-decoration: none;
 }
-/* 右端的圆钮：语言切换（「文A」翻译图标，Google 翻译、Chrome 地址栏里的那个），相册页另有放大镜开关（🔍） */
+/* Right-end round buttons: language toggle (globe + badge) and, on the gallery, the loupe toggle */
 .language-toggle, .nav-loupe {
   flex: 0 0 40px; width: 40px; height: 40px; padding: 0;
   border: 0; border-radius: 999px; background: none;
@@ -333,32 +307,65 @@ img { max-width: 100%; }
   text-shadow: 0 0 3px var(--text-halo), 0 1px 2px var(--text-halo);
   transition: background .2s ease;
 }
-/* 相册页的放大镜开关，在语言按钮左边。放大镜就绪后才由 glass.js 露出（去掉 hidden）：
-   直接冒出来会把旁边顶一下，所以收起时不是 display: none，而是宽度为 0、并用负边距抵掉自己那份间距，
-   露出时平滑展开；放大镜没能启用（无 WebGL 等）时它一直收着，导航里不留空位。打开时垫一块和水滴一样的底色（见下） */
+/* glass.js unhides the loupe toggle once the loupe is ready. Hidden = zero width plus a negative margin
+   for its gap (not display: none), so it expands smoothly; stays collapsed without WebGL. */
 .language-toggle, .nav-loupe { font-size: 18px; line-height: 1; text-shadow: none; }
-/* 图标随文字色；模糊下面可能是深色照片，和入口文字一样垫一圈淡白描边 */
+/* Nav icons are centred on the inline emoji (🏠 🖼️ in the 15px links, ink ~14.5px tall) and larger: a lone line
+   globe at the emoji's exact ink height looked a size smaller than an emoji set in text. The globe (20px) runs
+   ~20% taller, counted from the top of its circle to the bottom of the badge's letters, the only part visible
+   below it; top: -2px centres that on the emoji. The 🔍, a solid glyph, looked larger than the globe at the
+   same height, so its ink matches the globe's circle alone (17px). Re-measure ink (not boxes) if the font size,
+   the badge or these numbers change.
+   Globe and badge after rlinf.org: a line globe with the target language on its lower-right corner. Stroke 1.8
+   (~1.24px at this size) and a regular-weight badge match the nav links; the globe gets the link text's halo.
+   The globe's lines are cut around the badge by an SVG mask, a pill the badge's size (one per badge width, picked
+   by the target language in the button's lang). The badge itself has no background: a page-colored one shows as
+   a patch over the frosted nav, the hover circle or the lens, and touch screens keep :hover after a tap, so a
+   hover-colored one stayed lit after switching. If the badge text, size or offset changes, update the mask rects. */
+.language-icon { position: relative; top: -2px; display: block; width: 20px; height: 20px; }
 .language-toggle svg { display: block; width: 20px; height: 20px; filter: drop-shadow(0 0 2px var(--text-halo)); }
+.language-toggle[lang="zh-CN"] .language-cut-en, .language-toggle[lang="en"] .language-cut-zh,
+.language-cut-zh-s, .language-cut-en-s { display: none; }
+/* WebKit (Safari, every iPad browser) draws emoji ~24% larger than Chrome: a 15px 🏠 has ~18px of ink, not
+   ~14.5px. The globe grows to match (23.5px), with its own holes (-s) since the badge stays 8px; the 🔍 gets
+   its own size below. Detected with a WebKit-only font keyword. */
+@supports (font: -apple-system-body) {
+  .language-icon, .language-toggle svg { width: 23.5px; height: 23.5px; }
+  .language-icon { top: -1.85px; }
+  .language-cut-zh, .language-cut-en { display: none; }
+  .language-toggle[lang="zh-CN"] .language-cut-zh-s, .language-toggle[lang="en"] .language-cut-en-s { display: inline; }
+}
+.language-badge {
+  position: absolute; right: -4px; bottom: -2.5px;
+  padding: 1px 3px;                                /* sizes the mask's pill; it must stay inside the 40px hover circle */
+  font-size: 8px; line-height: 10px; font-weight: 400; white-space: nowrap;   /* regular, like the nav links */
+}
+/* "EN" has nothing below its baseline, so its ink ends ~0.6px above "中"'s; lower it to the same line */
+.language-toggle[lang="en"] .language-badge { bottom: -3.1px; }
 .nav-loupe {
   transition: background .2s ease, flex-basis .4s cubic-bezier(.32,.72,0,1),
               width .4s cubic-bezier(.32,.72,0,1), margin .4s cubic-bezier(.32,.72,0,1),
               opacity .3s ease;
 }
 .nav .nav-loupe[hidden] {
-  display: grid !important;                     /* 盖过全局的 [hidden]，才有过渡可言 */
+  display: grid !important;                     /* beats global [hidden] so the transition can run */
   flex-basis: 0; width: 0; margin-left: calc(-1 * var(--nav-gap));
   opacity: 0; visibility: hidden; pointer-events: none;
 }
-/* 打开时：垫一块和悬停水滴一样的底色，像水滴停在了上面。以前是一圈 2px 的主题蓝，水滴改成平的一块之后，
-   圆圈的样子和它对不上。指针移上来时也保持，不被「有水滴时条目自己不画悬停底」那条清成透明 ——
-   否则底色先淡掉、水滴再滑过来，中间会空一下 */
+/* Pressed: blob fill. Kept on hover, overriding the .nav.has-lens …:hover { background: none } rule,
+   or it blinks out before the blob arrives. */
 .nav .nav-loupe[aria-pressed="true"], .nav.has-lens .nav-loupe[aria-pressed="true"]:hover {
   background: var(--lens);
 }
-/* 提示这里有个放大镜：打开相册 1 秒后（glass.js 加上 .hint，走完去掉），图标自己轻轻放大、左右晃
-   两下，像在招手 —— 形状在动比颜色在变更容易被看见；底下同时浮起、淡去一块水滴的底色，不画圈、不发光。
-   glass.js 靠按钮自己这段动画的 animationend 去掉 .hint，所以这段不能删 */
-.nav-loupe .ico { display: inline-block; }
+/* Loupe hint (motion gets noticed more than color): glass.js adds .hint ~1s after load and removes it
+   on the button's own animationend, so loupe-breathe must stay. */
+/* Ink as tall as the globe's circle (see .language-icon). Measure with the hint finished: loupe-wave scales the
+   glyph up to 1.28x. WebKit's emoji don't scale with font size (16-18px all give ~20px of ink at 2x), so it
+   gets its own size, 15.5px (~19px of ink, its globe's circle), checked at 2x like an iPad. */
+.nav-loupe .ico { display: inline-block; font-size: 17px; }
+@supports (font: -apple-system-body) {
+  .nav-loupe .ico { position: relative; top: .2px; font-size: 15.5px; }
+}
 .nav-loupe.hint { animation: loupe-breathe 1.5s ease-in-out; }
 .nav-loupe.hint .ico { animation: loupe-wave 1.5s ease-in-out; }
 @keyframes loupe-breathe {
@@ -376,7 +383,7 @@ img { max-width: 100%; }
   outline: 2px solid var(--accent); outline-offset: -3px;
 }
 .nav-divider {
-  /* 竖线两侧留出呼吸空间，避免相邻入口的悬停底色贴在线上。 */
+  /* keeps neighbors' hover fill off the line */
   flex: 0 0 0; width: 0; height: 18px; margin: 0 6px;
   border-left: 1px solid var(--rule); opacity: .85;
 }
@@ -390,22 +397,21 @@ img { max-width: 100%; }
 .language-label[aria-hidden="false"] {
   opacity: 1; visibility: visible; transform: translateY(0);
 }
-/* 系统开了"降低透明度"：不模糊，导航下面垫一条实色底 */
+/* Reduced transparency: no blur, solid underlay */
 @media (prefers-reduced-transparency: reduce) {
   .nav.scrolled .nav-edge > i { -webkit-backdrop-filter: none; backdrop-filter: none; }
   .nav-edge { height: 100%; }
   .nav-edge::after { background: var(--bg); }
 }
 
-/* ---------- 头部名片 ----------
-   头像 216px，比左侧文字（从名字顶端到联系方式底端约 175–190px）高一截，两者上下居中对齐，头像上下各多出
-   一点。240px 时上下各空出 25–33px，头像显得太大。文字栏 = 860 − 两侧留白 44 − 头像 216 − 间距 32 = 568px；英文的联系方式一行要 520px，
-   放得下。改页宽或头像前先算这一笔，不然联系方式会折成两行 */
+/* ---------- hero ----------
+   216px avatar, a bit taller than the text, vertically centered. Text column max = 816 − 216 − 32
+   = 568px, room for one line of contacts. */
 .hero {
   display: grid;
   grid-template-columns: 1fr 216px;
   gap: 32px; align-items: center;
-  /* 顶部留白取纸面的内边距：头像比左边的文字高，这一行的顶就是头像的顶，头像上方和右侧的空白一样宽 */
+  /* top = sheet padding: the avatar sets the row top, so space above it equals space to its right */
   padding: var(--sheet-pad) 0 12px;
 }
 .hero h1 {
@@ -416,24 +422,27 @@ img { max-width: 100%; }
 .hero .cn {
   font-size: var(--fs-md); color: var(--subtle); font-weight: 400;
   margin-left: 9px; letter-spacing: .06em;
-  white-space: nowrap;   /* 名字后面的另一种写法（中文名 / 英文名）不从中间断开：放不下就整个换到下一行 */
+  white-space: nowrap;   /* alternate-script name wraps as a whole, never mid-name */
 }
-/* 名字下的两行同用正文衬线体与字号，仅靠颜色/字重区分主次 */
+/* Lines under the name use body font and size; hierarchy via color/weight only */
 .hero .role {
   font-size: var(--fs-md); line-height: 1.5; color: var(--accent);
-  font-weight: var(--bold); margin: 12px 0 2px;
+  font-weight: var(--bold); margin: 12px 0;
 }
-/* 机构行与 Biography 正文同款：同字体、同字号、同字重、同颜色，行距也不另设，
-   跟着正文走（英文 1.35、中文 1.5）—— 曾单独写死 1.5 / 1.65，正文行距收紧后这段就比 Bio 松一截 */
+/* Same size as the Biography body; line height inherited (don't fix it, or it drifts from the body).
+   Italic sets the hero's invitation apart from the body text (Chinese is slanted synthetically, as in
+   the publication venue lines). */
 .hero .affil {
-  font-size: var(--fs-md); color: var(--fg);
+  font-size: var(--fs-md); color: var(--fg); font-style: italic;
   margin: 0 0 20px;
 }
+/* Emoji stay upright: a synthetic slant skews them (🖼️ turns into a parallelogram) */
+.hero .affil .emo { font-style: normal; }
+/* The invitation's two links (Gallery, email me) in Show Lab red, as the job-seeking line's keywords were */
+.hero .affil a { color: var(--sl-red); }
 .hero p { margin: 0 0 9px; font-size: var(--fs-md); }
-/* 头像容器：去噪动画的画布覆盖在图片之上，播完隐藏。
-   悬停时朝指针的方向小幅转动、稍微放大，和相册跑马灯的照片同一套力度（--hover-tilt / --hover-zoom，
-   倍数同为 1.3）；指针位置由 index.html 页尾的脚本写进 --tx / --ty。
-   离开时走这里的 transition：比进入时慢，起步缓、收尾长，平滑地转回原位 */
+/* Denoising canvas overlays the image. Hover tilt uses the gallery's strength; --tx / --ty come from
+   the #avatarFx hover script in index.html. This transition is the slower return on leave. */
 .avatar-wrap {
   position: relative; width: 216px; height: 216px;
   cursor: pointer; justify-self: end;
@@ -445,7 +454,7 @@ img { max-width: 100%; }
              rotateX(calc(var(--hover-tilt) * var(--hover-k) * var(--ty, 0) * -1))
              rotateY(calc(var(--hover-tilt) * var(--hover-k) * var(--tx, 0)))
              scale(calc(1 + var(--hover-zoom) * var(--hover-k)));
-  box-shadow: 0 4px 14px rgba(45,42,41,.14);
+  box-shadow: var(--hover-shadow);
   transition: transform .34s cubic-bezier(.32,.72,0,1), box-shadow .34s cubic-bezier(.32,.72,0,1);
 }
 .avatar-fx {
@@ -453,10 +462,10 @@ img { max-width: 100%; }
   width: 100%; height: 100%;
   border-radius: var(--radius); border: 1px solid var(--card-b);
   opacity: 0; pointer-events: none;
-  transition: opacity .45s ease;
 }
-/* 播放中立即显示（不要过渡，否则前几步会被淡入吃掉） */
-.avatar-wrap.fx-on .avatar-fx { opacity: 1; transition: none; }
+/* Shown instantly (a fade-in would swallow the first steps) and kept after the run, its last frame being the
+   image: handing back to the <img> made the picture jump on an iPad (see play() in index.html). */
+.avatar-wrap.fx-on .avatar-fx { opacity: 1; }
 
 .hero .avatar {
   width: 216px; height: 216px; object-fit: cover;
@@ -464,14 +473,13 @@ img { max-width: 100%; }
   background: var(--card);
 }
 
-/* 联系方式行：「图标 文字 | 图标 文字」—— 普通的链接，之间一道竖线，不再是一个个圆角框。
-   竖线画在两个入口之间的空隙正中（绝对定位、不接鼠标），所以它不算链接的一部分：
-   点不到、悬停时也不跟着加下划线 */
+/* Contacts: plain links separated by "|". The divider is absolutely positioned in the gap with no
+   pointer events, so it isn't part of a link (not clickable, not underlined on hover). */
 .links {
-  --sep: 18px;   /* Georgia 比 Charis 宽，22px 时英文最后一项会掉到第二行 */
+  --sep: 18px;   /* item gap; the divider sits at its center */
   display: flex; flex-wrap: wrap; gap: 6px var(--sep); margin-top: 14px;
-  /* 窗口窄时入口会折成几行，折到行首的那一项，竖线落在这一栏左缘之外 —— 横向裁掉，行首就不挂一道竖线 */
-  overflow-x: clip;
+  /* No overflow clipping here: it would cut off the email popover, which is centred on the first link
+     and wider than it. Line-leading dividers are dropped via .line-start (set by index.html's script). */
 }
 .links a {
   font-family: var(--sans); font-size: var(--fs-sm);
@@ -483,13 +491,14 @@ img { max-width: 100%; }
   transform: translate(-50%, -50%);
   color: var(--rule); pointer-events: none;
 }
-/* 零高度的整宽占位，强制在此换行，把七个入口锁成 4 + 3 */
+/* Zero-height full-width spacer forcing a 4 + 3 split; unused while the LinkedIn / Instagram links are
+   commented out in index.html's .links */
 .links .lbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
-/* 它本身和换行后的第一个入口都不画竖线 */
-.links .lbreak::before, .links .lbreak + *::before { display: none; }
+/* no divider on the spacer or the item after it, nor on an item that starts a wrapped line */
+.links .lbreak::before, .links .lbreak + *::before, .links > .line-start::before { display: none; }
 .links img { width: 15px; height: 15px; object-fit: contain; }
-/* 邮箱入口悬停时弹出的小浮层：一个带描边、圆角、投影的小胶囊，里面是地址和「复制」。
-   底色写成实色 —— 浮层可能压在别的内容上，透明的话字会叠在一起。与入口左右居中对齐（--px 由脚本算）。带 .on 才显示，出现时从上方落下一点 */
+/* Email hover popover with the address and Copy. Solid background: it can overlap other text.
+   Centered on the link (--px from script); shown with .on, dropping in slightly. */
 .mailbox { position: relative; display: inline-flex; }
 .copy-pop {
   --pop-bg: var(--card);
@@ -507,8 +516,8 @@ img { max-width: 100%; }
   transition: opacity .2s ease, transform .45s var(--lg-spring);
 }
 .copy-pop .addr { user-select: all; -webkit-user-select: all; }
-/* 「复制」是一段主题色的文字，前面一道细线与地址隔开。宽度随文字：右边 10px 加浮层的 4px，
-   与左端的 14px 对称；复制后变成「已复制 ✓」浮层会宽一点，脚本当场重新居中（见首页的邮箱脚本） */
+/* Copy button: right 10px + popover's 4px mirrors the left 14px. The "copied" label is wider, so
+   place() in index.html's .mailbox script re-centers the popover. */
 .copy-pop button {
   margin-left: 10px; padding: 0 10px; border: 0; border-left: 1px solid var(--rule);
   background: none; cursor: pointer; font: inherit; line-height: inherit; color: var(--accent);
@@ -517,10 +526,8 @@ img { max-width: 100%; }
 .copy-pop button:hover { text-decoration: underline; }
 .copy-pop button.done { color: var(--fg); text-decoration: none; }
 .copy-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-/* 指向入口的小尖角。它所在的这一条（.copy-tip）正好填在入口与浮层之间那 9px 的缝里、与浮层同宽同位置
-   （--pw、--px 由脚本写），打开时才接鼠标：从入口往下划到浮层上，中途不会被当成移开。
-   尖角是一个转了 45° 的小方块，底色同浮层、上面两条边带同样的描边，下半截压住浮层的上沿，
-   把那一小段描边盖掉，看上去是一体的；位置对准入口正中（--ax） */
+/* .copy-tip bridges the 9px gap to the popover (--pw, --px from script) and takes pointer events only
+   when open, so moving onto the popover isn't a leave. Its arrow (at --ax) covers the popover's top border. */
 .copy-tip {
   position: absolute; left: var(--px, 0px); top: 100%; z-index: 21;
   width: var(--pw, 260px); height: 10px; pointer-events: none;
@@ -538,24 +545,21 @@ img { max-width: 100%; }
 }
 
 
-/* ---------- 正文纸面 ----------
-   首页的正文整张放在一张白纸上，衬在浅灰的底色上（学术主页常见的灰底白纸，这里用本站的配色和圆角）。
-   只有首页：相册页的 <main> 没有 .wrap，跑马灯要横向铺满视口 */
+/* ---------- sheet ----------
+   Homepage only: the gallery's <main> has no .wrap since its marquee spans the viewport. */
 main.wrap {
   width: min(var(--sheet-w), 100% - 28px); max-width: none;
-  /* 上沿离导航 8px。页面在顶部时导航下面的渐变模糊是关着的（见「顶部导航」），纸的上沿完整可见 */
+  /* blur is off until .nav.scrolled, so the sheet's top edge stays crisp */
   margin-top: 8px; padding: 0 var(--sheet-pad) 56px;
-  /* 小圆角：整体仍是一张长方形的纸，只把四个角磨圆一点 */
   background: var(--card); border: 1px solid var(--card-b); border-radius: var(--radius);
   box-shadow: 0 1px 2px rgba(35, 52, 70, .05);
 }
-/* 纸面的下沿已经把正文和页脚分开，页脚上那条分隔线和大段留白就不要了（相册页没有纸面，照旧） */
+/* the sheet edge already separates the footer: drop its rule and top space (gallery keeps them) */
 main.wrap ~ footer.wrap { margin-top: 0; padding-top: 32px; border-top: 0; }
 
-/* ---------- 章节 ---------- */
+/* ---------- sections ---------- */
 section { padding-top: 34px; }
-/* 章节标题：学术主页的老写法 —— 正常大小写、粗体、深一档的主题色，下面一条 1px 细线。
-   条目不再成卡，章节之间的分组全靠这条线 */
+/* Section headings: bold, darker accent, 1px rule below. Entries aren't cards, so the rule does the grouping */
 h2 {
   font-family: var(--sans);
   font-size: var(--fs-lg); font-weight: var(--bold);
@@ -563,8 +567,7 @@ h2 {
   margin: 0 0 14px; padding-bottom: 6px;
   border-bottom: 1px solid var(--rule);
 }
-/* 共一说明挂在 Publications 标题后的括号里，但保持它原先在作者行里的样子：
-   正文衬线体、作者行字号、正文色，不继承 h2 的粗细与颜色（中文标题的字距也不继承） */
+/* Co-first note in the Publications heading keeps author-line styling: no h2 weight, color or zh letter-spacing */
 h2 .cofirst {
   font-family: var(--serif); font-size: var(--fs-sm); font-weight: 400;
   letter-spacing: normal; color: var(--fg);
@@ -574,57 +577,58 @@ h2 .zh {
   font-family: var(--serif); font-size: var(--fs-xs); font-weight: 400;
   letter-spacing: normal; color: var(--subtle); margin-left: 8px;
 }
-/* 段落上下各 0.65em（浏览器默认是 1em）：段与段之间约 11px，读起来更紧凑 */
+/* tighter than the 1em default */
 p { margin: .65em 0; }
 section > p:first-of-type { margin-top: 14px; }
 
 strong, b { font-weight: var(--bold); }
 
 /* ---------- News ----------
-   学术主页常见的写法：方块项目符号，每条一行，日期写成 [MM/YYYY] 放在句首。日期与正文同字号，
-   颜色用方块符号的强调蓝；同一个月的多条消息也各占一行、各带日期 */
+   Square bullets, one item per line, each led by an accent-blue [MM/YYYY]. */
 .news { margin: 14px 0 0; padding-left: 1.25em; list-style: square; }
-.news li { padding: 7px 0; font-size: var(--fs-md); }   /* 条与条之间空 14px，与 jemdoc 页相同 */
+.news li { padding: 7px 0; font-size: var(--fs-md); }   /* 14px between items, as on jemdoc pages */
 .news li::marker { color: var(--accent); }
-/* Georgia 的数字宽窄不一，也不支持 tabular-nums：11 比 08 窄 6px，2027 比 2026 窄 1px，
-   日期写成一整段文字时，斜杠、右括号和后面的句子都对不齐。
-   所以月份、年份各放进一个定宽格子（按最宽的 08、2026 留足）：月份右对齐贴住斜杠，年份左对齐，
-   方括号由 CSS 补在两头 —— 左括号、斜杠、右括号三列都对齐。用 min-width，字形更宽的系统上只会撑开、不会压字 */
+/* Georgia digits are proportional with no tabular-nums, so dates misalign. Month and year get
+   min-width cells sized for 08 / 2026 (month right-aligned), with brackets from CSS. */
 .news time { display: inline-flex; color: var(--accent); white-space: nowrap; }
 .news time::before { content: "["; }
 .news time::after  { content: "]"; }
 .news time span:first-child { min-width: 1.22em; text-align: right; }
 .news time span:last-child  { min-width: 2.3em; }
-/* 「All News」像列表的最后一行：文字与上面各条的正文左对齐（列表缩进 1.25 个正文字号），
-   前面一个三角，颜色、位置和列表的方块一样（方块约 7px，中心在列表左缘往右 8px、落在这一行的中线附近）。
-   三角比方块略大（7.5 × 9px）：同样高的三角面积只有方块一半，看着轻，放大一点两者分量才相当。
-   三角是 inline-block，不吃悬停的下划线；展开时转 90° 朝下 */
-.news-more {
+/* "All News" as the list's last row: text aligned with items, a triangle in the bullet column.
+   7.5 × 9px since a triangle has half a same-height square's area. inline-block: no hover underline. */
+.news-more, .pub-more > summary {
   font-family: var(--sans); font-size: var(--fs-sm); color: var(--link);
   background: none; border: 0; cursor: pointer;
   padding: 8px 0 0 calc(var(--fs-md) * 1.25);
 }
-.news-more::before {
+.news-more::before, .pub-more > summary::before {
   content: ''; display: inline-block; width: 0; height: 0;
   border-style: solid; border-width: 4.5px 0 4.5px 7.5px;
   border-color: transparent transparent transparent var(--accent);
   vertical-align: 0;
-  /* 左移到方块那一列（中心在 8px），再补回同样多的距离，文字起点不变 */
+  /* shift into the bullet column (center at 8px) and add it back so the text start doesn't move */
   margin: 0 calc(var(--fs-md) * 1.25 - 11.75px) 0 calc(4.25px - var(--fs-md) * 1.25);
   transition: transform .2s ease;
 }
 .news-more[aria-expanded="true"]::before { transform: rotate(90deg); }
 .news-more:hover { text-decoration: underline; }
+/* Under-review papers: a native <details> whose summary looks like "All News". No bullet column here,
+   so the triangle sits at the left edge (aligned with the thumbnails) and the text follows it. */
+.pub-more > summary { display: inline-block; list-style: none; padding-left: 0; }
+.pub-more > summary::-webkit-details-marker { display: none; }
+.pub-more > summary::before { margin: 0 6px 0 0; }
+.pub-more[open] > summary::before { transform: rotate(90deg); }
+.pub-more > summary:hover { text-decoration: underline; }
 
-/* ---------- 条目 ----------
-   经历 / 论文直接排在纸面上，不再各自成卡，也没有悬停效果；条目之间只靠上下留白分开 */
+/* ---------- entries ----------
+   Experience / publications sit directly on the sheet: no cards, no hover, separated by spacing only */
 
-/* ---------- 论文条目 ---------- */
+/* ---------- publications ---------- */
 .pub {
   display: grid; grid-template-columns: 220px 1fr;
   gap: 20px; padding: 14px 0;
-  /* grid item 默认 align-self:stretch，会把 .thumb 拉到与右侧文字等高，
-     图片下方留出大片空白边框。改为 center 让缩略图垂直居中对齐正文。 */
+  /* default stretch would make .thumb as tall as the text, leaving empty bordered space */
   align-items: center;
 }
 
@@ -633,59 +637,48 @@ strong, b { font-weight: var(--bold); }
   border: 1px solid var(--card-b); background: var(--card);
   overflow: hidden;
 }
-/* 文字栏：标题、作者、venue、链接之间的空隙统一。原先各行 margin
-   （4 / 3 / 8px）和行高（1.38 / 1.55 / 1.68）都不一样，而视觉空隙 =
-   margin + 上下两行各自的半行距，四段间隔于是各不相等。现在行高统一（继承正文，
-   不另设 —— 曾固定 1.45，中文页面上就比正文的 1.55 紧一截）、margin 归零，间距只由 gap 一个值决定。 */
+/* Spacing comes only from gap: margins zeroed, line height inherited (mixing them made gaps uneven). */
 .pub > div:not(.thumb) { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .pub > div:not(.thumb) > * { margin: 0; }
 
-/* height: auto 不能省：图片带着宽高属性（让浏览器在加载前就留好位置，图片到了页面不跳），
-   不写的话高度属性会被当成固定高度，图片被拉变形 */
+/* height: auto is required: the width/height attributes (reserve space, no layout shift) would
+   otherwise act as a fixed height and distort the image */
 .pub .thumb img,
 .pub .thumb video { display: block; width: 100%; height: auto; }
 .pub h3 {
   font-family: var(--sans); font-size: var(--fs-md); font-weight: var(--bold);
-  /* pretty 而非 balance：balance 会把两行调成等长，于是第一行本来能铺满，
-     却被故意在中间截断 —— 实测两行标题的首行只占宽度的 52%–75%，
-     右边空出一大截，还常断在连字符上。pretty 按正常方式铺满每一行，
-     只在尾行会孤零零剩一个词时才往回调，首行回到 85%–98%。 */
+  /* pretty, not balance: balance evens out the lines, cutting line one short (often at a hyphen);
+     pretty fills lines normally and only avoids a lone last word. */
   text-wrap: pretty;
 }
-/* pretty 只管最后一行：不让单个词孤零零掉到下一行，
-   其余断行照常，适合作者列表这类较长的文本 */
 .pub .authors { font-size: var(--fs-sm); color: var(--subtle);
   text-wrap: pretty; }
 .pub .authors .me { font-weight: var(--bold); }
 .pub .venue {
   font-size: var(--fs-sm); color: var(--fg); font-style: italic;
 }
-/* 整行斜体，中英文都是（汉字没有斜体字形，由浏览器倾斜）；已发表的会议 / 期刊名
-   只多一层暖赤陶高亮和加粗。em 也一并接住，避免以后写错标签就失效。 */
+/* Whole line italic (Chinese is slanted synthetically); published venues add terracotta + bold.
+   em is matched too, so the wrong tag still works. */
 .pub .venue b,
 .pub .venue em { color: var(--high); font-weight: var(--bold); }
 .pub .venue .dot { margin: 0 5px; opacity: .6; font-style: normal; }
 .star { color: var(--high); font-weight: var(--bold); }
 
-/* Show-Harness 的 "Show" 用 Show Lab logo 的四色。
-   四个 <span> 之间不能有任何空白 —— HTML 会把换行折叠成空格，
-   渲染出 "S h o w"，复制出来也会带空格。 */
+/* "Show" in Show-Harness uses the four Show Lab logo colors. No whitespace between the four <span>s:
+   HTML collapses newlines to spaces, rendering and copying as "S h o w". */
 .shx span:nth-child(1) { color: var(--sl-blue); }
 .shx span:nth-child(2) { color: var(--sl-green); }
 .shx span:nth-child(3) { color: var(--sl-red); }
 .shx span:nth-child(4) { color: var(--sl-orange); }
-/* 资助说明：和作者、venue 同一档字号，斜体灰字；经历条目里的资助说明用 <em>，是同一个样子。
-   以前是 13px，比别的行小一号，像条脚注 */
+/* Funding note: same size as authors / venue, gray italic, matching the <em> notes in experience entries */
 .note {
   font-size: var(--fs-sm); color: var(--subtle); font-style: italic;
   margin: 0 0 8px;
 }
 
-/* 链接不再做成方块标签，改用方括号包裹。没有了底色与边框，
-   彼此之间要靠更大的间距分开，所以列间距从 6px 提到 12px。 */
+/* Bracketed links: with no fill or border they need the wider 12px column gap */
 .tags { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-/* 只命中直接子级：star 数是嵌在 <a> 里的 <span>，
-   用 .tags span 的话它会被再套一层方括号 */
+/* direct children only: the star count is a <span> inside <a> and would get double brackets */
 .tags > a, .tags > span {
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: var(--bold);
   color: var(--link);
@@ -693,19 +686,17 @@ strong, b { font-weight: var(--bold); }
 }
 .tags > a::before, .tags > span::before { content: "["; opacity: .5; }
 .tags > a::after,  .tags > span::after  { content: "]"; opacity: .5; }
-.tags > a:hover { color: var(--heading); text-decoration: none; }   /* 方括号链接悬停时不加下划线，换成深一档的标题色 */
+.tags > a:hover { color: var(--heading); text-decoration: none; }   /* darker color instead of underline */
 .tags > span { color: var(--subtle); }
-/* Github 后面追加的 star 数：细竖线隔开、次要色、等宽数字 */
+/* GitHub star count: thin divider, secondary color, tabular digits */
 .tags .gh-stars {
   margin-left: 6px; padding-left: 6px;
   border-left: 1px solid var(--rule);
   color: var(--subtle); font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 通用条目（经历 / 项目 / 写作）---------- */
-/* 两行网格：第一行是 logo | 标题+日期+职称，第二行整行通栏。
-   子经历（RA、学生工作、产品列表）因此从条目左缘起排，
-   而不是缩在标题那一栏里 —— 它们是独立条目，不是标题的附属说明。 */
+/* ---------- entries (experience / projects / writing) ---------- */
+/* Second row spans full width, so sub-entries start at the left edge: they're entries, not title notes. */
 .item {
   display: grid; grid-template-columns: 76px 1fr;
   column-gap: 16px; padding: 14px 0;
@@ -714,25 +705,20 @@ strong, b { font-weight: var(--bold); }
   grid-column: 1; grid-row: 1; align-self: center;
   display: flex; align-items: center; justify-content: center;
 }
-/* 不再固定槽高：写死 54px 时，7:1 的 mikomiko 只占其中 11px，
-   上下空出一大截，整行也被撑高。现在行高由标题那一栏决定，
-   logo 只受最大高度约束。 */
+/* No fixed slot height (wide logos like the 7:1 mikomiko would float in a tall gap); row height
+   follows the title column, logos only get a max height. */
 .ilogo img { max-width: 100%; max-height: 42px; width: auto; height: auto; }
-/* 圆形徽章填满整个外接方框，同样高度下比横幅式标识重，所以压一档；
-   但也不能按外接框等宽 —— NUS 是 33x42 的盾形，ZJU 若取 34px 就成了
-   34x34，矮了 8px，看着明显小一圈。按填充面积估，圆形取 38px 才与之相当。
-   按 src 选择，不必为此在 HTML 里加类；代价是改文件名会让这条静默失效。 */
+/* Round badges look heavier at equal height, but 34px (the NUS shield's width) looks small; 38px matches
+   by area. Keyed on src: renaming the file silently breaks this. */
 .ilogo img[src$="zju.png"] { max-height: 38px; }
-/* min-width:0 不写的话，grid item 的最小尺寸是内容宽度，
-   长机构名会把条目撑破而不是在内部折行 */
+/* min-width: 0, else a grid item's min size is its content and long org names overflow instead of wrapping */
 .ihead { grid-column: 2; grid-row: 1; min-width: 0; }
 .irest { grid-column: 1 / -1; margin-top: 10px; }
 .item .row {
   display: flex; justify-content: space-between;
   align-items: baseline; gap: 6px 16px; flex-wrap: wrap;
 }
-/* 标题可伸缩并在自身内部折行；否则长标题会占满整行、
-   把右侧日期整个挤到下一行的左边，视觉上错位。 */
+/* title shrinks and wraps internally; otherwise a long title pushes the date to the next line's left */
 .item .t { flex: 1 1 340px; min-width: 0; }
 .item .d { flex: 0 0 auto; }
 .item .t { font-family: var(--sans); font-size: var(--fs-md); font-weight: var(--bold); text-wrap: pretty; }
@@ -743,60 +729,60 @@ strong, b { font-weight: var(--bold); }
 .item .s { font-size: var(--fs-sm); color: var(--subtle); margin-top: 2px; text-wrap: pretty; }
 .item .s .me, .pub .authors .me { font-weight: var(--bold); color: var(--fg); }
 
-/* 工作条目下的产出、挂在学校下面的经历（如 ZJU 下的 RA）：一条一段，每条左边各有一小段竖线，
-   表明从属于上方的经历；条与条之间竖线是断开的。以前是整块共用一条竖线，几条连成一整段，
-   看着像一段引用。
-   .prow 是一句话的产出行；.pitem 是「标题 + 日期 + 说明」的一段经历，标题比父条目小一档、
-   字重降一级，一眼看出是从属关系而不是并列条目 */
+/* Sub-items (e.g. RA under ZJU) each get their own short left bar; one continuous bar reads as a
+   blockquote. .prow: one-line output; .pitem: title + date + text, smaller title so it reads as nested. */
 .item .plist > .prow, .item .plist > .pitem {
   border-left: 2px solid var(--rule); padding-left: 14px; font-size: var(--fs-sm);
 }
 .item .plist > .prow + .prow { margin-top: 7px; }
 .item .plist > .pitem + .pitem { margin-top: 11px; }
 .item .plist .row .t { font-size: var(--fs-sm); font-weight: var(--bold); }
-/* 产品状态标签：次要色、斜体，字号随所在行，跟在产品名后面，
-   靠颜色和斜体而不是字号与产品名区分 */
+/* Product status tag: set apart from the name by color and italic, not size */
 .item .pst {
   font-family: var(--sans); font-style: italic; color: var(--subtle);
   white-space: nowrap;
 }
+/* Handle shows "..." and fades to data-h on hover / focus. Pseudo-element text can't be selected or
+   copied, and keeps its width while transparent, so nothing jumps. */
+.item .handle { position: relative; display: inline-block; outline: none; }
+.item .handle::before { content: attr(data-h); opacity: 0; transition: opacity .6s ease; }
+.item .handle::after { content: "..."; position: absolute; left: 0; top: 0; transition: opacity .6s ease; }
+.item .handle:hover::before, .item .handle:focus-visible::before { opacity: 1; }
+.item .handle:hover::after, .item .handle:focus-visible::after { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .item .handle::before, .item .handle::after { transition: none; } }
 .item .t a { color: inherit; }
 .item .t a:hover { color: inherit; }
 .item ul { margin: 7px 0 0; padding-left: 18px; font-size: var(--fs-sm); text-wrap: pretty; }
 .item li { margin-bottom: 3px; }
 .item li::marker { color: var(--accent); }
 
-/* 页首求职句里的关键词用 Show Lab 红；页尾那段只是邀约，不再强调。 */
-.hero .affil strong { color: var(--sl-red); }
 
-/* ---------- 访客地图 ---------- */
-/* 无标题、无分隔线、无说明文字 —— 只有地图本身，
-   靠一段留白与上方的内容拉开距离。 */
-/* 地图上方：段落自带约 17px 的下边距，再加这 24px，与正文拉开约 40px。
-   原先 72px 叠上段落边距近 95px，地图像是孤零零悬在页尾。 */
-#visitors { padding-top: 24px; }
+/* ---------- visitor map ---------- */
+/* No heading, rule or caption: just the map, set off by spacing. */
+/* 40px above the map. It now follows Education directly (the contact invitation moved to the hero);
+   it used to be 24px plus that paragraph's ~17px bottom margin. */
+#visitors { padding-top: 40px; }
 .vmap {
   position: relative;
-  width: 80%; margin: 0 auto;   /* 比正文窄一圈并居中，让地图退成一枚图案 */
-  --vmap-dot: #d3dbe3;          /* 陆地点：比 --rule 再淡一档，退成底纹 */
-  --vmap-pin: var(--accent);    /* 接口没给 ago 时的单色兜底 */
+  width: 80%; margin: 0 auto;   /* narrower than the text, so it reads as an ornament */
+  --vmap-dot: #d3dbe3;          /* land dots: lighter than --rule, a background texture */
+  --vmap-pin: var(--accent);    /* single-color fallback when the API gives no ago */
 
-  /* 按"多久前访问"着色：页面主蓝（本周）→ 浅蓝（一个月）→ 渐隐到透明（半年+）。
-     越新的访问越醒目，久远的慢慢从地图上退去 */
+  /* Color by recency: accent (this week) → light blue (a month) → transparent (6+ months) */
   --vmap-hot:  var(--accent);
   --vmap-mid:  color-mix(in oklab, var(--accent) 50%, #fff);
 }
 .vmap-land { display: block; width: 100%; }
 .vmap-pins { position: absolute; inset: 0; }
-/* 用 <button> 而不是 <span>：键盘可聚焦，读屏能念出城市和次数 */
+/* <button>, not <span>: keyboard-focusable, and screen readers announce city and count */
 .vmap-pin {
   position: absolute; width: var(--s); height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   padding: 0; border: 0; border-radius: 50%;
-  color: var(--vmap-pin);          /* JS 按时间色阶覆盖；下面全部取 currentColor */
+  color: var(--vmap-pin);          /* JS overrides with the recency color; the rest uses currentColor */
   background: currentColor;
-  /* 半透明 + 一圈白细边（同 chenyanzhe.page）：浅底上看不见，两个点叠在一起时
-     却能把它们隔开。--fade 由 JS 按访问时间给出，描边随点一起淡出 */
+  /* Thin white ring: invisible on the light map but separates overlapping dots.
+     --fade (from JS, by visit age) fades the ring with the dot. */
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .9);
   opacity: calc(.8 * var(--fade, 1)); cursor: pointer;
   transition: transform .2s ease, opacity .2s ease;
@@ -804,8 +790,8 @@ strong, b { font-weight: var(--bold); }
 .vmap-pin:hover, .vmap-pin:focus-visible {
   transform: scale(1.4); opacity: 1; outline: none; z-index: 1;
 }
-/* 合并后的点一行一个城市（JS 用换行符分隔，white-space: pre 保留）。
-   底边固定在点上方 20px，而不是按自身高度的倍数上移 —— 行数一多，倍数会把它推得老远 */
+/* One city per line (JS joins with newlines). Fixed 20px offset above the pin, not a multiple of its
+   own height, which drifts as lines grow. */
 .vmap-tip {
   position: absolute; transform: translate(-50%, calc(-100% - 20px));
   font-family: var(--sans); font-size: var(--fs-xs); white-space: pre; line-height: 1.5;
@@ -813,10 +799,8 @@ strong, b { font-weight: var(--bold); }
   background: var(--fg); color: var(--bg);
   pointer-events: none; z-index: 2;
 }
-/* ---------- 页脚 ---------- */
-/* 必须写成 footer.wrap：页脚带 class="wrap"，而 .wrap 的
-   margin/padding 是类选择器，优先级高于单独的 footer 元素选择器，
-   会把这里设的上下间距整个覆盖掉。 */
+/* ---------- footer ---------- */
+/* Must be footer.wrap: the footer has class="wrap", whose margin/padding would beat a bare footer selector. */
 footer.wrap {
   margin: 64px auto 0; padding: 60px 22px 40px;
   border-top: 1px solid var(--rule);
@@ -825,7 +809,7 @@ footer.wrap {
   text-align: center;
 }
 
-/* 系统开启“减少动态效果”时关掉位移与过渡，只保留颜色反馈 */
+/* Reduced motion: effectively disable transitions and animations */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: .01ms !important;
@@ -833,11 +817,10 @@ footer.wrap {
   }
 }
 
-/* ---------- 入场：进入视口后浮现 ----------
-   首页只有一个 .rise —— 整张纸面（<main>），连同上面的内容一起浮上来；相册页按栏目逐个浮现。
-   缓动取 Apple 常用的那条：起步快、尾段长时间缓收。延迟由 JS 写入 --d，同一批里依次浮现。 */
-/* 默认可见：万一 reveal.js 没能加载，内容照常呈现而不是整页空白。
-   只有 <head> 里的同步脚本打上 js-rise 之后才转为待入场状态。 */
+/* ---------- entrance ----------
+   Homepage: one .rise (the whole <main>); gallery: one per heading, line and photo row. JS writes --d to stagger. */
+/* Visible by default, so content still shows if reveal.js fails; hidden only once reveal.js
+   (sync in <head>) adds .js-rise. */
 .js-rise .rise {
   opacity: 0; transform: translateY(24px);
   transition: opacity .8s cubic-bezier(.32,.72,0,1),
@@ -845,9 +828,62 @@ footer.wrap {
   transition-delay: var(--d, 0ms);
 }
 .js-rise .rise.in { opacity: 1; transform: none; }
-/* 不参与浏览器的滚动锚定。刷新时浏览器先把页面滚回原来的位置，入场把内容往上挪 24px，锚定误以为
-   内容动了，又替页面往下多滚 24px —— 每刷新一次纸面就往导航底下多钻一截，往回滚上面露出一段空白 */
+/* No scroll anchoring: on reload it mistakes the 24px rise for a content shift and scrolls 24px further
+   each time, pushing the sheet under the nav. */
 .rise { overflow-anchor: none; }
+
+/* Focus entrance, after the opening of the RUIBench demo video: pieces come into focus from a blur in turn.
+   Each comes in as it scrolls into view (reveal.js). Gallery: every .rise is one piece (heading, line, photo
+   row); homepage: each section below News is one, entering whole (one a tall screen shows at load follows
+   News, --nested-from). Same motion, timing and spacing as the homepage's first-screen pieces below
+   (reveal.js's --d steps 120 ms, as they do). The homepage's <main> is excluded:
+   one sheet thousands of px tall, it only fades, and the pieces on its first screen carry the blur (below). */
+.js-rise .rise:not(main) {
+  filter: blur(var(--blur, 6px)); transform: translateY(6px) scale(.985);
+  transition: opacity .65s var(--ease-focus), filter .65s var(--ease-focus), transform .65s var(--ease-focus);
+  transition-delay: var(--d, 0ms);
+}
+.js-rise .rise.in:not(main) { filter: none; transform: none; }
+.js-rise h2.rise { --blur: 10px; }
+
+/* Homepage first screen: built piece by piece. The sheet only fades in, a still ground; on it each piece comes
+   into focus in turn (name, role, invitation, the contact links left to right like the video's row of agent
+   icons, Biography, News; the Chinese name comes in with the English one). The avatar keeps its own
+   noise-to-image entrance (index.html), which starts with the sheet. The sheet itself never blurs: it is
+   the whole page; the sections below News blur one at a time, as each scrolls in (above), at Biography's
+   5 px. */
+.js-rise main.rise { transform: translateY(10px); transition-duration: .5s; --nested-from: 900ms; }
+.js-rise main section.rise { --blur: 5px; }
+.js-rise main.rise :is(.hero h1, .hero .role, .hero .affil, .links > *, #biography, #news) {
+  opacity: 0; filter: blur(var(--blur, 6px)); transform: translateY(var(--from-y, 6px)) scale(var(--from-s, .985));
+  transition: opacity .65s var(--ease-focus), filter .65s var(--ease-focus), transform .65s var(--ease-focus);
+  transition-delay: var(--bi, 0ms);
+}
+/* Per-piece values are custom properties: :is() takes the specificity of #biography, so a plain declaration
+   on a lighter selector would lose to it. */
+.js-rise main.rise.in :is(.hero h1, .hero .role, .hero .affil, .links > *, #biography, #news) {
+  opacity: 1; filter: none; transform: none;
+}
+.js-rise main.rise .hero h1   { --bi: 80ms; --blur: 10px; }
+.js-rise main.rise .hero .role  { --bi: 200ms; }
+.js-rise main.rise .hero .affil { --bi: 320ms; }
+.js-rise main.rise .links > *   { --bi: calc(440ms + var(--i, 0) * 70ms); --from-y: 4px; --from-s: .9; }
+.links > :nth-child(2) { --i: 1; }
+.links > :nth-child(3) { --i: 2; }
+.links > :nth-child(4) { --i: 3; }
+.links > :nth-child(5) { --i: 4; }
+.links > :nth-child(6) { --i: 5; }
+.links > :nth-child(7) { --i: 6; }
+.links > :nth-child(8) { --i: 7; }
+.js-rise main.rise #biography { --bi: 780ms; --blur: 5px; }
+.js-rise main.rise #news      { --bi: 900ms; --blur: 5px; }
+/* The avatar comes into focus while it denoises (both start as the sheet enters). A keyframe animation, not a
+   transition: .avatar-wrap's transition list belongs to the hover tilt, and re-declaring it here would slow the
+   hover. It touches opacity, filter and the separate scale property, never transform, which the tilt owns.
+   Backwards fill only: after the animation the plain styles apply again, so no filter is left on the wrap. */
+.js-rise main.rise .avatar-wrap { opacity: 0; }
+.js-rise main.rise.in .avatar-wrap { opacity: 1; animation: avatar-focus .7s var(--ease-focus) 100ms backwards; }
+@keyframes avatar-focus { from { opacity: 0; filter: blur(10px); scale: .96; } }
 
 @media (prefers-reduced-motion: reduce) {
   .rise { opacity: 1; transform: none; transition: none; }

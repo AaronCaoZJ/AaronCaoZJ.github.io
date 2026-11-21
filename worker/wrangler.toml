@@ -2,14 +2,18 @@ name = "caozhijun-visitors"
 main = "src/index.js"
 compatibility_date = "2026-01-01"
 
-# database_id 要换成 `wrangler d1 create visitors` 输出的那一串
+# Replace database_id with the ID printed by `wrangler d1 create visitors`
 [[d1_databases]]
 binding       = "DB"
 database_name = "visitors"
 database_id   = "PASTE_DATABASE_ID_HERE"
 
-# 路由必须在橙云代理的域名上，请求才会先经过 Worker。
-# www 也解析到 Cloudflare，从那儿进来的访问同样要记，所以两条都挂。
+# env.AI: transliterates city names Wikidata has no Chinese label for (fromAI in src/index.js)
+[ai]
+binding = "AI"
+
+# Routes must be on a proxied (orange-cloud) hostname for requests to hit the Worker.
+# www also resolves to Cloudflare and its visits count too, so route both.
 [[routes]]
 pattern   = "caozhijun.top/api/*"
 zone_name = "caozhijun.top"

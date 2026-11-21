@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<!-- 排版宽度跟着窗口走（学 Zechen 的 jemdoc 主页）：窗口窄了纸面跟着收、文字重新换行，不出横向滚动。
-     收到 700px（= style.css 的 --page-min）为止 —— 再窄头像和左边的文字就挤不下了，于是按 700px 排好、
-     整体缩到窗口宽（手机竖屏、iPad 分屏的窄的一侧）。看的是窗口宽而不是屏幕宽：iPad 分屏、台前调度时
-     窗口只占屏幕的一部分。头一次量时 viewport 还是 device-width，布局宽就是窗口宽；之后（转屏、拖分屏）
-     用「可视区宽 × 缩放比」—— 不管当前按多宽排、用户有没有双指放大，乘出来都是窗口宽。
-     电脑上浏览器不理 viewport，只靠样式表里的 min-width。脚本没跑时停在 device-width：手机上要横向拖，但不缺内容 -->
+<!-- Layout follows the window width and reflows without horizontal scroll, down to 700px (= --page-min in
+     style.css); below that the avatar and text no longer fit, so lay out at 700px and scale to the window.
+     Measure the window, not the screen (iPad Split View / Stage Manager). On first run the viewport is still
+     device-width, so clientWidth is the window width; later, visualViewport width × scale gives it regardless
+     of layout width or pinch zoom. Desktop browsers ignore viewport and rely on min-width.
+     Without JS it stays device-width: phones pan sideways, but nothing is missing. -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script>
 (function () {
@@ -21,33 +21,33 @@
 })();
 </script>
 <title data-i18n="home.title">Aaron Zhijun Cao 曹植竣</title>
-<meta name="description" content="Aaron Zhijun Cao (曹植竣, caozhijun), M.Sc. student at Show Lab, NUS, working on VLA models, embodied agents and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
+<!-- Bing requires the description to be 25–160 characters; recount when editing -->
+<meta name="description" content="Aaron Zhijun Cao (曹植竣), M.Sc. student at Show Lab, NUS, AI Scientist Intern at Mikomiko. Robot learning, diffusion models. 新加坡国立大学硕士，浙江大学本科。" data-i18n-content="home.description">
 <meta name="author" content="Aaron Zhijun Cao">
-<!-- 语言：主语言英文（<html lang>），同时声明面向中文读者 —— Bing 参考 content-language 判断
-     页面语言与受众（Google 不看它）。正文里夹着的中文片段另用 lang="zh-CN" 标出。 -->
+<!-- Primary language is English (<html lang>); content-language also declares a Chinese audience
+     (Bing uses it, Google ignores it). Inline Chinese is marked with lang="zh-CN". -->
 <meta http-equiv="content-language" content="en, zh-CN">
 
-<!-- Open Graph：分享到社交平台时的预览卡片 -->
+<!-- Open Graph: social share preview card -->
 <meta property="og:type" content="profile">
 <meta property="og:title" content="Aaron Zhijun Cao 曹植竣" data-i18n-content="home.title">
-<meta property="og:description" content="Aaron Zhijun Cao (曹植竣, caozhijun), M.Sc. student at Show Lab, NUS, working on VLA models, embodied agents and diffusion models. 曹植竣，新加坡国立大学 Show Lab 硕士研究生，本科毕业于浙江大学。" data-i18n-content="home.description">
+<meta property="og:description" content="Aaron Zhijun Cao (曹植竣), M.Sc. student at Show Lab, NUS, AI Scientist Intern at Mikomiko. Robot learning, diffusion models. 新加坡国立大学硕士，浙江大学本科。" data-i18n-content="home.description">
 <meta property="og:url" content="https://caozhijun.top/">
-<meta property="og:image" content="https://caozhijun.top/assets/img/avatar.jpg">
+<meta property="og:image" content="https://caozhijun.top/assets/img/avatar.jpg?v=20261112">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="zh_CN">
 
 <link rel="canonical" href="https://caozhijun.top/">
 <link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
-<link rel="stylesheet" href="assets/css/style.css?v=20261028graylens">
-<!-- 预加载正文字体：不预加载的话要等 CSS 解析完才开始下载，首屏会先用 Georgia 画一遍再换成 Gelasio -->
+<link rel="stylesheet" href="assets/css/style.css?v=20261121entrance">
+<!-- Preload the body font: otherwise it waits for CSS parsing and the first paint flashes Georgia before Gelasio -->
 <link rel="preload" href="assets/fonts/Gelasio-var.woff2" as="font" type="font/woff2" crossorigin>
-<script src="assets/js/reveal.js?v=20261027any"></script>
+<script src="assets/js/reveal.js?v=20261122start"></script>
 
-<!-- 结构化数据：WebSite 给出站点名称（Google 据此显示搜索结果里的站名），
-     ProfilePage 声明这一页以一个人为主体，Person 是那个人本身。
-     sameAs 把 Scholar / GitHub / LinkedIn 等身份关联到同一实体；
-     alternateName 保留中文名、拼音和曾用排列，帮助搜索引擎关联同一人的不同姓名。 -->
+<!-- Structured data: WebSite sets the site name Google shows in results; ProfilePage + Person mark the page
+     as about one person. sameAs ties Scholar / GitHub / LinkedIn etc. to that entity; alternateName lists the
+     Chinese name, pinyin and other name orders so search engines link them. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -75,9 +75,13 @@
       "name": "Aaron Zhijun Cao",
       "alternateName": ["曹植竣", "caozhijun", "Zhijun Cao", "Aaron Cao", "Cao Zhijun Aaron"],
       "url": "https://caozhijun.top/",
-      "image": "https://caozhijun.top/assets/img/avatar.jpg",
+      "image": "https://caozhijun.top/assets/img/avatar.jpg?v=20261112",
       "email": "mailto:aaroncaozj@gmail.com",
-      "jobTitle": "M.Sc. Student in Electrical Engineering",
+      "jobTitle": ["M.Sc. Student in Electrical Engineering", "AI Scientist Intern"],
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Mikomiko"
+      },
       "affiliation": {
         "@type": "CollegeOrUniversity",
         "name": "National University of Singapore",
@@ -106,7 +110,7 @@
   ]
 }
 </script>
-<script src="assets/js/i18n.js?v=20261028title" defer></script>
+<script src="assets/js/i18n.js?v=20261120calm" defer></script>
 <script src="assets/js/nav.js?v=20261027lens3" defer></script>
 </head>
 <body>
@@ -121,23 +125,29 @@
     <span class="nav-divider" aria-hidden="true"></span>
     <a href="/gallery/" data-i18n="nav.gallery">🖼️ Gallery</a>
   </div>
-  <!-- 语言按钮：「文A」翻译图标（Google Material Icons 的 translate，Apache License 2.0）；切到哪种语言写在提示里 -->
-  <button class="language-toggle" type="button" aria-label="切换到中文" title="切换到中文" lang="zh-CN" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg></button>
+  <!-- Language toggle: globe with the target language as a badge (after rlinf.org); Tabler Icons "world" glyph
+       (MIT License). The badge and tooltip name the target language; i18n.js swaps both. The mask cuts the globe
+       around the badge (one hole per badge width and engine, picked in style.css), so the badge needs no background -->
+  <button class="language-toggle" type="button" aria-label="切换到中文" title="切换到中文" lang="zh-CN" hidden><span class="language-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><mask id="language-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff" stroke="none"/><rect class="language-cut-zh" x="12.27" y="12.6" width="16.53" height="14.4" rx="7.2" fill="#000" stroke="none"/><rect class="language-cut-en" x="7.95" y="13.31" width="20.85" height="14.4" rx="7.2" fill="#000" stroke="none"/><rect class="language-cut-zh-s" x="14.01" y="14.3" width="14.07" height="12.26" rx="6.13" fill="#000" stroke="none"/><rect class="language-cut-en-s" x="10.34" y="14.9" width="17.74" height="12.26" rx="6.13" fill="#000" stroke="none"/></mask><g mask="url(#language-cut)"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></g></svg><span class="language-badge">中</span></span></button>
 </nav>
 
-<main class="wrap rise">   <!-- 整张纸面连同上面的内容一起入场（见 style.css「入场」） -->
+<main class="wrap rise">   <!-- sheet fades in, first screen in pieces, each section below News whole (style.css) -->
 
-  <!-- ============ 头部名片 ============ -->
+  <!-- ============ Hero ============ -->
   <header class="hero">
     <div>
       <h1 data-i18n="hero.name">Aaron Zhijun Cao <span class="cn" lang="zh-CN">曹植竣</span></h1>
       <div class="role" data-i18n="hero.role">M.Sc. Student at Show Lab, NUS</div>
-      <p class="affil" data-i18n="hero.opportunities">Currently seeking <strong>Researcher / Algorithm Engineer</strong> roles in <strong>Embodied Foundation Models / Generative AI</strong>, and open to <strong>PhD opportunities</strong>. See my <a href="/assets/pdf/CV_ZhijunCao.pdf?v=202610241143">CV</a> for details.</p>
+      <p class="affil" data-i18n="contact.invitation">
+        Want to find out more about me? Visit <span class="emo">👉</span> <a href="/gallery/"><strong><span class="emo">🖼️</span> Gallery</strong></a>.<br>
+        Feel free to <a href="mailto:aaroncaozj@gmail.com">email me</a> to discuss my work,
+        explore a possible collaboration, or simply say hello <span class="emo">🤝</span>.
+      </p>
 
 
       <div class="links">
-        <!-- 邮箱：鼠标悬停时下面弹出一个小浮层，显示地址、可以一键复制；点击仍是 mailto。
-             .copy-tip 是指向入口的小尖角，也垫住入口与浮层之间那条缝 -->
+        <!-- Email: hover opens a popover with the address and a copy button; clicking is still mailto.
+             .copy-tip is the arrow and also bridges the gap between link and popover -->
         <span class="mailbox">
           <a href="mailto:aaroncaozj@gmail.com" data-i18n="contact.email">
             <img src="assets/img/icon/email.png" alt="" width="15" height="15">Email
@@ -157,8 +167,8 @@
         <a href="https://huggingface.co/aaroncaozj">
           <img src="assets/img/icon/huggingface.png" alt="" width="15" height="15">Hugging Face
         </a>
-        <!-- 暂时隐藏 LinkedIn / Instagram。lbreak 一并注释：它原本把七个入口锁成
-             4 + 3 两行，只留它的话第二行就剩 CV 孤零零一个。整段取消注释即可恢复原样。
+        <!-- LinkedIn / Instagram hidden for now. .lbreak goes with them: it splits seven links into
+             4 + 3 rows, so on its own it would leave CV alone on row two. Uncomment the block to restore.
         <span class="lbreak" aria-hidden="true"></span>
         <a href="https://www.linkedin.com/in/aaron-cao-zhijun/">
           <img src="assets/img/icon/linkedin.png" alt="" width="15" height="15">LinkedIn
@@ -167,7 +177,7 @@
           <img src="assets/img/icon/instagram.png" alt="" width="15" height="15">Instagram
         </a>
         -->
-        <a href="assets/pdf/CV_ZhijunCao.pdf?v=202610241143" data-i18n="contact.cv">
+        <a href="assets/pdf/CV_ZhijunCao.pdf?v=202611201130" data-i18n="contact.cv">
           <img src="assets/img/icon/cv.png" alt="" width="15" height="15">
           CV (EN)
         </a>
@@ -175,7 +185,7 @@
     </div>
 
     <div class="avatar-wrap" id="avatarFx" title="Click to re-run the denoising" data-i18n-title="avatar.replay">
-      <img class="avatar" src="assets/img/avatar.jpg" alt="Aaron Zhijun Cao" width="216" height="216" fetchpriority="high" data-i18n-alt="avatar.name">
+      <img class="avatar" src="assets/img/avatar.jpg?v=20261112" alt="Aaron Zhijun Cao" width="216" height="216" fetchpriority="high" data-i18n-alt="avatar.name" data-fx-face="0.558 0.45">
       <canvas class="avatar-fx" width="480" height="480" aria-hidden="true"></canvas>
     </div>
   </header>
@@ -183,17 +193,18 @@
   <!-- ============ Biography ============ -->
   <section id="biography">
     <h2 data-i18n="section.biography">Biography</h2>
-    <p data-i18n="bio.current">I am an M.Sc. student in Electrical Engineering at the National University of Singapore, working on <strong>Robot Learning</strong> at <a href="https://github.com/showlab">Show Lab</a> under the supervision of <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>. My research interests include <strong>Vision-Language-Action Models</strong>, <strong>Embodied Agents</strong>, and <strong>Diffusion Models</strong>.</p>
-    <p data-i18n="bio.previous">Previously, I received my B.Eng. in Automation from Zhejiang University, where my early research focused on control in robot systems.</p>
+    <p data-i18n="bio.current">I am an M.Sc. student in Electrical Engineering at the National University of Singapore, working on <strong>Robot Learning</strong> at <a href="https://github.com/showlab">Show Lab</a>, advised by <a href="https://sites.google.com/view/showlab">Prof. Mike Zheng Shou</a>. My research interests include <strong>Generalist Robot Policies</strong>, <strong>Embodied Agents</strong>, and <strong>Diffusion Models</strong>.</p>
+    <p data-i18n="bio.mikomiko">I am also an AI Scientist Intern at <strong>Mikomiko</strong>, working on agent-powered image generation and editing models.</p>
+    <p data-i18n="bio.previous">Previously, I received my B.Eng. in Automation from <strong>Zhejiang University</strong>, where my early research focused on control in robot systems.</p>
   </section>
 
   <!-- ============ News ============ -->
   <section id="news">
     <h2 data-i18n="section.news">News</h2>
     <ul class="news">
-      <li><time datetime="2026-09"><span>09</span>/<span>2026</span></time> <span data-i18n="news.item0">🦾 Released <a href="https://showlab.github.io/Show-Harness/">Show-Harness</a> and a <a href="https://github.com/showlab/Awesome-Multimodal-Embodied-Agent/blob/main/assets/SURVEY_Multimodal_Embodied_Agent.pdf">survey</a> on robot-use agents.</span></li>
+      <li><time datetime="2026-09"><span>09</span>/<span>2026</span></time> <span data-i18n="news.item0">🦾 Released <a href="https://showlab.github.io/Show-Harness/">Show-Harness</a> and a <a href="https://arxiv.org/abs/2610.30108">survey</a> on robot-use agents.</span></li>
       <li><time datetime="2026-09"><span>09</span>/<span>2026</span></time> <span data-i18n="news.item1">🎉 Two papers accepted @ <strong>CoRL 2026</strong>.</span></li>
-      <li><time datetime="2026-06"><span>06</span>/<span>2026</span></time> <span data-i18n="news.item2">🐈‍⬛ Rejoined <strong>Mikomiko AI</strong>, working on next-gen image generation models.</span></li>
+      <li><time datetime="2026-06"><span>06</span>/<span>2026</span></time> <span data-i18n="news.item2">🐈‍⬛ Rejoined <strong>Mikomiko</strong> as an AI Scientist Intern.</span></li>
       <li><time datetime="2025-08"><span>08</span>/<span>2025</span></time> <span data-i18n="news.item3">📸 Joined <strong>Show Lab @ NUS</strong> as an M.Sc. student.</span></li>
       <li><time datetime="2024-11"><span>11</span>/<span>2024</span></time> <span data-i18n="news.item4">🎉 One paper presented @ <strong>CAC 2024</strong>.</span></li>
       <li class="news-hidden" hidden><time datetime="2024-06"><span>06</span>/<span>2024</span></time> <span data-i18n="news.item5">🎓 Graduated from <strong>Zhejiang University</strong> with a B.Eng. in Automation.</span></li>
@@ -202,7 +213,7 @@
   </section>
 
   <!-- ============ Publications ============ -->
-  <section id="publications">
+  <section id="publications" class="rise">
     <h2 data-i18n="section.publications">Publications <span class="cofirst">(Co-first Author<span class="star">*</span>, Corresponding Author<span class="star">†</span>)</span></h2>
 
     <article class="pub">
@@ -213,7 +224,7 @@
                aria-label="Show-Harness demo" data-i18n-aria-label="video.demo"></video>
       </div>
       <div>
-        <h3 data-i18n="paper.title0"><span class="shx"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness: Just a VLM Agent Can Play Robot</h3>
+        <h3 data-i18n="paper.title0"><span class="shx"><span>S</span><span>h</span><span>o</span><span>w</span></span>-Harness: Just a VLM Agent Can Play Robots</h3>
         <p class="authors">
           <!-- <a href="https://chenanno.github.io/"> -->Yanzhe Chen<!-- </a> --><span class="star">*</span>,
           <!-- <a href="https://www.baizechen.site/"> -->Zechen Bai<!-- </a> --><span class="star">*</span>,
@@ -238,7 +249,7 @@
     </article>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-papav.jpg" width="900" height="375" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-papav.jpg" width="900" height="375" alt="Figure from the survey on multimodal embodied agents" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title1">Survey on Multimodal Embodied Agents: A Unified Capability-centric Perspective from Computer-Use to Robot-Use</h3>
         <p class="authors">
@@ -253,7 +264,7 @@
           <!-- <a href="https://github.com/seizethe-day"> -->Chang Gong<!-- </a> -->,
           <span class="me">Zhijun Cao</span>,
           …,
-          <!-- 省略的作者（删掉这段注释的首尾即可恢复）：
+          <!-- Omitted authors (remove the comment markers to restore):
           Zechen Bai,
           Wenzheng Zeng,
           Yiqi Lin,
@@ -263,17 +274,17 @@
           -->
           Mike Zheng Shou<span class="star">†</span>
         </p>
-        <p class="venue" data-i18n="paper.venue1">TechRxiv Preprint <span class="dot">·</span> 2026.09</p>
+        <p class="venue" data-i18n="paper.venue1">arXiv Preprint <span class="dot">·</span> 2026.09</p>
         <div class="tags">
-          <a href="https://doi.org/10.6084/m9.figshare.33529048" data-i18n="link.paper">Paper</a>
+          <a href="https://arxiv.org/abs/2610.30108" data-i18n="link.paper">Paper</a>
           <a href="https://showlab.github.io/Awesome-Multimodal-Embodied-Agent/" data-i18n="link.page">Page</a>
-          <a href="https://github.com/showlab/Awesome-Multimodal-Embodied-Agent">GitHub</a>
+          <a href="https://github.com/showlab/Awesome-Multimodal-Embodied-Agent" data-gh-stars="showlab/Awesome-Multimodal-Embodied-Agent">GitHub</a>
         </div>
       </div>
     </article>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-dls.jpg" width="900" height="374" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-dls.jpg" width="900" height="374" alt="Figure from Where Success Breaks: failure-boundary learning for VLA models" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title2">Where Success Breaks: Failure-Boundary Learning for Robust Vision-Language-Action Models</h3>
         <p class="authors">Yanzhe Chen<span class="star">*</span>,
@@ -288,7 +299,7 @@
     </article>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" width="900" height="447" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-gra.jpg" width="900" height="447" alt="Figure from Supervise What Survives: geometry-guided VLA adaptation" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title3">Supervise What Survives: Geometry-Guided VLA Adaptation from Synthetic Robot Videos</h3>
         <p class="authors">
@@ -303,15 +314,7 @@
     </article>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-face.jpg" width="900" height="456" alt="" loading="lazy"></div>
-      <div>
-        <h3 data-i18n="paper.title4">When Failures Outline Success: Contrastive Denoising for Fine-Grained Robotic Manipulation</h3>        <p class="venue" data-i18n="paper.venue4">CCF-A Conference Under Review <span class="dot">·</span> 2026.05</p>
-        <div class="tags"><span data-i18n="paper.pending">Paper link to be updated</span></div>
-      </div>
-    </article>
-
-    <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-llmgrade.jpg" width="720" height="405" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-llmgrade.jpg" width="720" height="405" alt="Figure from the paper on an LLM-powered review system for lab reports" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title5">Intelligent Review System for Embedded Microprocessor Lab Reports Powered by Large Language Models</h3>
         <p class="authors"><!-- <a href="https://xplorestaging.ieee.org/author/37085709926"> -->Lingxia Lu<!-- </a> -->, Zile Feng, <span class="me">Zhijun Cao</span>, Zhejing Bao, <!-- <a href="https://xplorestaging.ieee.org/author/37534419800"> -->Miao Yu<!-- </a> --><span class="star">†</span></p>
@@ -323,7 +326,7 @@
     </article>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/pub/pub-cac.jpg" width="900" height="508" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/pub/pub-cac.jpg" width="900" height="508" alt="Figure from the paper on imitation learning for manipulator skill training" loading="lazy"></div>
       <div>
         <h3 data-i18n="paper.title6">Imitation Learning Based Manipulator Skill Training for Home Environment</h3>
         <p class="authors"><span class="me">Zhijun Cao</span>, <!-- <a href="https://ieeexplore.ieee.org/author/37288328000"> -->Yan He<!-- </a> --></p>
@@ -334,14 +337,45 @@
         </div>
       </div>
     </article>
+
+    <!-- Under-review papers, folded by default under a neutral "All Publications" label (native disclosure: no script; the label is translated via data-i18n) -->
+    <details class="pub-more">
+      <summary data-i18n="paper.more">All Publications</summary>
+
+      <article class="pub">
+        <div class="thumb"><img src="assets/img/pub/pub-ruibench.jpg" width="900" height="493" alt="Figure from RUIBench: what makes a good robot-use interface" loading="lazy"></div>
+        <div>
+          <h3 data-i18n="paper.title7">RUIBench: What Makes a Good Robot-Use Interface?</h3>
+          <p class="venue" data-i18n="paper.venue7">CCF-A Conference Under Review <span class="dot">·</span> 2026.11</p>
+          <div class="tags"><span data-i18n="paper.pending">Paper link to be updated</span></div>
+        </div>
+      </article>
+
+      <article class="pub">
+        <div class="thumb"><img src="assets/img/pub/pub-mrbench.jpg" width="900" height="362" alt="Figure from MRBench: physical necessity reasoning in heterogeneous multi-robot manipulation" loading="lazy"></div>
+        <div>
+          <h3 data-i18n="paper.title8">MRBench: Benchmarking Physical Necessity Reasoning in Heterogeneous Multi-Robot Manipulation</h3>
+          <p class="venue" data-i18n="paper.venue8">CCF-A Conference Under Review <span class="dot">·</span> 2026.11</p>
+          <div class="tags"><span data-i18n="paper.pending">Paper link to be updated</span></div>
+        </div>
+      </article>
+
+      <article class="pub">
+        <div class="thumb"><img src="assets/img/pub/pub-calm.jpg" width="900" height="459" alt="Figure from Learning from Last-Mile Failures: last-mile errors and contrastive guidance in fine-grained robotic manipulation" loading="lazy"></div>
+        <div>
+          <h3 data-i18n="paper.title4">Learning from Last-Mile Failures in Fine-Grained Robotic Manipulation</h3>        <p class="venue" data-i18n="paper.venue4">CCF-A Conference Under Review <span class="dot">·</span> 2026.05</p>
+          <div class="tags"><span data-i18n="paper.pending">Paper link to be updated</span></div>
+        </div>
+      </article>
+    </details>
   </section>
 
   <!-- ============ Writing & Media ============ -->
-  <section id="writing">
+  <section id="writing" class="rise">
     <h2 data-i18n="section.writing">Writing &amp; Media</h2>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/write/write-juliadiffusion.jpg" width="900" height="450" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/write/write-juliadiffusion.jpg" width="900" height="450" alt="Figure from the blog on continuous-time diffusion models in Julia" loading="lazy"></div>
       <div>
         <h3 data-i18n="writing.diffusion">Julia Implementation of Continuous-time Diffusion Models: A Blog for NUS EE5311</h3>
         <p class="authors"><span class="me">Zhijun Cao</span>, Pinhong Chen, Zifeng Huang, Shuzhe Rui, Xiao Wang</p>
@@ -354,7 +388,7 @@
     </article>
 
     <article class="pub">
-      <div class="thumb"><img src="assets/img/write/write-bgtree.jpg?v=202609291444" width="1280" height="854" alt="" loading="lazy"></div>
+      <div class="thumb"><img src="assets/img/write/write-bgtree.jpg?v=202609291444" width="1280" height="854" alt="Image from the BG Tree report on the historic cedar at ZJU Yuquan Campus" loading="lazy"></div>
       <div>
         <h3 data-i18n="writing.tree">报告树：“BG Tree” — A Documentary Report on the Historic Cedar at ZJU Yuquan Campus Gate</h3>
         <p class="authors">Yuxuan Ouyang, <span class="me">Zhijun Cao</span>, Yiying Zhou</p>
@@ -367,24 +401,23 @@
   </section>
 
   <!-- ============ Internship ============ -->
-  <section id="internship">
+  <section id="internship" class="rise">
     <h2 data-i18n="section.internship">Internship</h2>
 
     <div class="item">
-      <div class="ilogo"><img src="assets/img/logo/mikomiko.png" width="160" height="23" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/mikomiko.png" width="160" height="23" alt="Mikomiko logo" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
-        <span class="t" data-i18n="internship.mikomiko">Mikomiko AI</span>
+        <span class="t" data-i18n="internship.mikomiko">Mikomiko Pte Ltd</span>
         <span class="d" data-i18n="internship.dates">2025.08&nbsp;–&nbsp;2026.02 · 2026.06&nbsp;–&nbsp;present</span>
       </div>
-      <div class="s" data-i18n="internship.ai">AIGC Algorithm Engineer</div>
+      <div class="s" data-i18n="internship.ai">AI Scientist</div>
       </div>
       <div class="irest">
       <div class="plist">
         <div class="prow" data-i18n="internship.lab"><a href="https://kokorolab.net/en/home"><strong>Kokoro Lab</strong></a>
-          — Native image generation and editing model</div>
-        <div class="prow" data-i18n="internship.studio"><strong>Kokoro Studio</strong> <span class="pst">(to be announced)</span>
-          — Video generation canvas</div>
+          — Make your imagination alive with agent-powered generation</div>
+        <div class="prow" data-i18n="internship.more"><span class="pst">Explore more <span class="handle" tabindex="0" data-h="@otakufans_net"></span></span></div>
       </div>
       <!-- <ul>
         <li>Main work focusing on the inference efficiency and diffusion distillation of any-to-any models.</li>
@@ -393,7 +426,7 @@
     </div>
 
     <div class="item">
-      <div class="ilogo"><img src="assets/img/logo/innomotion.png" width="160" height="58" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/innomotion.png" width="160" height="58" alt="InnoMotion logo" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="internship.innomotion">InnoMotion Co. Ltd, Shanghai — R&amp;D Department</span>
@@ -405,11 +438,11 @@
   </section>
 
   <!-- ============ Education ============ -->
-  <section id="education">
+  <section id="education" class="rise">
     <h2 data-i18n="section.education">Education</h2>
 
     <div class="item">
-      <div class="ilogo"><img src="assets/img/logo/nus.png" width="125" height="160" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/nus.png" width="125" height="160" alt="National University of Singapore logo" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="education.title0">National University of Singapore</span>
@@ -420,7 +453,7 @@
     </div>
 
     <div class="item">
-      <div class="ilogo"><img src="assets/img/logo/zju.png" width="160" height="160" alt="" loading="lazy"></div>
+      <div class="ilogo"><img src="assets/img/logo/zju.png" width="160" height="160" alt="Zhejiang University logo" loading="lazy"></div>
       <div class="ihead">
       <div class="row">
         <span class="t" data-i18n="education.title1">Zhejiang University</span>
@@ -450,15 +483,15 @@
             <span class="d">2021.10 – 2025.07</span>
           </div>
           <div class="s" data-i18n="education.detail3">Deputy Head &amp; Advisor</div>
-          <div class="s" data-i18n="education.detail4"><strong>Excellent Campus News Award</strong> (People's Daily Online 2023)
-            · <strong>Good News Award</strong> (ZJU 2023; CMIC 2025)</div>
+          <div class="s" data-i18n="education.detail4"><em><strong>Excellent Campus News Award</strong> (People's Daily Online 2023)
+            · <strong>Good News Award</strong> (ZJU 2023; CMIC 2025)</em></div>
         </div>
       </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ Projects（暂时隐藏；咖啡冲煮机器人项目已列在 Education 的浙大条目下）============ -->
+  <!-- ============ Projects (hidden; the coffee-brewing robot is listed under the ZJU entry in Education) ============ -->
   <!-- <section id="projects">
     <h2>Projects</h2>
 
@@ -471,18 +504,9 @@
     </div>
   </section> -->
 
-  <!-- ============ Opportunities ============ -->
-  <section id="collaboration">
-    <p data-i18n="contact.invitation">
-      Want to find out more about me? Visit 👉 <a href="/gallery/"><strong>🖼️ Gallery</strong></a>.<br>
-      Feel free to <a href="mailto:aaroncaozj@gmail.com">email me</a> to discuss the work above,
-      explore a possible collaboration, or simply say hello 🤗.
-    </p>
-  </section>
-
   <!-- ============ Visitors ============ -->
-  <!-- 整段带 hidden，由 worldmap.js 在建好之后移除：
-       脚本挂了或接口无数据时，这一节连同它的留白一起不出现。 -->
+  <!-- Starts hidden; worldmap.js unhides it once the map is built, so a failed script or empty data
+       leaves no blank section. -->
   <section id="visitors" hidden>
     <div class="vmap" id="visitorMap"></div>
   </section>
@@ -491,17 +515,15 @@
 
 <footer class="wrap">
   <span data-i18n="footer.copyright">Copyright © Aaron Zhijun Cao. All Rights Reserved.</span>
-  <span data-i18n="footer.updated">Last Update: Oct. 2026</span>
+  <span data-i18n="footer.updated">Last Update: Nov. 2026</span>
 </footer>
 
 <script>
-/* 论文条目里的视频：滚进视口才开始播，滚出就暂停。
-   preload="none" 让它在此之前完全不占带宽 —— 首页七篇论文，
-   若都预加载会白白吃掉几 MB。
-   尊重"减少动态效果"：那种情况下只留 poster 静帧，并给出播放控件。
-   poster 不像 <img> 那样能 loading="lazy"，写成属性就会随页面一起下载（100 KB 左右），和首屏抢带宽。
-   所以写在 data-poster 里，卡片离视口还有一段距离时再挂上；video 上的 width/height 先按封面的比例
-   把框撑好，封面到了不会跳 */
+/* Paper videos play only while in view and pause when scrolled out; preload="none" keeps them off the
+   network until then. Reduced motion: poster frame only, with controls.
+   poster can't be lazy-loaded like <img> and as an attribute would download with the page, competing with
+   first paint; so it sits in data-poster and is attached as the card nears the viewport. width/height on
+   <video> reserve the poster's aspect ratio so nothing jumps. */
 (function () {
   var vids = document.querySelectorAll('.thumb-video');
   if (!vids.length) return;
@@ -523,7 +545,7 @@
 
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
-      // 浏览器不许自动播放时（如 iPhone 开着低电量模式）给出播放控件，至少能手动点开
+      // If autoplay is blocked (e.g. iPhone Low Power Mode), show controls so it can be started by hand
       if (e.isIntersecting) { e.target.play().catch(function (err) { if (err && err.name === 'NotAllowedError') e.target.controls = true; }); }
       else { e.target.pause(); }
     });
@@ -534,11 +556,11 @@
 </script>
 
 <script>
-/* 邮箱入口：鼠标悬停（或键盘聚焦）时在下面弹出小浮层，里面是地址和「复制」按钮；点击入口本身
-   仍是原来的 mailto。鼠标一离开就收起，不停留 —— 入口和浮层之间那条缝由 .copy-tip 垫着（它和浮层
-   一样宽，只在打开时接鼠标），所以从入口往下划到浮层上不算离开。
-   复制成功后按钮变成「已复制」，过一会儿变回来；文字变长变短时浮层跟着重新居中。按 Esc 也收起。
-   没有悬停的设备（手机）不弹：点一下就是写邮件，长按链接系统自带复制 */
+/* Email popover: hover or focus opens it below the link (address + Copy button); clicking the link is still mailto.
+   It closes as soon as the pointer leaves. .copy-tip bridges the gap (same width as the popover, takes the pointer
+   only while open), so moving down onto the popover doesn't count as leaving.
+   After copying, the button briefly reads "Copied" and the popover re-centres for the new width. Esc also closes.
+   Devices without hover (phones) get no popover: tap composes mail, long-press gives the system copy. */
 (function () {
   var box = document.querySelector('.mailbox');
   if (!box || !window.matchMedia || !matchMedia('(hover: hover)').matches) return;
@@ -552,8 +574,9 @@
     if (pop.classList.contains('on')) place();
   }
   function place() {
-    // 浮层与入口左右居中对齐；窗口窄、左边放不下时贴着窗口左缘留 8px，尖角仍对准入口正中。
-    // 垫缝的那一条（.copy-tip）与浮层同宽、同位置
+    // Centre the popover on the link; if it would overflow the left edge, keep 8px from the window edge
+    // with the arrow still on the link centre. .copy-tip shares the popover's width and position.
+    // .links must not clip horizontally, or the part left of the column is cut off (see the script below)
     var half = link.offsetWidth / 2, left = half - pop.offsetWidth / 2;
     left = Math.max(left, 8 - box.getBoundingClientRect().left);
     box.style.setProperty('--px', left + 'px');
@@ -569,7 +592,7 @@
     clearTimeout(doneT);
     doneT = setTimeout(reset, 1600);
   }
-  function legacyCopy() {                       // 没有剪贴板接口的旧浏览器
+  function legacyCopy() {                       // old browsers without the Clipboard API
     var t = document.createElement('textarea');
     t.value = addr; t.setAttribute('readonly', '');
     t.style.cssText = 'position:fixed;left:-99px;top:0;opacity:0';
@@ -589,10 +612,36 @@
   document.addEventListener('languagechange', function () { if (!copy.classList.contains('done')) reset(); });
 })();
 
-// News 展开
+// Contacts row: mark each item that starts a wrapped line (.line-start), so CSS drops its "|" divider,
+// which would otherwise sit left of the column. This replaces overflow-x: clip on .links, which also cut
+// off the email popover. Items on one flex line share offsetTop (align-items: stretch); a larger one
+// means a new line. Re-run whenever the row or an item changes size: window width, language, fonts.
+(function () {
+  var row = document.querySelector('.links');
+  if (!row) return;
+  function mark() {
+    var items = row.children, prev = null;
+    for (var i = 0; i < items.length; i++) {
+      var top = items[i].offsetTop;
+      items[i].classList.toggle('line-start', prev !== null && top > prev);
+      prev = top;
+    }
+  }
+  mark();
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(mark);
+    ro.observe(row);
+    for (var i = 0; i < row.children.length; i++) ro.observe(row.children[i]);
+  } else {
+    window.addEventListener('resize', mark);
+    document.addEventListener('languagechange', mark);
+  }
+})();
+
+// News expand / collapse
 (function () {
   var btn = document.getElementById('newsMore');
-  // 前面的三角由样式表画（.news-more::before），展开时转向下；这里只换文字
+  // The triangle is drawn in CSS (.news-more::before) and turns down when open; only the label changes here
   function updateLabel() {
     btn.textContent = document.documentElement.lang === 'zh-CN' ? '全部动态' : 'All News';
   }
@@ -609,55 +658,192 @@
 
 <script>
 /* ------------------------------------------------------------------
-   头像入场动效：latent diffusion + rectified flow 的视觉复刻。
+   Avatar intro: a visual mimic of latent diffusion + rectified flow,
+   calibrated against Z-Image (base) decodes, then restyled where marked
+   "Deliberately not copied".
 
-   路径用 rectified flow 的直线插值（SD3 / Flux 的做法）：
-       x_t = (1 - t) * x_0 + t * eps,   t: 1 -> 0
-   这恰好就是 canvas 的 alpha 合成公式，于是整段可以纯靠
-   globalAlpha + drawImage 完成，走 GPU，不必逐像素读写，
-   也就不受 tainted canvas 的跨源限制。
-   （DDPM 是球面路径 sqrt(abar)*x0 + sqrt(1-abar)*eps，
-     系数平方和为 1，那个就必须逐像素算了。）
+   Noise-level axis: t IS sigma, and it runs linearly 1 -> 0 (step k shows
+   sigma = 1 - k/STEPS). At every sigma the frame is tuned to look like a real
+   Z-Image latent x_sigma pushed straight through the VAE decoder:
+       x_sigma = (1 - sigma) * x_0 + sigma * eps
+   Calibration: real 1024px Z-Image runs decoded at sigma = 1, 0.95, ..., 0 and
+   compared at 512px with this script rendered in headless Chrome, on
+   fine-grain noise strength, colour layout and shape correlation with the final
+   image, mean luminance and saturation. Pixel constants below are for a 512px
+   canvas and scale with W.
 
-   噪声不在像素空间采样，而是先在低分辨率“latent”上生成，
-   再由 drawImage 平滑上采样 —— 模拟 VAE 解码，得到块状而非
-   针尖状的颗粒。
+   What real decodes look like, and how each is mimicked:
+   - sigma ~ 1: fine, saturated colour speckle (per-channel std ~60/255, grain
+     about 1/250 of the width, channels correlated ~0.7). Not soft blotches.
+     Deliberately not copied: the latent noise is a little coarser and softer
+     (NOISE_COARSE, NOISE_STD), so the first steps visibly churn without
+     clumping; the overlay grain keeps the measured fine size throughout.
+   - Colour layout surfaces first (sigma ~0.95-0.9), shapes from ~0.8, the
+     subject reads clearly from ~0.6; below ~0.3 only fine grain is left, and it
+     fades roughly linearly with sigma.
+   - Mid-range frames (sigma ~0.6-0.2) are slightly greyer than the final image:
+     the latent signal is scaled by (1 - sigma), so decodes lose saturation.
+     Deliberately not copied: under the wash the prediction gets a mild
+     saturation boost (SAT) and a hue-safe exposure lift (BRIGHT), so the sky
+     reads bright blue early (blurred sky ~95-100% of final luminance from 0.8,
+     hue within ~4 deg of the final blue).
+   - Anything that brightens per channel turns the sky cyan: its blue channel is
+     already near 255, so blue clips while green keeps rising. That rules out
+     contrast(), brightness() and the additive EXPO / BLOOM extras (kept at 0;
+     set them > 0 to restore the stylised look). BRIGHT instead mixes each
+     pixel toward white by an amount set by its own luminance.
 
-   关键点：混合进去的不是成品图，而是随 t 变化的“当前预测”
-   x_hat_0(t)。真实采样跑的是反向过程，早期模型只能给出粗糙
-   模糊、细节尚不存在的估计；若始终拿成品图去混噪声，得到的
-   只是前向加噪的倒放 —— 看上去像给照片盖了层噪声，而不是
-   把照片一点点生成出来。这里用降采样再上采样来模拟受 latent
-   分辨率限制的预测，并让饱和度、对比度一同从低到高恢复。
+   Rendering is plain canvas compositing (globalAlpha + drawImage), with noise
+   blended into the current prediction x_hat_0(sigma), not the final image.
+   Noise has two layers: a grey wash on the straight path whose weight
+   sigma^MIX drops early (0.66 at 0.9, 0.41 at 0.8, 0.13 at 0.6), and overlay
+   grain fading linearly with sigma, which modulates lightness so colour shows
+   through.
+
+   One sigma for the whole image, as in a real sampler (a face layer running
+   ahead of the rest drifted against it on an iPad).
 ------------------------------------------------------------------ */
 (function () {
   var wrap = document.getElementById('avatarFx');
   if (!wrap) return;
   var img    = wrap.querySelector('img');
   var canvas = wrap.querySelector('canvas');
-  var ctx    = canvas.getContext('2d');
+  var mctx   = canvas.getContext('2d');
+  var ctx    = mctx;   // context drawPred / render / drawBloom draw on
   var W = canvas.width, H = canvas.height;
+  var PX = W / 512;   // calibration was done on a 512px canvas; noise sizes scale with the canvas
 
-  var STEPS  = 20;    // 采样步数
-  var DT     = 45;    // 每步毫秒（20 x 45ms 约 0.90s）
-  var COARSE = 16;    // t=1 时的 latent 下采样倍率（块最粗）
-  var FINE   = 2;     // t=0 附近的下采样倍率（颗粒最细）
-  var CHROMA = 0.62;  // 三通道共享分量占比，越大色块越明显
-  var GAMMA  = 1.35;  // 预测清晰度的回升曲线：>1 表示结构在中段快速涌现
+  var STEPS  = 20;    // sampling steps; step k shows sigma = 1 - k/STEPS
+  var DT     = 50;    // ms per step (20 x 50 = 1 s): a whole number of frames (3 at 60 Hz, 6 at 120 Hz),
+                      // so every step lasts equally long; 45 ms would alternate 3/3/2 frames
+  var STEPS_INTRO = 24; // steps for the play on page load (24 x DT = 1.2 s). It starts with the page entrance
+                        // (see intro()), during which the avatar comes into focus from a blur (avatar-focus in
+                        // style.css: 0.1 s delay, 0.7 s), sharp at 0.8 s (step 16, a third left);
+                        // 1.6-2 s felt long. Change the step count, not DT: 100 ms steps stutter
+  var COARSE = 16;    // block side (px) at sigma=1, the coarsest level; a power of two dividing W (see drawPred)
+  var CHROMA = 0.62;  // share of noise common to all channels (real decodes: channel correlation ~0.72)
+  var GAMMA  = 2;     // prediction sharpness curve q = sigma^GAMMA; real x_hat_0 is sharp early, so structure
+                      // is limited by the noise, not by blur. Don't go below 1 (blocks jitter)
+  var MIX    = 4;     // grey-wash weight sigma^MIX (0.66 at 0.9, 0.41 at 0.8, 0.13 at 0.6); Z-Image measures ~2.5,
+                      // but its heavier wash greys the sky out for the first third
+  var GRAIN  = 1.0;   // overlay grain strength, times sigma
+  /* Latent noise: cell size (px) at sigma=1 / sigma=0 and strength. Z-Image measures ~6 px and std ~61; slightly
+     coarser cells make the early steps churn visibly (frame-to-frame change close to the old blotchy version).
+     Cells ~12 px or more, or std 60 at 8 px, read as clumps in the pure-noise frames. */
+  var NOISE_STD = 48; // per-channel std scale of the noise textures (0–255)
+  var NOISE_COARSE = 8 * PX, NOISE_FINE = 2 * PX;
+  var GRAIN_SCALE = 2 * PX;  // grain size (px)
+  /* Colour under the wash, both times the grey-wash weight sigma^MIX, so they vanish as the wash does.
+     SAT: extra saturation at full wash. Keep it modest: past ~1.2x the sky's blue clips and it drifts cyan.
+     BRIGHT: exposure. A greyscale copy of the prediction is screened on top, i.e. each pixel moves toward
+     white by its own luminance: the sky brightens a lot, the dark coat hardly at all, and hue is unchanged
+     because all three channels move by the same fraction. Above ~1.5 the sky goes hazy white. */
+  var SAT    = 0.8;
+  var BRIGHT = 1.2;
+  /* The prediction is upscaled smooth, not as blocks, whose edges jump between block sizes (most visibly at the
+     eyes and mouth). Upscale, then blur by PRED_BLUR x block size; without canvas filter (Safari) smoothUp stands
+     in for the blur. */
+  var PRED_BLUR = 0.55;
+  /* The block grid overhangs the canvas by up to one block (see AX), plus EDGE more blocks per side so the blur
+     never pulls transparency in at the canvas edge; the avatar is edge-extended by PAD px to cover all of it. */
+  var EDGE = 2, PAD = (1 + EDGE) * COARSE;
+  // Stylised extras, off for Z-Image fidelity (real decodes show neither):
+  var EXPO   = 0;     // overexposure: opacity of an additive copy of the prediction, times q^1.5 (was 0.12)
+  var BLOOM  = 0;     // bloom opacity, times q^1.5 (was 0.55)
+  var BLOOM_TH  = 0.74; // luminance threshold (0–1): only the brightest spots (horizon, highlights, surf) glow
+  var BLOOM_DIV = 4;    // bloom canvas is this many times smaller than the prediction; larger = softer
+  var BLOOM_WHITE = 0.3; // how far bloom cores are pushed to white (neutral; warm white looks fake on blue sky)
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  mctx.imageSmoothingEnabled = true;
+  mctx.imageSmoothingQuality = 'high';
 
-  // 低分辨率噪声画布，充当 latent
+  /* Two noise textures: latent noise and fine overlay grain. Built once before the first play, 1.6x
+     larger than a frame needs; each frame crops a random window (pickNoise). Shifted white noise is as good
+     as a fresh sample, and generating Gaussian noise per frame dominated render time. */
   var nz = document.createElement('canvas');
   var nctx = nz.getContext('2d');
-  // 当前步的预测图 x_hat_0(t)，同样先降到低分辨率
-  var pr = document.createElement('canvas');
+  var gz = document.createElement('canvas');
+  var gctx = gz.getContext('2d');
+  var pr = document.createElement('canvas');        // one level, downsampled (resized per level, see drawLevel)
   var pctx = pr.getContext('2d');
-  pctx.imageSmoothingEnabled = true;
-  pctx.imageSmoothingQuality = 'high';
+
+  /* Safari (iPad included) has canvas filter only behind a flag as of 26, so blur, saturate and grayscale are
+     silently ignored there. Fallbacks, used only without filter:
+     - blur: smoothUp, upscaling in 2x bilinear passes. Each pass is a round of Chaikin corner cutting, so a
+       few approach a quadratic B-spline: about as soft as the blur, with no block edges.
+     - BRIGHT: greyOf, a grey fill in the 'saturation' blend mode (keeps luminance, drops saturation).
+     SAT has no cheap equivalent and is skipped, so the sky is a little less saturated in the first steps. */
+  var canFilter = 'filter' in mctx;
+  var sb = [], sbx = [];                           // scratch canvases, fixed size so nothing reallocates per frame
+  for (var i = 0; i < 3; i++) {
+    sb[i] = document.createElement('canvas');
+    sb[i].width = sb[i].height = canFilter ? 1 : W + 2 * PAD;   // largest use: the m*b <= W + (1 + 2 EDGE) COARSE upscale
+    sbx[i] = sb[i].getContext('2d');
+    sbx[i].imageSmoothingEnabled = true;
+    sbx[i].imageSmoothingQuality = 'low';          // plain bilinear: what each Chaikin pass needs
+  }
+  var upSize = 0;
+  /* Variance (in blocks^2) the B-spline lacks against bilinear + PRED_BLUR (1/6 + PRED_BLUR^2 vs 1/4), added as
+     a [w, 1-2w, w] pre-blur per axis on pr, where a pixel is a block */
+  var PRE_W = Math.max(0, (1 / 6 + PRED_BLUR * PRED_BLUR - 1 / 4) / 2);
+  // pr drawn over itself shifted +1 then -1, both at alpha PRE_A: side weights PRE_A(1 - PRE_A) = PRE_W each.
+  // Each pass draws a copy (sb[2]) rather than pr onto itself, which iOS may not snapshot before drawing.
+  var PRE_A = (1 - Math.sqrt(1 - 4 * PRE_W)) / 2;
+  var PRE_SHIFTS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  function smoothUp(m, target) {                   // pr (m x m) doubled while it fits target; result is upSize square
+    pctx.globalAlpha = PRE_A;
+    PRE_SHIFTS.forEach(function (d) {
+      sbx[2].drawImage(pr, 0, 0);                  // pr is opaque, so this replaces the copy
+      pctx.drawImage(sb[2], 0, 0, m, m, d[0], d[1], m, m);
+    });
+    pctx.globalAlpha = 1;
+    var c = pr, s = m, k = 0;
+    while (s * 2 <= target) {
+      sbx[k].drawImage(c, 0, 0, s, s, 0, 0, s * 2, s * 2);
+      c = sb[k]; s *= 2; k ^= 1;
+    }
+    upSize = s;
+    return c;
+  }
+  function greyOf(c, s) {                          // greyscale copy of c's top-left s x s, in sb[2]
+    var x = sbx[2];
+    x.drawImage(c, 0, 0, s, s, 0, 0, s, s);        // opaque, so it fully replaces the region
+    x.globalCompositeOperation = 'saturation';
+    x.fillStyle = '#808080';
+    x.fillRect(0, 0, s, s);
+    x.globalCompositeOperation = 'source-over';
+    return sb[2];
+  }
+  // Bloom canvas: extracting highlights needs per-pixel reads. Under file:// the canvas is tainted and
+  // unreadable, so bloom turns off (bloomOk) and the rest still runs
+  var bl = document.createElement('canvas');
+  var bctx = bl.getContext('2d', { willReadFrequently: true });
+  var bloomOk = BLOOM > 0;
+
+  /* Every level's grid is anchored on the face, so a block is centred between the eyes at every block size
+     (data-fx-face on <img>, as fractions of width/height; update it with the avatar) and the levels line up there.
+     The overhang and the EDGE blocks past it come from the edge-extended copy (padded, PAD px each side).
+     The anchor is rounded so that, with power-of-two block sizes, every rect drawn is whole pixels: an iPad drew
+     each level a different fraction of a pixel off when the anchor was fractional (x 267.84), and the crossfade
+     between levels slid the picture sideways. */
+  var face = (img.getAttribute('data-fx-face') || '0.5 0.5').split(' ');
+  var AX = Math.round(parseFloat(face[0]) * W), AY = Math.round(parseFloat(face[1]) * H);
+  var padded = null;
+  function buildPadded() {
+    var T = W + 2 * PAD, iw = img.naturalWidth, ih = img.naturalHeight;
+    padded = document.createElement('canvas');
+    padded.width = T; padded.height = T;
+    var x = padded.getContext('2d');
+    x.imageSmoothingEnabled = true;
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(img, PAD, PAD, W, H);
+    x.drawImage(img, 0, 0, 1, ih, 0, PAD, PAD, H);               // left
+    x.drawImage(img, iw - 1, 0, 1, ih, PAD + W, PAD, PAD, H);    // right
+    x.drawImage(padded, 0, PAD, T, 1, 0, 0, T, PAD);             // top; the copied row is already side-extended, so corners fill too
+    x.drawImage(padded, 0, PAD + H - 1, T, 1, 0, PAD + H, T, PAD); // bottom
+  }
 
   // Box-Muller
   var spare = null;
@@ -669,69 +855,207 @@
     return r * Math.cos(th);
   }
 
-  function fillLatent(t) {
-    var scale = FINE + (COARSE - FINE) * t;
-    var n = Math.max(2, Math.round(W / scale));
-    nz.width = n; nz.height = n;                 // 改尺寸即清空
-    var d = nctx.createImageData(n, n), a = d.data;
+  // Fill c with n x n Gaussian noise around neutral grey
+  function fillNoise(c, cx, n) {
+    c.width = n; c.height = n;                   // resizing also clears it
+    var d = cx.createImageData(n, n), a = d.data;
     for (var i = 0; i < a.length; i += 4) {
-      // 三通道共享一部分分量，制造成片的偏色 —— latent 解码后的典型观感
-      var base = gauss() * 34 * CHROMA, ind = 34 * (1 - CHROMA);
-      a[i]     = 128 + base + gauss() * ind;
+      // channels share part of the sample, giving patches of colour cast — the decoded-latent look
+      var base = gauss() * NOISE_STD * CHROMA, ind = NOISE_STD * (1 - CHROMA);
+      a[i]     = 128 + base + gauss() * ind;     // ImageData clamps to 0–255, like the decoder's output clamp
       a[i + 1] = 128 + base + gauss() * ind;
       a[i + 2] = 128 + base + gauss() * ind;
       a[i + 3] = 255;
     }
-    nctx.putImageData(d, 0, 0);
+    cx.putImageData(d, 0, 0);
   }
+  // Below this grey-wash weight no pixel changes by half a level, so it is skipped (sigma < 0.21)
+  var NOISE_MIN = 0.5 / 255;
+  function latentSize(t) { return Math.max(2, Math.round(W / (NOISE_FINE + (NOISE_COARSE - NOISE_FINE) * t))); }
+  var GN = Math.round(W / GRAIN_SCALE);                   // side of the per-frame grain crop
+  var LN = latentSize(Math.pow(NOISE_MIN, 1 / MIX));      // size of the finest latent crop still drawn
+  var noiseReady = false;
+  function buildNoise() {
+    fillNoise(nz, nctx, Math.ceil(LN * 1.6));
+    fillNoise(gz, gctx, Math.ceil(GN * 1.6));
+    noiseReady = true;
+  }
+  // Integer top-left of an n x n crop in a size x size texture (integers keep interpolation from softening the noise).
+  // u (0–1) is drawn once per frame
+  function pickNoise(size, n, u) { return Math.floor(u * (size - n + 1)); }
+  var rnd = [0, 0, 0, 0];
 
   var running = false;
 
-  /* 当前步的预测 x_hat_0(t)：分辨率受限 + 色彩未完全恢复。
-     用 GAMMA 让结构在中段快速涌现，而不是随 t 线性变清晰。 */
-  function drawPred(t) {
+  /* Current prediction x_hat_0(sigma): resolution-limited, colour first, detail later, boosted against the wash.
+     GAMMA sets how fast structure emerges, rather than sharpening linearly in sigma.
+     The block size 1 + (COARSE - 1) q is drawn as a mix of the two power-of-two levels around it (16, 8, 4, 2 px,
+     and 1 = the original), each on a fixed grid, so only the mix changes between steps. Resampling at a new block
+     size every step moved the picture a little each time, and on an iPad visibly shook it. */
+  var lv = [], lvx = [];
+  for (var j = 0; j < 2; j++) {
+    lv[j] = document.createElement('canvas');
+    lv[j].width = W; lv[j].height = H;
+    lvx[j] = lv[j].getContext('2d');
+    lvx[j].imageSmoothingEnabled = true;
+    lvx[j].imageSmoothingQuality = 'high';
+  }
+  function drawPred(t, a) {                       // a: grey-wash weight this prediction will sit under (see render)
     var q = Math.pow(t, GAMMA);
-    var scale = 1 + (COARSE - 1) * q;
-    var n = Math.max(2, Math.round(W / scale));
-    pr.width = n; pr.height = n;
-    pctx.drawImage(img, 0, 0, n, n);              // 降采样：丢掉高频细节
-    ctx.filter = 'saturate(' + (1 - 0.45 * q).toFixed(3) + ') ' +
-                 'contrast(' + (1 - 0.12 * q).toFixed(3) + ')';
-    ctx.drawImage(pr, 0, 0, W, H);                // 上采样回画布
-    ctx.filter = 'none';
-  }
-
-  function render(t) {
-    fillLatent(t);
-    ctx.globalAlpha = 1;
-    drawPred(t);                                  // x_hat_0(t)，而非成品图
-    ctx.globalAlpha = t;                          // 直线路径的 sigma
-    ctx.drawImage(nz, 0, 0, W, H);                // latent 噪声，上采样时自动平滑
+    var L = Math.min(Math.log2(COARSE), Math.log2(1 + (COARSE - 1) * q));   // 0 (original) to 4 (16 px blocks)
+    var L0 = Math.floor(L), f = L - L0;           // between level L0 and the coarser L0 + 1, f of the way there
+    var out = ctx;
+    if (f > 0) { ctx = lvx[0]; drawLevel(1 << (L0 + 1), a, q); }
+    ctx = lvx[1]; drawLevel(1 << L0, a, q);
+    ctx = out;
+    if (f > 0) ctx.drawImage(lv[0], 0, 0);
+    ctx.globalAlpha = 1 - f;
+    ctx.drawImage(lv[1], 0, 0);
     ctx.globalAlpha = 1;
   }
+  function drawLevel(b, a, q) {                   // b: block side, a power of two dividing W
+    if (b === 1) { ctx.drawImage(img, 0, 0, W, H); return; }
+    var n = W / b;
+    var x0 = (AX + b / 2) % b - (1 + EDGE) * b, y0 = (AY + b / 2) % b - (1 + EDGE) * b;   // first block's top-left: a block is centred on (AX, AY), EDGE blocks start off-canvas
+    var m = n + 1 + 2 * EDGE;                     // one extra block covers the right/bottom after the offset, plus EDGE per side
+    pr.width = m; pr.height = m;                  // resizing resets the context, so smoothing is set after it
+    pctx.imageSmoothingEnabled = true;
+    pctx.imageSmoothingQuality = 'high';
+    pctx.drawImage(padded, x0 + PAD, y0 + PAD, m * b, m * b, 0, 0, m, m);   // downsample: drop high-frequency detail
+    var src = pr, s = m;
+    if (!canFilter) { src = smoothUp(m, m * b); s = upSize; }   // see canFilter
+    var blur = canFilter ? ' blur(' + (PRED_BLUR * b).toFixed(2) + 'px)' : '';   // smooth, not blocks (exposure copies too); see PRED_BLUR
+    if (canFilter) ctx.filter = 'saturate(' + (1 + SAT * a).toFixed(3) + ')' + blur;
+    ctx.drawImage(src, 0, 0, s, s, x0, y0, m * b, m * b);   // upsample back with the same offset
+    // Exposure and bloom fade before structure (q^1.5): blown highlights belong to the noisiest steps only
+    var fx = Math.pow(q, 1.5);
+    if (EXPO > 0) {
+      ctx.globalCompositeOperation = 'lighter';   // overexposure: add the same image again, clipped at 255
+      ctx.globalAlpha = EXPO * fx;
+      ctx.drawImage(pr, x0, y0, m * b, m * b);
+    }
+    if (BRIGHT > 0 && a > 0) {                    // hue-safe exposure: screen a greyscale copy (see BRIGHT)
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = Math.min(1, BRIGHT * a);
+      if (canFilter) {
+        ctx.filter = 'grayscale(1)' + blur;
+        ctx.drawImage(pr, x0, y0, m * b, m * b);
+      } else {
+        ctx.drawImage(greyOf(src, s), 0, 0, s, s, x0, y0, m * b, m * b);
+      }
+    }
+    if (canFilter) ctx.filter = 'none';
+    if (bloomOk) drawBloom(fx, m, x0, y0, b);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
 
-  function play() {
+  // Bloom: draw the prediction small, keep highlights (brighter = whiter), upscale back for a soft glow
+  function drawBloom(fx, m, x0, y0, b) {
+    var k = Math.max(4, Math.round(m / BLOOM_DIV));
+    bl.width = k; bl.height = k;
+    bctx.imageSmoothingEnabled = true;
+    bctx.imageSmoothingQuality = 'high';
+    bctx.drawImage(pr, 0, 0, k, k);
+    var d;
+    try { d = bctx.getImageData(0, 0, k, k); } catch (e) { bloomOk = false; return; }
+    var a = d.data;
+    for (var i = 0; i < a.length; i += 4) {
+      var l = (0.3 * a[i] + 0.59 * a[i + 1] + 0.11 * a[i + 2]) / 255;
+      var w = Math.min(1, Math.max(0, (l - BLOOM_TH) / (1 - BLOOM_TH)) * 1.6), ww = w * w * BLOOM_WHITE;
+      a[i]     = a[i] * w     + 255 * ww;          // dark areas: w=0 gives black, which screen leaves unchanged
+      a[i + 1] = a[i + 1] * w + 255 * ww;
+      a[i + 2] = a[i + 2] * w + 255 * ww;
+    }
+    bctx.putImageData(d, 0, 0);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.min(1, BLOOM * fx);
+    ctx.drawImage(bl, x0, y0, m * b, m * b);
+  }
+
+  function frame(t) {
+    rnd = [Math.random(), Math.random(), Math.random(), Math.random()];
+    render(t);
+  }
+
+  function render(t) {                            // t = sigma
+    var a = Math.pow(t, MIX);                     // grey-wash weight
+    ctx.globalAlpha = 1;
+    if (a < 1) drawPred(t, a);                    // x_hat_0(sigma), not the final image; skipped at sigma=1, where noise covers it
+    if (a >= NOISE_MIN) {
+      var n = latentSize(t), sx = pickNoise(nz.width, n, rnd[0]), sy = pickNoise(nz.width, n, rnd[1]);
+      ctx.globalAlpha = a;
+      ctx.drawImage(nz, sx, sy, n, n, 0, 0, W, H);  // latent noise, smoothed by upsampling
+    }
+    var g = Math.min(1, GRAIN * t);
+    if (g > 0) {
+      var gx = pickNoise(gz.width, GN, rnd[2]), gy = pickNoise(gz.width, GN, rnd[3]);
+      ctx.globalCompositeOperation = 'overlay';   // grain: overlay changes lightness only, so colour shows through
+      ctx.globalAlpha = g;
+      ctx.drawImage(gz, gx, gy, GN, GN, 0, 0, W, H);
+      ctx.drawImage(gz, gx, gy, GN, GN, 0, 0, W, H);  // drawn twice: a single overlay pass is too weak at this amplitude
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* Fixed schedule: step k shows k x DT ms after start, at sigma = 1 - k/steps (linear noise-level axis).
+     Each requestAnimationFrame tick works out the current step and redraws only when it changes, staying
+     aligned with refresh. Don't chain setTimeout after rendering: each step would last DT plus a variable
+     render time, drifting and stretching the animation. */
+  function showNoise() {                          // build what's missing and show the sigma=1 frame
+    if (!padded) buildPadded();
+    if (!noiseReady) buildNoise();
+    wrap.classList.add('fx-on');
+    frame(1);
+  }
+  function play(steps) {
     if (running || !img.naturalWidth) return;
     running = true;
-    wrap.classList.add('fx-on');
-    var k = 0;
-    (function step() {
-      render(1 - k / STEPS);
-      if (k++ < STEPS) { setTimeout(step, DT); return; }
-      wrap.classList.remove('fx-on');            // 淡出画布，露出原图
+    showNoise();
+    var start = -1, shown = 0;
+    requestAnimationFrame(function tick(now) {
+      if (start < 0) start = now;                 // step 0 shows this frame; its timestamp is the origin, so step boundaries land on frames
+      var k = Math.min(steps, Math.floor((now - start + 4) / DT));   // 4 ms slack so timestamp jitter can't add or drop a frame
+      if (k !== shown) { shown = k; frame(1 - k / steps); }
+      if (k < steps) { requestAnimationFrame(tick); return; }
+      // The canvas stays up with the image as its last frame: handing back to the <img> (640 px scaled once, against
+      // 640 -> 480 px scaled again) made the picture drop slightly at the very end on an iPad
       running = false;
-    })();
+    });
   }
 
-  if (img.complete) play();
-  else img.addEventListener('load', play);
-  wrap.addEventListener('click', play);
+  /* The play on page load waits for the entrance: <main> (.rise) stays transparent until reveal.js adds .in,
+     and starting at image load used to spend most steps unseen. Until .in, hold pure noise (so the setup cost
+     also lands before the fade, not on its first frame), then run STEPS_INTRO steps. Without .js-rise
+     (reveal.js missing) there is no entrance to wait for. Clicks replay in STEPS. */
+  var rise = document.documentElement.classList.contains('js-rise') && wrap.closest('.rise');
+  var entered = !rise || rise.classList.contains('in'), loaded = false;
+  function intro() {
+    if (!loaded || !img.naturalWidth) return;
+    if (entered) play(STEPS_INTRO);
+    else showNoise();
+  }
+  if (!entered) {
+    var mo = new MutationObserver(function () {
+      if (!rise.classList.contains('in')) return;
+      mo.disconnect();
+      entered = true;
+      intro();
+    });
+    mo.observe(rise, { attributes: true, attributeFilter: ['class'] });
+  }
+  function onLoad() { loaded = true; intro(); }
+  if (img.complete) onLoad();
+  else img.addEventListener('load', onLoad);
+  wrap.addEventListener('click', function () { play(STEPS); });
 })();
 
-/* 头像悬停：朝指针的方向小幅转动（样式见 style.css「头像容器」），和相册的照片同一套力度。
-   头像自己不动，是否悬停交给 :hover 就够了，这里只把指针在头像上的相对位置（-1 到 1）写进
-   --tx / --ty；移开时去掉，由过渡平滑地转回原位。位置用 offsetX / offsetY（头像转动之前的坐标）算，转角不会
-   反过来改变位置；变化不到 0.03 不写，免得过渡一直作废重开。触屏和减少动态效果时只放大不转 */
+/* Avatar hover: tilt slightly toward the pointer (styles: .avatar-wrap in style.css), same strength as gallery photos.
+   :hover handles the hover state; this only writes the pointer position over the avatar (-1 to 1) to --tx / --ty
+   and removes them on leave so the transition eases back. offsetX / offsetY are pre-tilt coordinates, so the tilt
+   can't feed back into the position; changes under 0.03 are skipped so the transition isn't restarted constantly.
+   Touch and reduced motion: scale only, no tilt. */
 (function () {
   var el = document.getElementById('avatarFx');
   if (!el || !window.matchMedia || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -741,12 +1065,12 @@
     raf = 0;
     if (Math.abs(tx - lx) < .03 && Math.abs(ty - ly) < .03) return;
     lx = tx; ly = ty;
-    el.style.setProperty('--tx', tx.toFixed(3));   // 右半边：右边往里退
-    el.style.setProperty('--ty', ty.toFixed(3));   // 下半边：下边往里退
+    el.style.setProperty('--tx', tx.toFixed(3));   // right half: right edge tilts away
+    el.style.setProperty('--ty', ty.toFixed(3));   // bottom half: bottom edge tilts away
   }
   el.addEventListener('pointermove', function (e) {
     if (e.pointerType === 'touch') return;
-    var t = e.target;                               // 指针下的是头像图片（去噪画布不接鼠标）
+    var t = e.target;                               // always the avatar <img> (the denoise canvas ignores the pointer)
     tx = Math.max(-1, Math.min(1, e.offsetX / t.offsetWidth * 2 - 1));
     ty = Math.max(-1, Math.min(1, e.offsetY / t.offsetHeight * 2 - 1));
     if (!raf) raf = requestAnimationFrame(apply);
@@ -759,7 +1083,7 @@
 })();
 </script>
 
-<script src="assets/js/worldmap.js?v=20261028cn"></script>
+<script src="assets/js/worldmap.js?v=20261110area" defer></script>
 <script src="assets/js/ghstars.js?v=20260929zh1" defer></script>
 
 </body>

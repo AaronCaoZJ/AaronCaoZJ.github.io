@@ -1,11 +1,17 @@
-/* 每个城市一行累计计数，不保留逐条访问日志。
-   主键是 (city, country)，所以 ON CONFLICT 能原地累加。
+/* One cumulative row per city, no per-visit log. Primary key (city, country) lets ON CONFLICT increment in place.
 
-   全文用块注释而非 SQL 行注释：D1 的网页 Console 会把多行输入压成一行，
-   行注释一旦被折叠，就会把它后面的整条语句一并吃掉，
-   报 "Requests without any query are not supported"。
-   即便如此，粘进 Console 时仍建议一次只贴一条语句。 */
+   Block comments only: the D1 web console collapses input to one line, so a -- comment would swallow
+   the statement after it ("Requests without any query are not supported"). Paste one statement at a time. */
 
-CREATE TABLE IF NOT EXISTS visits (city TEXT NOT NULL, country TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, PRIMARY KEY (city, country));
+/* city_zh: Chinese city name, filled in by the Worker (toChinese in src/index.js); NULL = not found yet.
+   Tables created before 2026-11 lack it: ALTER TABLE visits ADD COLUMN city_zh TEXT; */
+
+/* area / area_zh: English and Chinese name of the city-level area (CN prefecture, US metro area, Tokyo),
+   filled in by the Worker (AREA in src/index.js); the front end merges by area. area = city: no merge; NULL: not checked yet.
+   Tables created before 2026-11-10 lack them; run one at a time:
+   ALTER TABLE visits ADD COLUMN area TEXT;
+   ALTER TABLE visits ADD COLUMN area_zh TEXT; */
+
+CREATE TABLE IF NOT EXISTS visits (city TEXT NOT NULL, country TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, city_zh TEXT, area TEXT, area_zh TEXT, PRIMARY KEY (city, country));
 
 CREATE INDEX IF NOT EXISTS idx_visits_n ON visits (n DESC);

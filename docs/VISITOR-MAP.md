@@ -23,6 +23,9 @@
 | 累计次数、最后一次时间 | Cookie / 任何标识符 |
 | | 单次访问记录 |
 
+查中文名和所属城市时（见下面两节），发给 Wikidata、OpenStreetMap、美国人口普查局的只有 Cloudflare 报的城市名和取整后的坐标，
+没有任何访客信息。
+
 想改成只到国家级，把 `worker/src/index.js` 里插入语句的 `city` 换成
 `country` 并去掉城市字段即可。
 
@@ -60,7 +63,7 @@ Cloudflare 的面板改版频繁，下面的菜单名可能略有出入，按意
 进去后有个 **Console**（或 Query）标签页，**一次粘一条**执行下面两句：
 
 ```sql
-CREATE TABLE IF NOT EXISTS visits (city TEXT NOT NULL, country TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, PRIMARY KEY (city, country));
+CREATE TABLE IF NOT EXISTS visits (city TEXT NOT NULL, country TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, city_zh TEXT, area TEXT, area_zh TEXT, PRIMARY KEY (city, country));
 ```
 
 ```sql
@@ -90,6 +93,9 @@ Worker 详情页 → **Settings → Bindings → Add → D1 database**：
 - D1 database：选 `visitors`
 
 保存后 Cloudflare 会重新部署一次。
+
+再加一个 **Workers AI** 绑定，Variable name 填 **`AI`**（代码里是 `env.AI`）。
+它只用来给 Wikidata 查不到的城市音译中文名（见下面「中文城市名」），不绑也能用，只是那几个城市在中文页面上显示英文。
 
 ### 4. 挂路由
 
@@ -159,19 +165,70 @@ curl https://caozhijun.top/api/visitors          # 期望一个 JSON 数组
 如果 `recorded` 是 `false`，说明 Cloudflare 没能定位你这个出口 IP ——
 换个网络（手机热点）再试一次，这是正常现象而不是配置错误。
 
-## 前端切到真实数据
+## 前端的数据开关
 
-编辑 `assets/js/worldmap.js`：
+`assets/js/worldmap.js` 里的 `USE_MOCK` 线上保持 `false`。本地没有 Worker，想预览地图版式时临时改成 `true`，
+用的是文件里的原型数据，别提交。
 
-```js
-var USE_MOCK = true;    →    var USE_MOCK = false;
-```
-
-提交并 push。**注意 CSS/JS 被 Cloudflare 缓存 4 小时**，自己看的时候
-硬刷新（Chrome `Cmd+Shift+R`）。
-
-切换之后如果接口取不到数据，整个 Visitors 一节会**保持隐藏**——
+接口取不到数据时，整个 Visitors 一节会**保持隐藏**——
 宁可什么都不显示，也不会把假数字当成真实访问量摆出来。
+
+## 显示规则
+
+都在前端做，数据库里的原始记录不动（`worldmap.js` 的 `mergeDistricts`、`placeName`）：
+
+- **并到城市级**：统一到和中国地级市同一级（见「城市级单位」），宝安并进深圳、圣克拉拉并进圣何塞、新宿并进东京。香港、澳门、新加坡、台湾各并成一个点。次数相加，位置取次数最多的那条。
+- **压住的点合成一个**：一个点的圆心落进另一个点里才合，悬停列出每个城市；只是挨着、边缘叠一点的照旧分开（见 `worldmap.js` 的 `regroup`）。
+- **地名**：港澳台和内地一样写成中国，英文 `Taiwan, CN`、`Hong Kong, CN`，中文「台湾，中国」「香港，中国」。
+- **中文城市名**：见下一节。
+
+## 中文城市名
+
+Cloudflare 只给英文城市名。新城市第一次被记下时，Worker 在后台（响应发出之后，访客不用等）查一次中文名，
+存进 `city_zh` 列，`/api/visitors` 把它作为 `zh` 带给前端：
+
+1. **Wikidata**：按英文名搜，只要居民点 / 行政区、离 Cloudflare 给的坐标 50 km 内的，取维基百科语言版本最多的那个
+   （同名的车站、海湾、已撤销的旧县版本数少得多），用它的简体中文名。「名古屋市」这类去掉「市」。
+   普通城市和区基本都能查到。Wikidata 出错（限流、超时）时不拿 AI 顶替，下次再查。
+2. **Workers AI** 音译（`@cf/meta/llama-3.3-70b-instruct-fp8-fast`）：Wikidata 没有中文名的，比如美国的机房小镇。
+   需要上面那个 `AI` 绑定。模型下线了就换 `worker/src/index.js` 里的 `AI_MODEL`。
+3. 都没拿到就保持 NULL：下次有人从这个城市访问、或者有人打开地图（每次补最多三个）时再试。
+
+前端 `worldmap.js` 的 `CITY_ZH` 表优先于自动译名，只用来改掉不合心意的译名（比如 Redwood City 写「红木城」），平时不用再加。
+并点后显示的所属城市名（深圳、圣何塞）走同一套：Worker 查好存进 `area_zh`，`CITY_ZH` 同样可以覆盖（「东京都」写成「东京」）。
+
+**2026-11 之前部署的，升级按这个顺序**（顺序不能反：新代码读写 `city_zh`，列还没加就部署，记访问和读地图都会报错）：
+
+1. D1 Console 执行 `ALTER TABLE visits ADD COLUMN city_zh TEXT;`
+2. Worker 加 `AI` 绑定（见「绑定数据库」一节末尾）
+3. 把新的 `worker/src/index.js` 贴进面板，Deploy
+
+已有的城市不用手动补，有人打开地图时陆续补上，一般一两天补完。
+
+## 城市级单位
+
+Cloudflare 报的城市粒度不齐：中国有时只报到区（宝安、固戍），美国报的是一个个市镇（湾区有圣何塞、圣克拉拉、帕洛阿尔托、雷德伍德城），
+东京可能报到区。地图统一到和中国地级市同一级。新城市记下时 Worker 顺带查一次它属于哪个单位，英文名存进 `area`、中文名存进 `area_zh`，
+前端按 `area` 并点：
+
+| 国家 | 并到 | 数据来源 |
+|---|---|---|
+| 中国 | 地级市、自治州、地区、盟；直辖市整体一个 | Wikidata 沿「所在行政区」往上找；名字查不到的（社区一级）按坐标问 OpenStreetMap |
+| 美国 | 都会区（CBSA），用第一个中心城市命名；不在都会区里的小镇保持原样 | 美国人口普查局 Geocoder |
+| 日本 | 市町村保持原样，东京都整体一个 | Wikidata 查是否在东京都里 |
+| 香港、澳门、新加坡、台湾 | 整体一个 | 前端 `WHOLE` |
+| 其他国家 | 保持 Cloudflare 报的 | —（偶尔冒出来的区写进前端 `PARENT`） |
+
+能按名字查的都按名字查：表里坐标取整到 0.1°，边界附近会落到隔壁（深圳那条取整后在香港新界）。
+`area` 等于 `city` 表示不用并，NULL 表示还没查到；补的时机和中文名一样（新访问、或有人打开地图时随机补三个）。
+
+已知的小毛病：只有一个中心城市、名字本身带连字符的都会区（Winston-Salem）会被切成 Winston。
+
+**2026-11-10 之前部署的，升级按这个顺序**（顺序不能反：新代码读写这两列，列还没加就部署，记访问和读地图都会报错）：
+
+1. D1 Console 一次一句执行 `ALTER TABLE visits ADD COLUMN area TEXT;` 和 `ALTER TABLE visits ADD COLUMN area_zh TEXT;`
+2. 把新的 `worker/src/index.js` 贴进面板，Deploy
+3. 再推前端（新的 `worldmap.js` 不再自带深圳各区的对照表，Worker 没升级前那两个区会单独显示）
 
 ## 日常运维
 
@@ -236,8 +293,8 @@ Worker 会在边缘缓存里另存一份"上次成功的数"，保留 30 天。G
 只有从来没成功过的时候才返回 `{"stars": null}`，此时前端只显示 `Github`。
 
 排查时看响应头 `x-upstream`，它是 Worker 从 GitHub 拿到的状态码：
-`403` 就是限流，`404` 是仓库不公开或名字错了。
+`403` 就是限流，`404` 是仓库不公开或名字错了。`x-auth` 是 `token` 或 `none`，表示 Worker 有没有读到 `GITHUB_TOKEN`。
 
 ```bash
-curl -si "https://caozhijun.top/api/stars?repo=showlab/Show-Harness" | grep -iE "x-upstream|^\{"
+curl -si "https://caozhijun.top/api/stars?repo=showlab/Show-Harness" | grep -iE "x-upstream|x-auth|^\{"
 ```
