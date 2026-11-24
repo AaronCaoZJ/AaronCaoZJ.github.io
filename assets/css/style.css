@@ -1,39 +1,10 @@
 /* ============================================================
    Zhijun Cao — personal site
-   Palette follows the CV's (LaTeX) Morandi colors. Light theme only.
+   Palette: muted blue and muted red on untinted grays (:root). Light theme only.
    ============================================================ */
 
 /* ---------- self-hosted fonts ----------
-   No Google Fonts CDN: unreachable in mainland China, and it blocks rendering.
-   Inter and Charis are unused spares (never downloaded), kept for switching back. */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('../fonts/Inter-normal.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Charis';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../fonts/Charis-400.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Charis';
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../fonts/Charis-400i.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Charis';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../fonts/Charis-700.woff2') format('woff2');
-}
+   No Google Fonts CDN: unreachable in mainland China, and it blocks rendering. */
 /* Gelasio: OFL Georgia clone (license in OFL-Gelasio.txt) with matching metrics, so line breaks don't
    shift; variable 400–700, unlike Georgia's 400/700. Latin subset incl. Latin Extended (map place names).
    Italic is only used below the fold: not preloaded. */
@@ -69,32 +40,33 @@
 }
 
 :root {
-  --accent: #4d6e8a;   /* Morandi haze blue */
-  --heading: #34526b;  /* darker accent: section headings, bracket-link hover */
-  --high:   #c4876e;   /* Morandi terracotta: published venues, author stars */
+  /* Low saturation, three hues: a muted blue for links and structure, one muted red for highlights, and
+     untinted grays for everything else. The grays carry no tint, so even a muted blue stands apart from the text. */
+  --accent: #4c699a;   /* dusty blue, hue 260° (oklch), away from cyan: 5.5:1 on white, passes the 4.5:1 AA bar */
+  --heading: #395076;  /* darker accent: section headings, bracket-link hover */
+  --high:   #bc5c58;   /* muted red, the one warm color: published venues, author stars, the hero invitation's links */
 
-  /* Show Lab logo colors: .shx (the "Show" in Show-Harness); red also for the hero invitation's links */
+  /* Show Lab logo colors: .shx (the "Show" in Show-Harness) only */
   --sl-blue:   #669ED3;
   --sl-green:  #67A651;
   --sl-red:    #D85E5D;
   --sl-orange: #F3AA68;
-  --link:   #4d6e8a;   /* same as accent: 5.4:1 on white, passes the 4.5:1 AA bar */
-  --rule:   #c9d3dd;   /* light blue-gray: dividers */
-  --subtle: #7b8794;   /* blue-gray: secondary text */
+  --link:   var(--accent);
 
+  /* Grays, dark to light, all untinted */
+  --fg:     #292929;
+  --subtle: #858585;   /* secondary text */
+  --rule:   #d1d1d1;   /* dividers */
+  --card-b: #e2e2e2;   /* shared border for all rounded boxes */
   --desk:   #eeeeee;   /* gray backdrop behind the homepage sheet, jemdoc-style */
+  --chip:   #f1f1f1;
   --bg:     var(--desk);   /* page background; the gallery has no sheet and sets it to white (gallery/index.html :root { --bg }) */
-  --fg:     #232a31;
   --card:   #ffffff;
-  --card-b: #dbe3eb;   /* shared border for all rounded boxes */
-  --chip:   #eef2f6;
 
   /* Fallback Georgia is metric-compatible (no reflow on swap). Chinese uses system fonts to avoid a
      large download ('ZH Adj' = 95% PingFang / YaHei); Songti looked fuzzy at body size. */
   --serif: "Gelasio", Georgia, "ZH Adj", "PingFang SC", "Microsoft YaHei", serif;
-  /* All-serif site: --sans aliases --serif. To restore Inter, set it to
-     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif
-     and re-add the Inter preload on both pages. */
+  /* All-serif site: --sans aliases --serif */
   --sans: var(--serif);
 
   /* Only five font sizes; pick from these for new styles. */
@@ -103,6 +75,16 @@
   --fs-md: 16px;   /* body and titles. 17px looked crowded next to jemdoc pages (Georgia 16px) */
   --fs-lg: 20px;   /* section headings */
   --fs-xl: 34px;   /* name */
+
+  /* Vertical spacing on the homepage: multiples of 6px, one per level of grouping; pick from these for new styles.
+     With the single 1.45 line height, every text line carries ~1.5px of leading above and below, so a gap
+     between two lines of text shows as its value + 3px: 9 / 15 / 21 / 27 / 45. Entries and sections are
+     spaced by these alone: their first and last rows carry no outer space. */
+  --sp-line:    6px;    /* lines of one entry: title, authors, venue, links; a title and its subtitle; the invitation's sentences */
+  --sp-row:     12px;   /* rows: paragraphs, news items, sub-items, name to role; heading rule to content */
+  --sp-block:   18px;   /* blocks within the hero: role to invitation */
+  --sp-entry:   24px;   /* entries: papers, experiences; invitation to contacts */
+  --sp-section: 42px;   /* sections */
 
   /* The site's single bold weight. Gelasio is variable, so 670 is a real weight;
      Chinese ≥600 maps to PingFang Semibold ('ZH Adj' above). */
@@ -122,7 +104,7 @@
      --hover-shadow is their common hover shadow: a tight contact layer for the edge plus a soft drop. */
   --hover-tilt: 6deg;
   --hover-zoom: .02;
-  --hover-shadow: 0 1px 3px rgba(45,42,41,.08), 0 6px 16px rgba(45,42,41,.18);
+  --hover-shadow: 0 1px 3px rgba(41, 41, 41, .08), 0 6px 16px rgba(41, 41, 41, .18);
   --ease-focus: cubic-bezier(.25, .8, .3, 1);   /* every focus entrance: pieces, sections, avatar, gallery photos */
 
   /* Light only: opt out of browser/OS forced dark mode. */
@@ -130,7 +112,7 @@
 
   /* Translucent fill for non-nav components: no blur, no highlight */
   --glass-fill: rgba(255, 255, 255, .20);
-  --glass-cast: rgba(35, 52, 70, .09);
+  --glass-cast: rgba(41, 41, 41, .09);
   --text-halo: rgba(255, 255, 255, .85);   /* faint halo keeps nav text legible over blurred dark content */
   /* Nav hover blob; also the loupe toggle's pressed and hint fill (see .liquid-lens) */
   --lens: color-mix(in srgb, var(--accent) 10%, var(--bg));
@@ -155,7 +137,9 @@ body {
   color: var(--fg);
   font-family: var(--serif);
   font-size: var(--fs-md);
-  line-height: 1.45;   /* the only line height; 1.35 felt cramped with Georgia's tall x-height. zh-CN: 1.6 */
+  /* The only text line height, Biography included, so equal gaps look equal (--sp-*). Dense by design;
+     1.35 felt cramped with Georgia's tall x-height. zh-CN: 1.6. */
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   /* long URLs or unbroken words must not cause horizontal scroll */
@@ -247,7 +231,7 @@ img { max-width: 100%; }
 }
 .view-switch button:hover { color: var(--fg); }
 .view-switch button[aria-pressed="true"] {
-  color: var(--accent); background: rgba(77, 110, 138, .1);
+  color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 .view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -411,35 +395,45 @@ img { max-width: 100%; }
   display: grid;
   grid-template-columns: 1fr 216px;
   gap: 32px; align-items: center;
-  /* top = sheet padding: the avatar sets the row top, so space above it equals space to its right */
-  padding: var(--sheet-pad) 0 12px;
+  /* top = sheet padding: the avatar sets the row top, so space above it equals space to its right.
+     bottom: the first screen stands a grid step farther from Biography than sections from each other */
+  padding: var(--sheet-pad) 0 var(--sp-line);
 }
 .hero h1 {
   font-family: var(--sans);
   font-size: var(--fs-xl); font-weight: var(--bold); letter-spacing: -.02em;
-  margin: 0 0 2px; line-height: 1.2;
+  margin: 0; line-height: 1.2;
 }
 .hero .cn {
   font-size: var(--fs-md); color: var(--subtle); font-weight: 400;
   margin-left: 9px; letter-spacing: .06em;
   white-space: nowrap;   /* alternate-script name wraps as a whole, never mid-name */
 }
-/* Lines under the name use body font and size; hierarchy via color/weight only */
+/* Lines under the name use body font, size and line height; hierarchy via color/weight only.
+   Name to role is a row gap; +3px since the name's 1.2 line height carries no leading, where body text has
+   ~3px between lines. The invitation below is set apart (.hero .affil). */
 .hero .role {
-  font-size: var(--fs-md); line-height: 1.5; color: var(--accent);
-  font-weight: var(--bold); margin: 12px 0;
+  font-size: var(--fs-md); color: var(--accent);
+  font-weight: var(--bold); margin: calc(var(--sp-row) + 3px) 0 var(--sp-row);
 }
 /* Same size as the Biography body; line height inherited (don't fix it, or it drifts from the body).
    Italic sets the hero's invitation apart from the body text (Chinese is slanted synthetically, as in
-   the publication venue lines). */
+   the publication venue lines; upright and Kai were both tried and dropped). Set apart from the lines
+   around it: a block gap above, an entry gap below,
+   which sets the contacts off as their own line. Margins collapse with the role's and the contacts' row gaps. */
 .hero .affil {
   font-size: var(--fs-md); color: var(--fg); font-style: italic;
-  margin: 0 0 20px;
+  margin: var(--sp-block) 0 var(--sp-entry);
 }
+/* One block per sentence, a line gap apart (a <br> can't take a margin): closer than paragraphs, yet at the
+   dense 1.45 line height (3 px between wrapped lines) still clearly a break. At a looser line height the same
+   gap read as uneven leading. */
+.hero .affil .sent { display: block; }
+.hero .affil .sent + .sent { margin-top: var(--sp-line); }
 /* Emoji stay upright: a synthetic slant skews them (🖼️ turns into a parallelogram) */
 .hero .affil .emo { font-style: normal; }
-/* The invitation's two links (Gallery, email me) in Show Lab red, as the job-seeking line's keywords were */
-.hero .affil a { color: var(--sl-red); }
+/* The invitation's two links (Gallery, email me) in the highlight red, as the job-seeking line's keywords were */
+.hero .affil a { color: var(--high); }
 .hero p { margin: 0 0 9px; font-size: var(--fs-md); }
 /* Denoising canvas overlays the image. Hover tilt uses the gallery's strength; --tx / --ty come from
    the #avatarFx hover script in index.html. This transition is the slower return on leave. */
@@ -477,7 +471,7 @@ img { max-width: 100%; }
    pointer events, so it isn't part of a link (not clickable, not underlined on hover). */
 .links {
   --sep: 18px;   /* item gap; the divider sits at its center */
-  display: flex; flex-wrap: wrap; gap: 6px var(--sep); margin-top: 14px;
+  display: flex; flex-wrap: wrap; gap: 6px var(--sep); margin-top: var(--sp-row);
   /* No overflow clipping here: it would cut off the email popover, which is centred on the first link
      and wider than it. Line-leading dividers are dropped via .line-start (set by index.html's script). */
 }
@@ -550,21 +544,22 @@ img { max-width: 100%; }
 main.wrap {
   width: min(var(--sheet-w), 100% - 28px); max-width: none;
   /* blur is off until .nav.scrolled, so the sheet's top edge stays crisp */
-  margin-top: 8px; padding: 0 var(--sheet-pad) 56px;
+  margin-top: 8px; padding: 0 var(--sheet-pad) var(--sheet-pad);   /* bottom = sides = space above the avatar */
   background: var(--card); border: 1px solid var(--card-b); border-radius: var(--radius);
-  box-shadow: 0 1px 2px rgba(35, 52, 70, .05);
+  box-shadow: 0 1px 2px rgba(41, 41, 41, .05);
 }
 /* the sheet edge already separates the footer: drop its rule and top space (gallery keeps them) */
 main.wrap ~ footer.wrap { margin-top: 0; padding-top: 32px; border-top: 0; }
 
 /* ---------- sections ---------- */
 section { padding-top: 34px; }
+main.wrap > section { padding-top: var(--sp-section); }
 /* Section headings: bold, darker accent, 1px rule below. Entries aren't cards, so the rule does the grouping */
 h2 {
   font-family: var(--sans);
   font-size: var(--fs-lg); font-weight: var(--bold);
   color: var(--heading);
-  margin: 0 0 14px; padding-bottom: 6px;
+  margin: 0 0 var(--sp-row); padding-bottom: 6px;
   border-bottom: 1px solid var(--rule);
 }
 /* Co-first note in the Publications heading keeps author-line styling: no h2 weight, color or zh letter-spacing */
@@ -580,14 +575,20 @@ h2 .zh {
 /* tighter than the 1em default */
 p { margin: .65em 0; }
 section > p:first-of-type { margin-top: 14px; }
+/* Homepage paragraphs (Biography) are rows; the first one's top margin collapses into the heading's */
+main.wrap > section > p { margin: var(--sp-row) 0 0; }
 
 strong, b { font-weight: var(--bold); }
 
 /* ---------- News ----------
    Square bullets, one item per line, each led by an accent-blue [MM/YYYY]. */
-.news { margin: 14px 0 0; padding-left: 1.25em; list-style: square; }
-.news li { padding: 7px 0; font-size: var(--fs-md); }   /* 14px between items, as on jemdoc pages */
+.news { margin: 0; padding-left: 1.25em; list-style: square; }
+.news li { padding: calc(var(--sp-row) / 2) 0; font-size: var(--fs-md); }   /* a row gap between items, as on jemdoc pages */
+.news li:first-child { padding-top: 0; }
 .news li::marker { color: var(--accent); }
+/* The leading emoji: a little room on both sides, on top of the spaces around it (Gelasio's space is narrow
+   and emoji have almost no side bearing, so date, emoji and text ran together) */
+.news .emo { margin: 0 .2em; }
 /* Georgia digits are proportional with no tabular-nums, so dates misalign. Month and year get
    min-width cells sized for 08 / 2026 (month right-aligned), with brackets from CSS. */
 .news time { display: inline-flex; color: var(--accent); white-space: nowrap; }
@@ -596,13 +597,17 @@ strong, b { font-weight: var(--bold); }
 .news time span:first-child { min-width: 1.22em; text-align: right; }
 .news time span:last-child  { min-width: 2.3em; }
 /* "All News" as the list's last row: text aligned with items, a triangle in the bullet column.
-   7.5 × 9px since a triangle has half a same-height square's area. inline-block: no hover underline. */
-.news-more, .pub-more > summary {
+   7.5 × 9px since a triangle has half a same-height square's area. inline-block: no hover underline.
+   The toggle itself is a block with the text line height, spaced like any row: inline, it sat in a line box
+   that added ~2px below it, and a <button> otherwise keeps line-height: normal. max-content keeps the
+   click target to its text. */
+.news-more, .pub-more {
+  display: block; width: max-content; line-height: inherit;
   font-family: var(--sans); font-size: var(--fs-sm); color: var(--link);
   background: none; border: 0; cursor: pointer;
-  padding: 8px 0 0 calc(var(--fs-md) * 1.25);
+  padding: calc(var(--sp-row) / 2) 0 0 calc(var(--fs-md) * 1.25);   /* plus the last item's half: a row gap */
 }
-.news-more::before, .pub-more > summary::before {
+.news-more::before, .pub-more::before {
   content: ''; display: inline-block; width: 0; height: 0;
   border-style: solid; border-width: 4.5px 0 4.5px 7.5px;
   border-color: transparent transparent transparent var(--accent);
@@ -611,23 +616,26 @@ strong, b { font-weight: var(--bold); }
   margin: 0 calc(var(--fs-md) * 1.25 - 11.75px) 0 calc(4.25px - var(--fs-md) * 1.25);
   transition: transform .2s ease;
 }
-.news-more[aria-expanded="true"]::before { transform: rotate(90deg); }
-.news-more:hover { text-decoration: underline; }
-/* Under-review papers: a native <details> whose summary looks like "All News". No bullet column here,
-   so the triangle sits at the left edge (aligned with the thumbnails) and the text follows it. */
-.pub-more > summary { display: inline-block; list-style: none; padding-left: 0; }
-.pub-more > summary::-webkit-details-marker { display: none; }
-.pub-more > summary::before { margin: 0 6px 0 0; }
-.pub-more[open] > summary::before { transform: rotate(90deg); }
-.pub-more > summary:hover { text-decoration: underline; }
+:is(.news-more, .pub-more)[aria-expanded="true"]::before { transform: rotate(90deg); }
+:is(.news-more, .pub-more):hover { text-decoration: underline; }
+/* "All Publications": the same toggle after the folded under-review papers. No bullet column here,
+   so the triangle sits at the left edge (aligned with the thumbnails) and the text follows it.
+   No top padding: the paper above keeps its bottom half-entry gap (12px = a row gap, as under News),
+   and as the section's last child the toggle ends it, so the section gap is the same open or closed. */
+.pub-more { padding-left: 0; padding-top: 0; }
+.pub-more::before { margin: 0 6px 0 0; }
 
 /* ---------- entries ----------
-   Experience / publications sit directly on the sheet: no cards, no hover, separated by spacing only */
+   Experience / publications sit directly on the sheet: no cards, no hover, separated by spacing only.
+   Each carries half an entry gap above and below; the first under a heading and the last in a section drop
+   theirs, so heading-to-content is a row gap and section-to-section the section gap, for every entry type. */
+main.wrap > section > h2 + :is(.pub, .item) { padding-top: 0; }
+main.wrap > section > :is(.pub, .item):last-child { padding-bottom: 0; }
 
 /* ---------- publications ---------- */
 .pub {
   display: grid; grid-template-columns: 220px 1fr;
-  gap: 20px; padding: 14px 0;
+  gap: 20px; padding: calc(var(--sp-entry) / 2) 0;
   /* default stretch would make .thumb as tall as the text, leaving empty bordered space */
   align-items: center;
 }
@@ -638,7 +646,7 @@ strong, b { font-weight: var(--bold); }
   overflow: hidden;
 }
 /* Spacing comes only from gap: margins zeroed, line height inherited (mixing them made gaps uneven). */
-.pub > div:not(.thumb) { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pub > div:not(.thumb) { display: flex; flex-direction: column; gap: var(--sp-line); min-width: 0; }
 .pub > div:not(.thumb) > * { margin: 0; }
 
 /* height: auto is required: the width/height attributes (reserve space, no layout shift) would
@@ -657,7 +665,7 @@ strong, b { font-weight: var(--bold); }
 .pub .venue {
   font-size: var(--fs-sm); color: var(--fg); font-style: italic;
 }
-/* Whole line italic (Chinese is slanted synthetically); published venues add terracotta + bold.
+/* Whole line italic (Chinese is slanted synthetically); published venues add the highlight red + bold.
    em is matched too, so the wrong tag still works. */
 .pub .venue b,
 .pub .venue em { color: var(--high); font-weight: var(--bold); }
@@ -677,7 +685,7 @@ strong, b { font-weight: var(--bold); }
 }
 
 /* Bracketed links: with no fill or border they need the wider 12px column gap */
-.tags { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.tags { display: flex; flex-wrap: wrap; gap: var(--sp-line) 12px; }
 /* direct children only: the star count is a <span> inside <a> and would get double brackets */
 .tags > a, .tags > span {
   font-family: var(--sans); font-size: var(--fs-sm); font-weight: var(--bold);
@@ -699,7 +707,7 @@ strong, b { font-weight: var(--bold); }
 /* Second row spans full width, so sub-entries start at the left edge: they're entries, not title notes. */
 .item {
   display: grid; grid-template-columns: 76px 1fr;
-  column-gap: 16px; padding: 14px 0;
+  column-gap: 16px; padding: calc(var(--sp-entry) / 2) 0;
 }
 .ilogo {
   grid-column: 1; grid-row: 1; align-self: center;
@@ -713,10 +721,10 @@ strong, b { font-weight: var(--bold); }
 .ilogo img[src$="zju.png"] { max-height: 38px; }
 /* min-width: 0, else a grid item's min size is its content and long org names overflow instead of wrapping */
 .ihead { grid-column: 2; grid-row: 1; min-width: 0; }
-.irest { grid-column: 1 / -1; margin-top: 10px; }
+.irest { grid-column: 1 / -1; margin-top: var(--sp-row); }
 .item .row {
   display: flex; justify-content: space-between;
-  align-items: baseline; gap: 6px 16px; flex-wrap: wrap;
+  align-items: baseline; gap: var(--sp-line) 16px; flex-wrap: wrap;
 }
 /* title shrinks and wraps internally; otherwise a long title pushes the date to the next line's left */
 .item .t { flex: 1 1 340px; min-width: 0; }
@@ -726,7 +734,7 @@ strong, b { font-weight: var(--bold); }
   font-family: var(--sans); font-size: var(--fs-sm); color: var(--subtle);
   white-space: nowrap;
 }
-.item .s { font-size: var(--fs-sm); color: var(--subtle); margin-top: 2px; text-wrap: pretty; }
+.item .s { font-size: var(--fs-sm); color: var(--subtle); margin-top: var(--sp-line); text-wrap: pretty; }
 .item .s .me, .pub .authors .me { font-weight: var(--bold); color: var(--fg); }
 
 /* Sub-items (e.g. RA under ZJU) each get their own short left bar; one continuous bar reads as a
@@ -734,8 +742,7 @@ strong, b { font-weight: var(--bold); }
 .item .plist > .prow, .item .plist > .pitem {
   border-left: 2px solid var(--rule); padding-left: 14px; font-size: var(--fs-sm);
 }
-.item .plist > .prow + .prow { margin-top: 7px; }
-.item .plist > .pitem + .pitem { margin-top: 11px; }
+.item .plist > * + * { margin-top: var(--sp-row); }
 .item .plist .row .t { font-size: var(--fs-sm); font-weight: var(--bold); }
 /* Product status tag: set apart from the name by color and italic, not size */
 .item .pst {
@@ -752,20 +759,17 @@ strong, b { font-weight: var(--bold); }
 @media (prefers-reduced-motion: reduce) { .item .handle::before, .item .handle::after { transition: none; } }
 .item .t a { color: inherit; }
 .item .t a:hover { color: inherit; }
-.item ul { margin: 7px 0 0; padding-left: 18px; font-size: var(--fs-sm); text-wrap: pretty; }
-.item li { margin-bottom: 3px; }
+.item ul { margin: var(--sp-line) 0 0; padding-left: 18px; font-size: var(--fs-sm); text-wrap: pretty; }
+.item li + li { margin-top: var(--sp-line); }
 .item li::marker { color: var(--accent); }
 
 
 /* ---------- visitor map ---------- */
-/* No heading, rule or caption: just the map, set off by spacing. */
-/* 40px above the map. It now follows Education directly (the contact invitation moved to the hero);
-   it used to be 24px plus that paragraph's ~17px bottom margin. */
-#visitors { padding-top: 40px; }
+/* No heading, rule or caption: just the map, set off by the section gap like any section. */
 .vmap {
   position: relative;
   width: 80%; margin: 0 auto;   /* narrower than the text, so it reads as an ornament */
-  --vmap-dot: #d3dbe3;          /* land dots: lighter than --rule, a background texture */
+  --vmap-dot: #dadada;          /* land dots: lighter than --rule, a background texture */
   --vmap-pin: var(--accent);    /* single-color fallback when the API gives no ago */
 
   /* Color by recency: accent (this week) → light blue (a month) → transparent (6+ months) */
@@ -808,6 +812,16 @@ footer.wrap {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   text-align: center;
 }
+/* Partner link, the row above the copyright, set like the hero's invitation ("Visit 👉 Gallery"): the
+   whole line italic with the emoji upright (Chinese slanted too, as in the hero), the name bold in the link blue. It runs at --fs-sm, a step
+   above the 13px fine print below it, so the text holds its own beside the 26px icon; at 13px the icon
+   dwarfed the words and the 👉. The chibi Vitruvian figure stands where the hero has the 🖼️ emoji,
+   whole, with its own circle and square as the frame (no badge crop): a small-size cut of the full
+   drawing, line art only, heavier lines, no texture or hatching. The icon path is absolute so the same
+   i18n string works on every page. */
+footer .partner { font-size: var(--fs-sm); font-style: italic; }
+footer .partner .emo { font-style: normal; }
+footer .partner img { width: 26px; height: 26px; margin: 0 6px 0 3px; vertical-align: middle; }
 
 /* Reduced motion: effectively disable transitions and animations */
 @media (prefers-reduced-motion: reduce) {

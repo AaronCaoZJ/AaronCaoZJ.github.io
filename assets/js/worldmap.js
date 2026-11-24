@@ -1,6 +1,6 @@
 /* Visitor world map: a staggered dot-matrix map with no external dependencies.
 
-   Land is a 180x101 bitmask, 45 hex chars per row (4 cells per char), 4.5 KB in all: no map library or tiles.
+   Land is a 180x105 bitmask, 45 hex chars per row (4 cells per char), 4.7 KB in all: no map library or tiles.
 
    Hexagonal layout: odd rows shift half a cell and row spacing is √3/2 of column spacing, so each dot is
    equidistant from its six neighbours. Finer than a square grid, with no stair-steps on diagonal coasts.
@@ -9,17 +9,24 @@
    Equirectangular would be 2.6:1; Mercator blows Greenland up to Africa's size.
 
    The mask is generated offline from Natural Earth 110m land, scanline-testing cell centres on each row's
-   central parallel. Clipped to 83N–56S (no Antarctica or empty Arctic rows); the left edge cuts through
-   the Bering Strait so the Atlantic is centred. */
+   central parallel. Clipped to about 84.4N–58.4S: two rows above 83N so Greenland's north tip (83.6N) is
+   whole, two blank rows under Cape Horn, no Antarctica; the left edge cuts through the Bering Strait so the
+   Atlantic is centred. Rows are added in pairs at the top so every existing row keeps its half-cell shift. */
 /* ---------- Record a visit ----------
    Independent of the map: recorded even when #visitorMap is hidden or absent, so the data has no gap.
 
-   Once per browser per 24 h. Client-side and bypassable, but enough for a homepage, and the owner's reloads
-   don't inflate the local dot. localStorage throws in some private modes, hence try/catch; then every load counts. */
+   Once per browser per 24 h, or per 3 days on a device set to Singapore time: the owner lives there, and
+   their phone, laptop, iPad and each browser would otherwise add a Singapore visit every day. Time zone
+   stands in for location (the Worker doesn't tell the page where it was counted); a visitor on a
+   Singapore VPN is still counted daily, which is fine. Client-side and bypassable, but enough for a
+   homepage. localStorage throws in some private modes, hence try/catch; then every load counts. */
 (function () {
-  var KEY = 'vmap:seen', now = Date.now();
+  var KEY = 'vmap:seen', now = Date.now(), DAY = 864e5, wait = DAY;
   try {
-    if (now - (+localStorage.getItem(KEY) || 0) < 864e5) return;
+    if (Intl.DateTimeFormat().resolvedOptions().timeZone === 'Asia/Singapore') wait = 3 * DAY;
+  } catch (e) {}
+  try {
+    if (now - (+localStorage.getItem(KEY) || 0) < wait) return;
     localStorage.setItem(KEY, now);
   } catch (e) {}
   if (window.fetch) {
@@ -32,7 +39,7 @@
   var el = document.getElementById('visitorMap');
   if (!el) return;
 
-  var W = 180, H = 101, CH = 45;
+  var W = 180, H = 105, CH = 45;
   var ROWK = Math.sqrt(3) / 2;   // hex layout: row spacing / column spacing
   /* Left-edge meridian, mid Bering Strait: mainland Alaska ends at −168.1°, St. Lawrence Island at −168.7°.
      Cutting at 180° would wrap the tip of Chukotka to the far left, next to Alaska. */
@@ -42,8 +49,10 @@
   function miller(lat) {
     return 1.25 * Math.log(Math.tan(Math.PI / 4 + 0.4 * lat * Math.PI / 180));
   }
-  /* Top edge 83N; bottom (~56S) follows from H rows × row spacing, exactly as in the mask generator */
-  var YT = miller(83), YB = YT - H * ROWK * 2 * Math.PI / W;
+  /* Top edge two rows above 83N (~84.4N); bottom (~58.4S) follows from H rows × row spacing, exactly as in
+     the mask generator */
+  var ROW = ROWK * 2 * Math.PI / W;   // row spacing, Miller y
+  var YT = miller(83) + 2 * ROW, YB = YT - H * ROW;
 
   /* lat/lon → relative map position (0–1), same mapping as the mask generator */
   function place(lat, lon) {
@@ -51,6 +60,8 @@
              y: (YT - miller(lat)) / (YT - YB) };
   }
   var MASK =
+    '000000000000000000000000000000000000000000000' +
+    '0000000000000000fe000000000000000000000000000' +
     '00000000005ff807ffc00000000000000000000000000' +
     '0000000003fff7fffe000000000000000000000000000' +
     '0000000005ffeffffffc0000000000000000000000000' +
@@ -151,6 +162,8 @@
     '000000000003860000000000000000000000000000000' +
     '000000000001c00000000000000000000000000000000' +
     '000000000001c00000000000000000000000000000000' +
+    '000000000000000000000000000000000000000000000' +
+    '000000000000000000000000000000000000000000000' +
     '000000000000000000000000000000000000000000000'
 ;
 
