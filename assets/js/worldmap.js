@@ -30,7 +30,18 @@
     localStorage.setItem(KEY, now);
   } catch (e) {}
   if (window.fetch) {
-    fetch('/api/visit', { method: 'POST', keepalive: true }).catch(function () {});
+    /* Referring site, host only (the Worker counts it per city): across sites the browser rarely sends more,
+       and a path could carry search terms. Empty = typed URL, bookmark, PDF, most in-app browsers. */
+    var ref = '';
+    try { ref = new URL(document.referrer).hostname; } catch (e) {}
+    /* In-app browsers send no referrer, so name the app from the User-Agent instead (the UA itself is not
+       sent). No dot, so it can't clash with a host. WeCom's UA also says MicroMessenger: test it first. */
+    if (!ref) {
+      var ua = navigator.userAgent, apps = [[/wxwork/i, 'wxwork'], [/MicroMessenger/i, 'weixin'],
+        [/Lark|Feishu/i, 'feishu'], [/DingTalk/i, 'dingtalk'], [/\sQQ\//, 'qq']];
+      for (var i = 0; i < apps.length && !ref; i++) if (apps[i][0].test(ua)) ref = apps[i][1];
+    }
+    fetch('/api/visit?ref=' + encodeURIComponent(ref), { method: 'POST', keepalive: true }).catch(function () {});
   }
 })();
 

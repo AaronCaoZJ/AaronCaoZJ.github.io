@@ -15,3 +15,15 @@
 CREATE TABLE IF NOT EXISTS visits (city TEXT NOT NULL, country TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, city_zh TEXT, area TEXT, area_zh TEXT, PRIMARY KEY (city, country));
 
 CREATE INDEX IF NOT EXISTS idx_visits_n ON visits (n DESC);
+
+/* refs: referring site per city, owner-only (the public /api/visitors never reads it). ref = referrer host
+   without www. and without path, or the in-app browser (weixin, wxwork, feishu, dingtalk, qq) when there is
+   no referrer; '' = direct (typed URL, bookmark, PDF).
+   Added 2026-11-24; on an older database just run this statement. */
+CREATE TABLE IF NOT EXISTS refs (city TEXT NOT NULL, country TEXT NOT NULL, ref TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, PRIMARY KEY (city, country, ref));
+
+/* nets: network per city, owner-only like refs. asn / org = AS number and operator name from Cloudflare's
+   request.cf (asn 0 = unknown); no IP. Tells a located city from a default one, e.g. Shanghai Mobile (24400)
+   vs China Mobile group-wide (9808), both placed in Shanghai.
+   Added 2026-11-24; on an older database just run this statement. */
+CREATE TABLE IF NOT EXISTS nets (city TEXT NOT NULL, country TEXT NOT NULL, asn INTEGER NOT NULL, org TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, last_seen INTEGER NOT NULL, PRIMARY KEY (city, country, asn));

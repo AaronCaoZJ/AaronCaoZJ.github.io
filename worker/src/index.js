@@ -2,7 +2,9 @@
    Location comes from Cloudflare's request.cf: no IP database, and visitor IPs never leave Cloudflare.
 
    Privacy: store only city + country, coordinates rounded to 0.1° (~11 km); no IP, User-Agent,
-   cookies or per-visit log, just one cumulative row per city.
+   cookies or per-visit log, just one cumulative row per city. Owner-only tables add one cumulative row
+   per city and referring host (refs, no path) and per city and network (nets: AS number and operator
+   name from request.cf, no IP).
 
    /api/stars is an unrelated GitHub star-count proxy/cache for assets/js/ghstars.js. */
 
@@ -12,6 +14,8 @@ const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 // put data-gh-stars="owner/name" on its link.
 const STAR_REPOS = new Set([
   'showlab/Show-Harness',
+  'showlab/RUIBench',
+  'showlab/MRBench',
   'showlab/Awesome-Multimodal-Embodied-Agent',
   'AaronCaoZJ/julia-diffusion',
 ]);
@@ -259,6 +263,30 @@ export default {
       // New (or incomplete) city: fill in after the response is sent
       const r = row && Object.assign({ city, cc: country, lat, lon }, row);
       if (r && incomplete(r)) ctx.waitUntil(enrich(env, r));
+
+      // Referring site per city (table refs): host only, or an app name (weixin, feishu...), '' = direct.
+      // Owner-only: /api/visitors never reads it.
+      // The catch keeps visits working if this Worker is deployed before refs is created.
+      let ref = (url.searchParams.get('ref') || '').toLowerCase().replace(/^www\./, '');
+      if (!/^[a-z0-9.-]{1,100}$/.test(ref)) ref = '';
+      ctx.waitUntil(env.DB.prepare(
+        `INSERT INTO refs (city, country, ref, n, last_seen)
+         VALUES (?1, ?2, ?3, 1, unixepoch())
+         ON CONFLICT(city, country, ref)
+         DO UPDATE SET n = n + 1, last_seen = unixepoch()`
+      ).bind(city, country, ref).run().catch(() => {}));
+
+      // Network per city (table nets): AS number + operator name, asn 0 = unknown. Shows whether a city was
+      // really located or is a default: Shanghai Mobile (AS24400) vs China Mobile group-wide (AS9808), which
+      // Cloudflare also places in Shanghai. Owner-only and fail-safe like refs.
+      const asn = Number.isInteger(cf.asn) ? cf.asn : 0;
+      const org = String(cf.asOrganization || '').slice(0, 100);
+      ctx.waitUntil(env.DB.prepare(
+        `INSERT INTO nets (city, country, asn, org, n, last_seen)
+         VALUES (?1, ?2, ?3, ?4, 1, unixepoch())
+         ON CONFLICT(city, country, asn)
+         DO UPDATE SET n = n + 1, org = excluded.org, last_seen = unixepoch()`
+      ).bind(city, country, asn, org).run().catch(() => {}));
 
       return json({ ok: true, recorded: true });
     }
