@@ -6,7 +6,7 @@ compatibility_date = "2026-01-01"
 [[d1_databases]]
 binding       = "DB"
 database_name = "visitors"
-database_id   = "PASTE_DATABASE_ID_HERE"
+database_id   = "bd4b0e10-1653-4b75-843a-331192e253dd"
 
 # env.AI: transliterates city names Wikidata has no Chinese label for (fromAI in src/index.js)
 [ai]
