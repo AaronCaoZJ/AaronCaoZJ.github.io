@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page not found · Aaron Zhijun Cao</title>
+<!-- Easter egg at /shoko/: the 404 page, on white, with 剣時 (@freekenji422)'s illustration of Shoko
+     (https://x.com/freekenji422/status/1148973467007537153, 2019-07-10).
+     Not in sitemap.xml and noindex (noimageindex keeps the illustration out of image search too);
+     robots.txt doesn't list it either: a Disallow would only point at it, and would stop crawlers from
+     ever reading this noindex.
+     404.html sends /shoko in any letter case here. Absolute paths and no site scripts, as in 404.html.
+     The illustration is the original file (name=orig, 1448x2048), byte for byte. If it is ever removed,
+     the figure and the credit hide themselves and the page shows only the text. -->
+<meta name="robots" content="noindex, noimageindex">
+<link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
+<link rel="preload" href="/assets/fonts/Gelasio-var.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Fonts, type sizes, spacing and the entrance are shared with 404.html; this page keeps its colours and layout -->
+<link rel="stylesheet" href="/assets/css/notfound.css?v=20261127">
+<style>
+:root {
+  --fg: #292929; --subtle: #858585; --card-b: #e2e2e2;   /* style.css tokens */
+  --accent: #4c699a; --heading: #395076;
+}
+html, body { background: #fff; }
+body { color: var(--fg); display: grid; place-items: center; }
+
+/* Illustration beside the text on landscape screens, above it on portrait ones */
+.stage {
+  display: flex; align-items: center; justify-content: center; gap: clamp(32px, 6vw, 96px);
+  padding: max(32px, 6vh, env(safe-area-inset-top)) max(24px, 6vw, env(safe-area-inset-right)) 72px max(24px, 6vw, env(safe-area-inset-left));
+  box-sizing: border-box; width: 100%;
+}
+figure { margin: 0; flex: 0 1 auto; min-width: 0; }
+figure img {
+  display: block; width: auto; height: auto;
+  max-width: min(52vw, 900px, 100%); max-height: 82vh;   /* 100%: shrinks with the figure if the text needs room */
+  animation: develop 1.6s var(--ease-focus) both;
+}
+@keyframes develop { from { opacity: 0; filter: blur(14px); scale: 1.02; } }
+main { flex: 0 0 auto; }
+@media (max-aspect-ratio: 1/1), (max-width: 719px) {
+  /* One screen, no scrolling: the illustration takes whatever height the text leaves, so the buttons are
+     always in view; the credit stays fixed bottom right, in the room left under the stage */
+  body { display: block; }
+  .stage { flex-direction: column; align-items: stretch; gap: 20px;
+           height: 100vh; height: 100svh; padding-bottom: max(44px, calc(env(safe-area-inset-bottom) + 28px)); }
+  figure { flex: 1 1 0; min-height: 0; }
+  figure img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; }
+  /* The translation keeps one line on phones (the Japanese may wrap): the size follows the text column
+     (100vw minus the stage's side padding) divided by the line's length in em, 23 glyphs at about 0.97 em
+     (95% size-adjust, tighter tracking). Never larger than the shared size (16 px on phones). */
+  .zh { letter-spacing: .02em; font-size: min(16px, calc((100vw - 2 * max(24px, 6vw)) / 23.5)); }
+}
+
+/* Colours: dark on white */
+.zh, .hint, .credit { color: var(--subtle); }
+.links a { color: var(--heading); border-color: var(--card-b); background: #fff; }
+.links a.home { background: var(--heading); border-color: var(--heading); color: #fff; }
+.links a:hover { border-color: var(--accent); }
+.links a.home:hover { background: var(--accent); border-color: var(--accent); }
+.links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.credit a { color: inherit; text-decoration-color: var(--card-b); text-underline-offset: 3px; }
+.credit a:hover { color: var(--accent); text-decoration-color: currentColor; }
+body:has(figure[hidden]) .credit { display: none; }   /* no illustration, no credit line */
+
+@media (prefers-reduced-motion: reduce) {
+  figure img { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <figure>
+    <img src="/assets/img/easter/shoko.jpg" width="1448" height="2048" alt="Makinohara Shoko, illustration by 剣時 (@freekenji422)"
+         fetchpriority="high" onerror="this.parentNode.hidden = true">
+  </figure>
+  <main>
+    <p class="code">404</p>
+    <h1 lang="ja">「はい、翔子さんです」<br>「私が来たから、もう大丈夫です」</h1>
+    <p class="zh" lang="zh-CN">是的，我是翔子小姐。既然我来了，就已经没事了哟。</p>
+    <p class="hint">Correct links below <span lang="zh-CN">下面是正确的链接</span></p>
+    <nav class="links">
+      <a class="home" href="/">Home <span lang="zh-CN">首页</span></a>
+      <a href="/gallery/">Gallery <span lang="zh-CN">相册</span></a>
+    </nav>
+  </main>
+</div>
+<p class="credit">Illustration by <a href="https://x.com/freekenji422/status/1148973467007537153"><span lang="ja">剣時</span> @freekenji422</a></p>
+</body>
+</html>

@@ -1,0 +1,93 @@
+/* ============================================================
+   Shared by the two not-found pages, /404.html and /shoko/: fonts, type sizes, spacing and the entrance,
+   so the two stay the same. Each page keeps only its own colours, background and layout inline.
+   URLs are absolute: 404.html is served at any depth. After editing, bump ?v= in both pages.
+   ============================================================ */
+
+/* Fonts as in style.css */
+@font-face {
+  font-family: 'Gelasio'; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url('/assets/fonts/Gelasio-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Gelasio'; font-style: italic; font-weight: 400 700; font-display: swap;
+  src: url('/assets/fonts/Gelasio-Italic-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'ZH Adj'; font-weight: 400;
+  src: local('PingFang SC Regular'), local('PingFangSC-Regular'), local('Microsoft YaHei'), local('MicrosoftYaHei');
+  size-adjust: 95%;
+  unicode-range: U+2E80-2FFF, U+3000-30FF, U+3100-33FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF;
+}
+/* The bold face too, so 首页 on the bold Home button is real PingFang Semibold, not synthetic bold */
+@font-face {
+  font-family: 'ZH Adj'; font-weight: 600 700;
+  src: local('PingFang SC Semibold'), local('PingFangSC-Semibold'), local('Microsoft YaHei Bold'), local('MicrosoftYaHei-Bold');
+  size-adjust: 95%;
+  unicode-range: U+2E80-2FFF, U+3000-30FF, U+3100-33FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF;
+}
+
+:root {
+  --serif: "Gelasio", Georgia, "ZH Adj", "PingFang SC", "Microsoft YaHei", serif;
+  /* Shoko's line: a Mincho face, the serif counterpart of Gelasio (PingFang would draw it in Chinese glyph forms) */
+  --mincho: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
+  --ease-focus: cubic-bezier(.25, .8, .3, 1);   /* style.css: every focus entrance */
+  color-scheme: light;
+}
+body {
+  margin: 0; min-height: 100vh; min-height: 100svh;
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- type: 404, the line (English or Japanese), the Chinese, the hint, the buttons ----------
+   Gaps on the homepage's 6 px grid: 18 / 12 / 24 / 12 */
+.code { margin: 0; font-size: clamp(88px, 15vw, 168px); font-weight: 400; line-height: 1; letter-spacing: .01em; }
+h1 {
+  margin: 18px 0 0; font-size: clamp(20px, 2.2vw, 28px); font-weight: 500;
+  line-height: 1.35; letter-spacing: -.005em; text-wrap: balance;
+}
+h1:lang(ja) { font-family: var(--mincho); line-height: 1.7; letter-spacing: .04em; }
+.zh { margin: 12px 0 0; font-size: clamp(16px, 1.8vw, 20px); letter-spacing: .08em; }
+
+/* One line above the buttons saying what they are; never wraps (short enough for a 320 px phone).
+   Chinese italic too: slanted synthetically, as in the homepage's invitation. */
+.hint { margin: 24px 0 0; font-size: 15px; font-style: italic; white-space: nowrap; }
+.hint span { font-size: 14px; margin-left: 6px; }
+.links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.links a {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 9px 20px; border-radius: 999px;
+  font-size: 16px; text-decoration: none;
+  border: 1px solid transparent;
+  transition: background-color .25s, color .25s, border-color .25s;
+}
+.links a span { font-size: 14px; opacity: .8; }
+.links a.home { font-weight: 600; }
+
+/* Bottom-right line (photo place / illustrator); wraps before the second language on narrow screens */
+.credit {
+  position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
+  left: max(20px, env(safe-area-inset-left)); text-align: right;
+  margin: 0; font-size: 13px; font-style: italic;
+}
+
+/* Landscape screens: 404 sits beside the text (404.html) or beside the illustration (shoko), a little smaller */
+@media (min-aspect-ratio: 1/1) and (min-width: 720px) {
+  .code { font-size: clamp(96px, 10.5vw, 150px); }
+}
+
+/* ---------- entrance: each piece comes into focus in turn, as on the homepage's first screen ---------- */
+.code, h1, .zh, .hint, .links a, .credit { animation: focus .65s var(--ease-focus) both; }
+.code  { animation-delay: 500ms; }
+h1     { animation-delay: 620ms; }
+.zh    { animation-delay: 740ms; }
+.hint  { animation-delay: 800ms; }
+.links a:nth-child(1) { animation-delay: 860ms; }
+.links a:nth-child(2) { animation-delay: 930ms; }
+.credit { animation-delay: 1400ms; }
+@keyframes focus { from { opacity: 0; filter: blur(8px); translate: 0 6px; scale: .985; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .code, h1, .zh, .hint, .links a, .credit { animation: none; }
+}

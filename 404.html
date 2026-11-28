@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page not found · Aaron Zhijun Cao</title>
+<!-- 404 page. GitHub Pages serves it at whatever address was asked for, at any depth (/a/b/c), so every path
+     here is absolute. It loads none of the site's scripts: worldmap.js would count every bot probing
+     /wp-login.php as a visit. The photo is the gallery's more-02, plus two larger exports in assets/img/404/. -->
+<link rel="icon" href="/assets/img/favicon.png?v=20261015sq192" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20261010full">
+<link rel="preload" href="/assets/fonts/Gelasio-var.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Easter egg: /Shoko, /SHOKO, /shoko.html … go to /shoko/ (GitHub Pages paths are case-sensitive).
+     /shoko/ itself is never redirected, so if that page is ever removed this doesn't loop. -->
+<script>
+var p = location.pathname;
+if (p !== '/shoko/' && /^\/shoko(\/|\.html)?$/i.test(p)) location.replace('/shoko/');
+</script>
+<!-- Fonts, type sizes, spacing and the entrance are shared with /shoko/; this page keeps its colours and layout -->
+<link rel="stylesheet" href="/assets/css/notfound.css?v=20261127">
+<style>
+:root {
+  --heading: #395076;                  /* style.css: darker accent */
+  --shade: 22, 38, 62;                 /* rgb of the overlay and text halo: the accent darkened toward the sea */
+}
+html { background: #3d7fb8; }          /* sky blue, under the photo while it loads */
+body { color: #fff; }
+
+/* The photo: comes into focus from a blur (like the homepage avatar's denoising), then drifts very slowly,
+   as if the sea were breathing. Two elements so the two motions never fight over one property. */
+.scene { position: fixed; inset: 0; overflow: hidden; animation: drift 40s ease-in-out 2s infinite alternate; }
+.scene img {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: 30% 50%;   /* keeps Enoshima in view on a portrait phone */
+  filter: saturate(.85);                          /* toward the site's low-saturation palette */
+  animation: develop 2s var(--ease-focus) both;
+}
+/* No shade over the photo. The text sits in the sky, its calmest part, and carries only its own soft halo;
+   it blocks nothing but sky. One screen, no scrolling. */
+@keyframes develop { from { opacity: 0; filter: saturate(.85) blur(18px); scale: 1.06; } }
+@keyframes drift   { to { scale: 1.05; translate: -1.2% 0; } }
+
+main {
+  position: relative;
+  max-width: 640px;
+  padding: max(28px, 6vh, env(safe-area-inset-top)) max(24px, 7vw, env(safe-area-inset-right)) 0 max(24px, 7vw, env(safe-area-inset-left));
+  text-shadow: 0 1px 2px rgba(var(--shade), .35), 0 2px 18px rgba(var(--shade), .5);
+}
+/* Landscape screens: the sky is the top ~40%; 404 and the text side by side make one short band in it */
+@media (min-aspect-ratio: 1/1) and (min-width: 720px) {
+  main { display: flex; align-items: center; gap: 40px; max-width: none; padding-top: max(40px, 9vh); }
+  .text { position: relative; padding-left: 40px; }
+  /* The divider enters with the text: it grows out from its middle between 404 (500 ms) and the heading (620 ms).
+     A pseudo-element, not a border, so it can have its own animation. */
+  .text::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+    background: rgba(255, 255, 255, .55);
+    animation: rule .65s var(--ease-focus) 560ms both;
+  }
+  h1 { margin-top: 0; }
+}
+@keyframes rule { from { opacity: 0; scale: 1 0; } }
+/* Portrait screens: filling the height, the photo leaves only ~37% sky above Enoshima, too little for the
+   stacked text. Drawn 118% tall from the top, the island moves down to ~half height; only sand is cut. */
+@media (max-aspect-ratio: 1/1), (max-width: 719px) {
+  .scene img { height: 118%; object-position: 32% 0; }
+}
+
+/* Colours: white on the photo */
+.zh   { opacity: .92; }
+.hint { opacity: .95; }
+.hint span { opacity: .85; }
+.links { text-shadow: none; }
+.links a {
+  /* a faint dark glass on the button itself (not on the photo), so it still reads on the pale sky near the horizon */
+  color: #fff; border-color: rgba(255, 255, 255, .6); background: rgba(var(--shade), .22);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.links a.home { background: rgba(255, 255, 255, .94); border-color: transparent; color: var(--heading); }
+.links a:hover { background: rgba(var(--shade), .36); }
+.links a.home:hover { background: #fff; }
+.links a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.credit { color: rgba(255, 255, 255, .88); text-shadow: 0 1px 6px rgba(var(--shade), .6); }
+.credit span { display: inline-block; }   /* italic like the English (Chinese slanted synthetically) */
+
+@media (prefers-reduced-motion: reduce) {
+  .scene, .scene img, .text::before { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="scene" aria-hidden="true">
+  <!-- 560 / 1120: the gallery's own files. 2560 / 3840: exported from the same original for this page
+       (cwebp -q 82 -sharp_yuv), since 1679 px was soft full-screen on retina displays. -->
+  <img src="/assets/img/gallery/1120/more-02.webp?v=20261111kamakura"
+       srcset="/assets/img/gallery/560/more-02.webp?v=20261111kamakura 840w,
+               /assets/img/gallery/1120/more-02.webp?v=20261111kamakura 1679w,
+               /assets/img/404/shichirigahama-2560.webp?v=20261127 2560w,
+               /assets/img/404/shichirigahama-3840.webp?v=20261127 3840w"
+       sizes="(max-aspect-ratio: 3/2) 150vh, 100vw" alt="" fetchpriority="high">
+</div>
+<main>
+  <p class="code">404</p>
+  <div class="text">
+    <h1>This page has drifted out to sea.</h1>
+    <p class="zh" lang="zh-CN">这一页被海浪带走了。</p>
+    <p class="hint">Correct links below <span lang="zh-CN">下面是正确的链接</span></p>
+    <nav class="links">
+      <a class="home" href="/">Home <span lang="zh-CN">首页</span></a>
+      <a href="/gallery/">Gallery <span lang="zh-CN">相册</span></a>
+    </nav>
+  </div>
+</main>
+<p class="credit">Coast of Shichirigahama, Kamakura · <span lang="zh-CN">镰仓七里滨海岸</span></p>
+</body>
+</html>

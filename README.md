@@ -16,8 +16,10 @@ A hand-written static site with **no build step**: edit the HTML, push to `main`
 ```
 ├── index.html          Home page
 ├── gallery/index.html  Gallery, served at /gallery/
+├── 404.html            Not-found page: absolute paths, no site scripts, gallery photo more-02 as backdrop
 ├── assets/
 │   ├── css/style.css   Site styles; design tokens are at the top
+│   ├── css/notfound.css  Fonts, type and entrance shared by 404.html and shoko/ (the easter egg)
 │   ├── js/             i18n, nav, reveal, glass (loupe), worldmap, ghstars
 │   ├── fonts/          Self-hosted Gelasio
 │   ├── img/ pdf/ video/
@@ -42,6 +44,7 @@ python3 -m http.server 8000
 | Colors, type, spacing, radius | CSS variables at the top of `style.css`; gaps use the `--sp-*` scale (multiples of 6px) |
 | CV, images, gallery photos | Replace the file under `assets/`, then bump the `?v=` of every URL that points to it |
 | Add a page | Also add a `<url>` to `sitemap.xml` |
+| Share card (`og.png`) | Edit `assets/img/src/og-card.html` (local only; render command inside), then bump `og:image`'s `?v=` in `index.html` |
 
 ## 🌐 Languages
 
